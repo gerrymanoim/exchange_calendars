@@ -16,13 +16,11 @@
 from datetime import time
 
 import pandas as pd
-
-from pytz import timezone, UTC
+from pytz import timezone
 from pandas.tseries.holiday import Holiday
 
-from .exchange_calendar import ExchangeCalendar, HolidayCalendar, end_default
+from .exchange_calendar import HolidayCalendar
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
-
 from .xkrx_holidays import (
     krx_regular_holiday_rules,
     precomputed_krx_holidays,
@@ -31,11 +29,7 @@ from .xkrx_holidays import (
 from .pandas_extensions.korean_holiday import next_business_day
 
 
-start_krx = pd.Timestamp("1956-03-03", tz=UTC)
-start_default = pd.Timestamp("1986-01-01", tz=UTC)
-
-
-class XKRXExchangeCalendar(ExchangeCalendar):
+class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
     """
     Calendar for the Korea exchange, and the primary calendar for
     the country of South Korea.
@@ -68,36 +62,6 @@ class XKRXExchangeCalendar(ExchangeCalendar):
     name = "XKRX"
 
     tz = timezone("Asia/Seoul")
-
-    def __init__(self, start=start_default, end=end_default):
-        super().__init__(start=start, end=end)
-
-        earliest_precomputed_year = 1956  # KRX started since 1956
-        latest_precomputed_year = (
-            2050  # korean_lunar_calendar package currently supports until 2050
-        )
-
-        if earliest_precomputed_year > self.first_trading_session.year:
-            raise ValueError(
-                "The {} holidays are only recorded back to {},"
-                " cannot instantiate the {} calendar back to {}.".format(
-                    self.name,
-                    earliest_precomputed_year,
-                    self.name,
-                    self.first_trading_session.year,
-                ),
-            )
-
-        if latest_precomputed_year < self.last_trading_session.year:
-            raise ValueError(
-                "The {} holidays are only recorded to {},"
-                " cannot instantiate the {} calendar for {}.".format(
-                    self.name,
-                    latest_precomputed_year,
-                    self.name,
-                    self.last_trading_session.year,
-                ),
-            )
 
     # KRX schedule change history
     # https://blog.naver.com/daishin_blog/220724111002
@@ -156,14 +120,22 @@ class XKRXExchangeCalendar(ExchangeCalendar):
             (None, pd.Timestamp("1998-12-06"), "1111110"),
         ]
 
-    # KRX regular and adhoc holidays
+    @property
+    def _earliest_precomputed_year(self) -> int:
+        return 1956
+
+    @property
+    def _latest_precomputed_year(self) -> int:
+        return 2050
+
+    # KRX regular and precomputed adhoc holidays
 
     @property
     def regular_holidays(self):
         return HolidayCalendar(krx_regular_holiday_rules)
 
     @property
-    def adhoc_holidays(self):
+    def precomputed_holidays(self) -> pd.DatetimeIndex:
         return precomputed_krx_holidays.tolist()
 
     # The first business day of each year:

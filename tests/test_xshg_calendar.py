@@ -14,6 +14,9 @@ class XSHGCalendarTestCase(ExchangeCalendarTestBase, TestCase):
     answer_key_filename = "xshg"
     calendar_class = XSHGExchangeCalendar
 
+    START_BOUND = T("1999-01-01")
+    END_BOUND = T("2025-12-31")
+
     # Shanghai stock exchange is open from 9:30 am to 3pm
     # (for now, ignoring lunch break)
     MAX_SESSION_HOURS = 5.5
@@ -44,27 +47,3 @@ class XSHGCalendarTestCase(ExchangeCalendarTestBase, TestCase):
 
         for session_label in expected_holidays_2017:
             self.assertNotIn(session_label, self.calendar.all_sessions)
-
-    def test_constrain_construction_dates(self):
-        # the XSHG calendar currently goes from 1999 to 2025, inclusive.
-        with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("1998-12-31"), T("2005-01-01"))
-
-        self.assertEqual(
-            str(e.exception),
-            (
-                "The XSHG holidays are only recorded back to 1999,"
-                " cannot instantiate the XSHG calendar back to 1998."
-            ),
-        )
-
-        with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("2005-01-01"), T("2026-01-01"))
-
-        self.assertEqual(
-            str(e.exception),
-            (
-                "The XSHG holidays are only recorded to 2025,"
-                " cannot instantiate the XSHG calendar for 2026."
-            ),
-        )

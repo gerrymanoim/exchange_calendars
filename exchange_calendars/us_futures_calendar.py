@@ -4,8 +4,7 @@ from pandas import Timedelta, Timestamp
 from pandas.tseries.holiday import GoodFriday
 from pytz import UTC, timezone
 
-from .exchange_calendar import ExchangeCalendar
-from exchange_calendars.exchange_calendar import HolidayCalendar, end_default
+from exchange_calendars.exchange_calendar import ExchangeCalendar, HolidayCalendar
 from exchange_calendars.us_holidays import Christmas, USNewYearsDay
 
 # Number of hours of offset between the open and close times dictated by this
@@ -36,18 +35,19 @@ class QuantopianUSFuturesCalendar(ExchangeCalendar):
     CME Pre-Open hour (5-6pm).
     """
 
-    # XXX: Override the default ExchangeCalendar start and end dates with ones
-    # further in the future. This is a stopgap for memory issues caused by
-    # upgrading to pandas 18. This calendar is the most severely affected,
-    # since it has the most total minutes of any of the zipline calendars.
-    def __init__(self, start=Timestamp("2000-01-01", tz=UTC), end=end_default):
-        super(QuantopianUSFuturesCalendar, self).__init__(start=start, end=end)
-
     name = "us_futures"
     tz = timezone("America/New_York")
     open_times = ((None, time(18, 1)),)
     close_times = ((None, time(18)),)
     open_offset = -1
+
+    @property
+    def _default_start(self) -> Timestamp:
+        # XXX: Override the default start date. This is a stopgap for memory
+        # issues caused by upgrading to pandas 18. This calendar is the most
+        # severely affected since it has the most total minutes of any of the
+        # zipline calendars.
+        return Timestamp("2000-01-01", tz=UTC)
 
     def execution_time_from_open(self, open_dates):
         return open_dates + Timedelta(hours=FUTURES_OPEN_TIME_OFFSET)

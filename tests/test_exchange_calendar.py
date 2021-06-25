@@ -12,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 from datetime import time
 from os.path import abspath, dirname, join
 from unittest import TestCase
 
-import pytest
 import numpy as np
 import pandas as pd
 import pandas.testing as tm
@@ -33,6 +33,7 @@ from exchange_calendars.calendar_utils import (
 )
 from exchange_calendars.errors import CalendarNameCollision, InvalidCalendarName
 from exchange_calendars.exchange_calendar import ExchangeCalendar, days_at_time
+from .test_utils import T
 
 
 class FakeCalendar(ExchangeCalendar):
@@ -169,6 +170,13 @@ class ExchangeCalendarTestBase(object):
     answer_key_filename = None
     calendar_class = None
 
+    # Affects test_start_bound. Should be set to earliest date for which
+    # calendar can be instantiated, or None if no start bound.
+    START_BOUND: pd.Timestamp | None = None
+    # Affects test_end_bound. Should be set to latest date for which
+    # calendar can be instantiated, or None if no end bound.
+    END_BOUND: pd.Timestamp | None = None
+
     # Affects tests that care about the empty periods between sessions. Should
     # be set to False for 24/7 calendars.
     GAPS_BETWEEN_SESSIONS = True
@@ -184,6 +192,10 @@ class ExchangeCalendarTestBase(object):
     # Affects test_for_breaks. True if one or more calendar sessions has a
     # break.
     HAVE_BREAKS = False
+
+    # Affects test_session_has_break.
+    SESSION_WITH_BREAK = None  # None if no session has a break
+    SESSION_WITHOUT_BREAK = T("2011-06-15")  # None if all sessions have breaks
 
     # Affects test_sanity_check_session_lengths. Should be set to the largest
     # number of hours that ever appear in a single session.
@@ -237,11 +249,36 @@ class ExchangeCalendarTestBase(object):
 
         cls.one_minute = pd.Timedelta(minutes=1)
         cls.one_hour = pd.Timedelta(hours=1)
+        cls.today = pd.Timestamp.now(tz="UTC").floor("D")
 
     @classmethod
     def teardown_class(cls):
         cls.calendar = None
         cls.answers = None
+
+    def test_start_bound(self):
+        if self.START_BOUND is not None:
+            cal = self.calendar_class(self.START_BOUND, self.today)
+            self.assertIsInstance(cal, ExchangeCalendar)
+            with self.assertRaises(ValueError):
+                self.calendar_class(
+                    self.START_BOUND - pd.DateOffset(days=1), self.today
+                )
+        else:
+            # verify no bound imposed
+            cal = self.calendar_class(pd.Timestamp("1902-01-01", tz="UTC"), self.today)
+            self.assertIsInstance(cal, ExchangeCalendar)
+
+    def test_end_bound(self):
+        if self.END_BOUND is not None:
+            cal = self.calendar_class(self.today, self.END_BOUND)
+            self.assertIsInstance(cal, ExchangeCalendar)
+            with self.assertRaises(ValueError):
+                self.calendar_class(self.today, self.END_BOUND + pd.DateOffset(days=1))
+        else:
+            # verify no bound imposed
+            cal = self.calendar_class(self.today, pd.Timestamp("2050-01-01", tz="UTC"))
+            self.assertIsInstance(cal, ExchangeCalendar)
 
     def test_sanity_check_session_lengths(self):
         # make sure that no session is longer than self.MAX_SESSION_HOURS hours
@@ -417,7 +454,7 @@ class ExchangeCalendarTestBase(object):
             self.calendar.minute_to_session_label(minute_before_first_open),
             self.calendar.minute_to_session_label(
                 minute_before_first_open, direction="next"
-            )
+            ),
         ]
 
         unique_session_labels = set(minutes_that_resolve_to_this_session)
@@ -551,7 +588,7 @@ class ExchangeCalendarTestBase(object):
         session_label = self.answers.index[-1]
 
         minute_that_resolves_to_session_label = self.calendar.minute_to_session_label(
-            minute_after_last_close, direction='previous'
+            minute_after_last_close, direction="previous"
         )
 
         self.assertEqual(session_label, minute_that_resolves_to_session_label)
@@ -888,9 +925,7 @@ class ExchangeCalendarTestBase(object):
                 (localized_open.year, localized_open.month, localized_open.day),
             )
 
-            open_ix = open_times.index.searchsorted(
-                pd.Timestamp(date), side="right"
-            )
+            open_ix = open_times.index.searchsorted(pd.Timestamp(date), side="right")
             if open_ix == len(open_times):
                 open_ix -= 1
 
@@ -920,47 +955,13 @@ class ExchangeCalendarTestBase(object):
         has_breaks = self.calendar.has_breaks()
         self.assertEqual(has_breaks, self.HAVE_BREAKS)
 
-
-class TestSessionHasBreak:
-    """Test for ExchangeCalendar.session_has_break."""
-
-    @pytest.fixture
-    def cal_xhkg(self) -> ExchangeCalendar:
-        yield get_calendar("XHKG")
-
-    @pytest.fixture
-    def xhkg_session_no_break(self, cal_xhkg) -> pd.Timestamp:
-        session = pd.Timestamp("2020-12-31", tz="UTC")
-        assert session in cal_xhkg.schedule.index
-        yield session
-
-    @pytest.fixture
-    def xhkg_session_with_break(self, cal_xhkg) -> pd.Timestamp:
-        session = pd.Timestamp("2021-01-04", tz="UTC")
-        assert session in cal_xhkg.schedule.index
-        yield session
-
-    @pytest.fixture
-    def cal_xlon(self) -> ExchangeCalendar:
-        yield get_calendar("XLON")
-
-    @pytest.fixture
-    def xlon_session(self, cal_xlon) -> pd.Timestamp:
-        session = pd.Timestamp("2021-06-07", tz="UTC")
-        assert session in cal_xlon.schedule.index
-        yield session
-
-    def test_session_has_break(
-        self,
-        cal_xhkg,
-        xhkg_session_no_break,
-        xhkg_session_with_break,
-        cal_xlon,
-        xlon_session,
-    ):
-        assert not cal_xhkg.session_has_break(xhkg_session_no_break)
-        assert cal_xhkg.session_has_break(xhkg_session_with_break)
-        assert not cal_xlon.session_has_break(xlon_session)
+    def test_session_has_break(self):
+        if self.SESSION_WITHOUT_BREAK is not None:
+            self.assertFalse(
+                self.calendar.session_has_break(self.SESSION_WITHOUT_BREAK)
+            )
+        if self.SESSION_WITH_BREAK is not None:
+            self.assertTrue(self.calendar.session_has_break(self.SESSION_WITH_BREAK))
 
 
 class EuronextCalendarTestBase(ExchangeCalendarTestBase):

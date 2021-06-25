@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import pandas as pd
 import pandas.testing as tm
 
 from exchange_calendars.exchange_calendar_xkrx import XKRXExchangeCalendar
@@ -14,6 +15,9 @@ class XKRXCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
     answer_key_filename_old = "xkrx_old"
 
     calendar_class = XKRXExchangeCalendar
+
+    START_BOUND = T("1956-01-01")
+    END_BOUND = T("2050-12-31")
 
     # Korea exchange is open from 9am to 3:30pm
     MAX_SESSION_HOURS = 6.5
@@ -67,30 +71,6 @@ class XKRXCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
         schedule = schedule[schedule.slice_indexer(start_date, end_date)]
         tm.assert_index_equal(answers_old, schedule)
 
-    def test_constrain_construction_dates(self):
-        # the XKRX calendar currently goes from 1956-03-03 to 2050-12-31, inclusive.
-        with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("1955-01-01"), T("2005-01-01"))
-
-        self.assertEqual(
-            str(e.exception),
-            (
-                "The XKRX holidays are only recorded back to 1956,"
-                " cannot instantiate the XKRX calendar back to 1955."
-            ),
-        )
-
-        with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("2005-01-01"), T("2051-01-03"))
-
-        self.assertEqual(
-            str(e.exception),
-            (
-                "The XKRX holidays are only recorded to 2050,"
-                " cannot instantiate the XKRX calendar for 2051."
-            ),
-        )
-
     def test_holidays_fall_on_weekend(self):
         # Holidays below falling on a weekend should
         # not be made up during the week.
@@ -143,9 +123,7 @@ class XKRXCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
         self.assertIn(unexpected_hangeul_day, self.calendar.all_sessions)
 
     def test_historical_regular_holidays_fall_into_precomputed_holidays(self):
-        from pandas import DatetimeIndex
-
-        precomputed_holidays = DatetimeIndex(self.calendar.adhoc_holidays)
+        precomputed_holidays = pd.DatetimeIndex(self.calendar.adhoc_holidays)
 
         # precomputed holidays won't include weekends (saturday, sunday)
         self.assertTrue(all(d.weekday() < 5 for d in precomputed_holidays))
@@ -158,7 +136,7 @@ class XKRXCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
         self.assertFalse(all(d.weekday() < 5 for d in generated_holidays.index))
 
         # filter non weekend generated holidays
-        non_weekend_mask = DatetimeIndex(
+        non_weekend_mask = pd.DatetimeIndex(
             [d for d in generated_holidays.index if d.weekday() < 5]
         )
         non_weekend_generated_holidays = generated_holidays[non_weekend_mask]

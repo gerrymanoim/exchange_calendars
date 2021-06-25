@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import pytest
 import pandas as pd
 from pytz import UTC
 
@@ -15,6 +16,10 @@ class XISTCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
 
     # The XIST is open from 10:00 am to 6:00 pm
     MAX_SESSION_HOURS = 8.0
+
+    @pytest.mark.xfail(reason=("See issue #33"))
+    def test_end_bound(self):
+        super().test_end_bound()
 
     def test_regular_holidays(self):
         all_sessions = self.calendar.all_sessions

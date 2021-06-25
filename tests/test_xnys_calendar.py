@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import pytest
 import pandas as pd
 from pytz import UTC
 
@@ -14,6 +15,10 @@ class XNYSCalendarTestCase(ExchangeCalendarTestBase, TestCase):
     calendar_class = XNYSExchangeCalendar
 
     MAX_SESSION_HOURS = 6.5
+
+    @pytest.mark.xfail(reason=("See issue #33"))
+    def test_start_bound(self):
+        super().test_start_bound()
 
     def test_2012(self):
         # holidays we expect:

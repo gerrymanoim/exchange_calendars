@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import abstractproperty
 
 import numpy as np
@@ -9,47 +10,44 @@ from .exchange_calendar import ExchangeCalendar
 
 class PrecomputedExchangeCalendar(ExchangeCalendar):
     """
-    Used to model an exchange calendar whose holidays are precomputed and
-    hardcoded.
+    Used to model an exchange calendar whose holidays inlcude holidays that
+    are precomputed and hardcoded.
     """
 
-    def __init__(self, start=None, end=None):
-        earliest_precomputed_year = np.min(self.precomputed_holidays).year
-        latest_precomputed_year = np.max(self.precomputed_holidays).year
-
-        if start is None:
-            start = pd.Timestamp("{}-01-01".format(earliest_precomputed_year), tz=UTC)
-
-        if end is None:
-            end = pd.Timestamp("{}-12-31".format(latest_precomputed_year), tz=UTC)
-        super(PrecomputedExchangeCalendar, self).__init__(start=start, end=end)
-
-        if earliest_precomputed_year > self.first_trading_session.year:
-            raise ValueError(
-                "The {} holidays are only recorded back to {},"
-                " cannot instantiate the {} calendar back to {}.".format(
-                    self.name,
-                    earliest_precomputed_year,
-                    self.name,
-                    self.first_trading_session.year,
-                ),
-            )
-
-        if latest_precomputed_year < self.last_trading_session.year:
-            raise ValueError(
-                "The {} holidays are only recorded to {},"
-                " cannot instantiate the {} calendar for {}.".format(
-                    self.name,
-                    latest_precomputed_year,
-                    self.name,
-                    self.last_trading_session.year,
-                ),
-            )
-
     @abstractproperty
-    def precomputed_holidays(self):
+    def precomputed_holidays(self) -> pd.DatetimeIndex | list[pd.Timestamp]:
         raise NotImplementedError()
 
     @property
-    def adhoc_holidays(self):
+    def adhoc_holidays(self) -> pd.DatetimeIndex | list[pd.Timestamp]:
         return self.precomputed_holidays
+
+    @property
+    def _earliest_precomputed_year(self) -> int:
+        return np.min(self.precomputed_holidays).year
+
+    @property
+    def _latest_precomputed_year(self) -> int:
+        return np.max(self.precomputed_holidays).year
+
+    @property
+    def bound_start(self) -> pd.Timestamp:
+        return pd.Timestamp(f"{self._earliest_precomputed_year}-01-01", tz=UTC)
+
+    @property
+    def bound_end(self) -> pd.Timestamp:
+        return pd.Timestamp(f"{self._latest_precomputed_year}-12-31", tz=UTC)
+
+    def _bound_start_error_msg(self, start: pd.Timestamp) -> str:
+        return (
+            f"The {self.name} holidays are only recorded back to the year"
+            f" {self._earliest_precomputed_year}, cannot instantiate the"
+            f" {self.name} calendar from {start}."
+        )
+
+    def _bound_end_error_msg(self, end: pd.Timestamp) -> str:
+        return (
+            f"The {self.name} holidays are only recorded to the year"
+            f" {self._latest_precomputed_year}, cannot instantiate the"
+            f" {self.name} calendar through to {end}."
+        )

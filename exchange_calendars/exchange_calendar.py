@@ -37,11 +37,10 @@ from .utils.memoize import lazyval
 from .utils.pandas_utils import days_at_time
 from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 
-start_default = pd.Timestamp("1990-01-01", tz=UTC)
-end_base = pd.Timestamp("today", tz=UTC)
+GLOBAL_DEFAULT_START = pd.Timestamp.now(tz=UTC).floor("D") - pd.DateOffset(years=20)
 # Give an aggressive buffer for logic that needs to use the next trading
 # day or minute.
-end_default = end_base + pd.Timedelta(days=365)
+GLOBAL_DEFAULT_END = pd.Timestamp.now(tz=UTC).floor("D") + pd.DateOffset(years=1)
 
 NANOS_IN_MINUTE = 60000000000
 MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
@@ -75,23 +74,88 @@ def _group_times(all_days, times, tz, offset=0):
 
 
 class ExchangeCalendar(ABC):
+    """Representation of timing information of a single market exchange.
+
+    The timing information is made up of two parts: sessions, and
+    opens/closes (and break_starts/break_ends for exchanges that observe
+    an intraday break).
+
+    For exchanges that do not observe an intraday break a session
+    represents a contiguous set of minutes. Where an exchange observes
+    an intraday break a session represents two contiguous set of minutes
+    separated by the intraday break.
+
+    Each session has a label that is midnight UTC. It is important to note
+    that a session label should not be considered a specific point in time,
+    and that midnight UTC is just being used for convenience.
+
+    For each session, we store the open and close time together with, for
+    those exchanges with breaks, the break start and break end. All times
+    are defined as UTC.
+
+    Parameters
+    ----------
+    start : default: later of 20 years ago or first supported start date.
+        First calendar session will be `start`, if `start` is a session, or
+        first session after `start`.
+
+    end : default: earliest of 1 year from 'today' or last supported end date.
+        Last calendar session will be `end`, if `end` is a session, or last
+        session before `end`.
+
+    Raises
+    ------
+    ValueError
+        If `start` is earlier than the earliest supported start date.
+        If `end` is later than the latest supported end date.
+        If `start` parses to a later date than `end`.
+
+    Notes
+    -----
+    Exchange calendars were originally defined for the Zipline package from
+    Quantopian under the package 'trading_calendars'. Since 2021 they have
+    been maintained under the 'exchange_calendars' package (a fork of
+    'trading_calendars') by an active community of contributing users.
+
+    Some calendars have defined start and end bounds within which
+    contributors have endeavoured to ensure the calendar's accuracy and
+    outside of which the calendar would not be accurate. These bounds
+    are enforced such that passing `start` or `end` as dates that are
+    out-of-bounds will raise a ValueError. The bounds of each calendar are
+    exposed via the `bound_start` and `bound_end` properties.
+
+    Many calendars do not have bounds defined (`bound_start` and/or
+    `bound_end` return None). These calendars can be created through any
+    date range although it should be noted that the further back the
+    start date, the greater the potential for inaccuracies.
+
+    In all cases, no guarantees are offered as to the accuracy of any
+    calendar.
     """
-    An ExchangeCalendar represents the timing information of a single market
-    exchange.
 
-    The timing information is made up of two parts: sessions, and opens/closes.
+    def __init__(self, start: Session | None = None, end: Session | None = None):
 
-    A session represents a contiguous set of minutes, and has a label that is
-    midnight UTC. It is important to note that a session label should not be
-    considered a specific point in time, and that midnight UTC is just being
-    used for convenience.
+        if start is None:
+            start = self._default_start
+        else:
+            start = parse_session(start, "start", strict=False)
+            if self.bound_start is not None and start < self.bound_start:
+                raise ValueError(self._bound_start_error_msg(start))
 
-    For each session, we store the open and close time in UTC time.
-    """
+        if end is None:
+            end = self._default_end
+        else:
+            end = parse_session(end, "end", strict=False)
+            if self.bound_end is not None and end > self.bound_end:
+                raise ValueError(self._bound_end_error_msg(end))
 
-    def __init__(self, start=start_default, end=end_default):
+        if start >= end:
+            raise ValueError(
+                "`start` must be earlier than `end` although `start` parsed as"
+                f" '{start}' and `end` as '{end}'."
+            )
+
         # Midnight in UTC for each trading day.
-
         _all_days = date_range(start, end, freq=self.day, tz=UTC)
 
         # `DatetimeIndex`s of standard opens/closes for each day.
@@ -191,6 +255,81 @@ class ExchangeCalendar(ABC):
         self._early_closes = pd.DatetimeIndex(
             _special_closes.map(self.minute_index_to_session_labels)
         )
+
+    @property
+    def bound_start(self) -> pd.Timestamp | None:
+        """Earliest date from which calendar can be constructed.
+
+        Returns
+        -------
+        pd.Timestamp or None
+            Earliest date from which calendar can be constructed. Must have
+            tz as "UTC". None if no limit.
+
+        Notes
+        -----
+        To impose a constraint on the earliest date from which a calendar
+        can be constructed subclass should override this method and
+        optionally override `_bound_start_error_msg`.
+        """
+        return None
+
+    @property
+    def bound_end(self) -> pd.Timestamp | None:
+        """Latest date to which calendar can be constructed.
+
+        Returns
+        -------
+        pd.Timestamp or None
+            Latest date to which calendar can be constructed. Must have tz
+            as "UTC". None if no limit.
+
+        Notes
+        -----
+        To impose a constraint on the latest date to which a calendar can
+        be constructed subclass should override this method and optionally
+        override `_bound_end_error_msg`.
+        """
+        return None
+
+    def _bound_start_error_msg(self, start: pd.Timestamp) -> str:
+        """Return error message to handle `start` being out-of-bounds.
+
+        See Also
+        --------
+        bound_start
+        """
+        return (
+            f"The earliest date from which calendar {self.name} can be"
+            f" evaluated is {self.bound_start}, although received `start` as"
+            f" {start}."
+        )
+
+    def _bound_end_error_msg(self, end: pd.Timestamp) -> str:
+        """Return error message to handle `end` being out-of-bounds.
+
+        See Also
+        --------
+        bound_end
+        """
+        return (
+            f"The latest date to which calendar {self.name} can be evaluated"
+            f" is {self.bound_end}, although received `end` as {end}."
+        )
+
+    @property
+    def _default_start(self) -> pd.Timestamp:
+        if self.bound_start is None:
+            return GLOBAL_DEFAULT_START
+        else:
+            return max(GLOBAL_DEFAULT_START, self.bound_start)
+
+    @property
+    def _default_end(self) -> pd.Timestamp:
+        if self.bound_end is None:
+            return GLOBAL_DEFAULT_END
+        else:
+            return min(GLOBAL_DEFAULT_END, self.bound_end)
 
     @lazyval
     def day(self):
@@ -715,9 +854,7 @@ class ExchangeCalendar(ABC):
             end_minute=self.schedule.at[session_label, "market_close"],
         )
 
-    def execution_minutes_for_session(
-        self, session_label: Session
-    ) -> pd.DatetimeIndex:
+    def execution_minutes_for_session(self, session_label: Session) -> pd.DatetimeIndex:
         """
         Given a session label, return the execution minutes for that session.
 
@@ -791,9 +928,7 @@ class ExchangeCalendar(ABC):
             self.all_sessions.slice_indexer(start_session_label, end_session_label)
         ]
 
-    def sessions_window(
-        self, session_label: Session, count: int
-    ) -> pd.DatetimeIndex:
+    def sessions_window(self, session_label: Session, count: int) -> pd.DatetimeIndex:
         """
         Given a session label and a window size, returns a list of sessions
         of size `count` + 1, that either starts with the given session
@@ -915,9 +1050,7 @@ class ExchangeCalendar(ABC):
         start_session_label = parse_session(
             start_session_label, "start_session_label", self
         )
-        end_session_label = parse_session(
-            end_session_label, "end_session_label", self
-        )
+        end_session_label = parse_session(end_session_label, "end_session_label", self)
         first_minute, _ = self.open_and_close_for_session(start_session_label)
         _, last_minute = self.open_and_close_for_session(end_session_label)
 
