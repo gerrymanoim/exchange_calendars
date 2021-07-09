@@ -24,6 +24,7 @@ class XTKSCalendarTestCase(ExchangeCalendarTestBase, TestCase):
     answer_key_filename = "xtks"
     calendar_class = XTKSExchangeCalendar
 
+    START_BOUND = pd.Timestamp("2000-01-01", tz="UTC")
     MAX_SESSION_HOURS = 6
     HAVE_EARLY_CLOSES = False
 

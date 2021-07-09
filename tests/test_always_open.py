@@ -18,6 +18,7 @@ class AlwaysOpenTestCase(ExchangeCalendarTestBase, TestCase):
     MAX_SESSION_HOURS = 24
     GAPS_BETWEEN_SESSIONS = False
     HAVE_EARLY_CLOSES = False
+    SESSION_WITHOUT_BREAK = pd.Timestamp("2016-06-15", tz="UTC")
 
     MINUTE_INDEX_TO_SESSION_LABELS_START = pd.Timestamp("2016-01-01", tz=UTC)
     MINUTE_INDEX_TO_SESSION_LABELS_END = pd.Timestamp("2016-04-04", tz=UTC)

@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import pytest
 import pandas as pd
 from pytz import UTC
 
@@ -15,6 +16,14 @@ class XKLSCalendarTestCase(NoDSTExchangeCalendarTestBase, TestCase):
 
     # The XKLS is open from 9AM to 5PM
     MAX_SESSION_HOURS = 8.0
+
+    @pytest.mark.xfail(reason=("See issue #33"))
+    def test_start_bound(self):
+        super().test_start_bound()
+
+    @pytest.mark.xfail(reason=("See issue #33"))
+    def test_end_bound(self):
+        super().test_end_bound()
 
     def test_regular_holidays(self):
         all_sessions = self.calendar.all_sessions

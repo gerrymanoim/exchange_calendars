@@ -3,23 +3,24 @@ Tests for ExchangeCalendarDispatcher.
 """
 from unittest import TestCase
 
+import pandas as pd
+
+from exchange_calendars import ExchangeCalendar
 from exchange_calendars.calendar_utils import ExchangeCalendarDispatcher
+from exchange_calendars.exchange_calendar_iepa import IEPAExchangeCalendar
 from exchange_calendars.errors import (
     CalendarNameCollision,
     CyclicCalendarAlias,
     InvalidCalendarName,
 )
-from exchange_calendars.exchange_calendar_iepa import IEPAExchangeCalendar
 
 
-class CalendarAliasTestCase(TestCase):
+class CalendarDispatcherTestCase(TestCase):
     @classmethod
     def setup_class(cls):
-        # Make a calendar once so that we don't spend time in every test
-        # instantiating calendars.
         cls.dispatcher_kwargs = dict(
-            calendars={"IEPA": IEPAExchangeCalendar()},
-            calendar_factories={},
+            calendars={},
+            calendar_factories={"IEPA": IEPAExchangeCalendar},
             aliases={
                 "IEPA_ALIAS": "IEPA",
                 "IEPA_ALIAS_ALIAS": "IEPA_ALIAS",
@@ -122,3 +123,29 @@ class CalendarAliasTestCase(TestCase):
             self.dispatcher.names_to_aliases(),
             {"IEPA": ["IEPA_ALIAS", "IEPA_ALIAS_ALIAS"]},
         )
+
+    def test_get_calendar(self):
+        cal = self.dispatcher.get_calendar("IEPA")
+        self.assertIsInstance(cal, ExchangeCalendar)
+
+    def test_get_calendar_kwargs(self):
+        start = pd.Timestamp("2020-01-02", tz="UTC")
+        end = pd.Timestamp("2020-01-31", tz="UTC")
+        cal = self.dispatcher.get_calendar("IEPA", start=start, end=end)
+        self.assertEqual(cal.first_session, start)
+        self.assertEqual(cal.last_session, end)
+
+        self.dispatcher.register_calendar("iepa_instance", cal)
+        with self.assertRaises(ValueError):
+            # Can only pass kwargs to registered factories (not calendar instances)
+            self.dispatcher.get_calendar("iepa_instance", start=start)
+
+    def test_get_calendar_cache(self):
+        start = pd.Timestamp("2020-01-02", tz="UTC")
+        end = pd.Timestamp("2020-01-31", tz="UTC")
+        cal = self.dispatcher.get_calendar("IEPA", start=start, end=end)
+        cal2 = self.dispatcher.get_calendar("IEPA", start=start, end=end)
+        self.assertIs(cal, cal2)
+        start += pd.DateOffset(days=1)
+        cal3 = self.dispatcher.get_calendar("IEPA", start=start, end=end)
+        self.assertIsNot(cal, cal3)

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from .calendar_helpers import parse_session
 from .always_open import AlwaysOpenCalendar
 from .errors import CalendarNameCollision, CyclicCalendarAlias, InvalidCalendarName
+from .exchange_calendar import ExchangeCalendar
 from .exchange_calendar_asex import ASEXExchangeCalendar
 from .exchange_calendar_bvmf import BVMFExchangeCalendar
 from .exchange_calendar_cmes import CMESExchangeCalendar
@@ -146,8 +148,8 @@ class ExchangeCalendarDispatcher(object):
     """
     A class for dispatching and caching exchange calendars.
 
-    Methods of a global instance of this class are provided by
-    calendars.calendar_utils.
+    Methods of a global instance of this class can be accessed directly
+    from exchange_calendars, for example `exchange_calendars.get_calendar`.
 
     Parameters
     ----------
@@ -163,38 +165,90 @@ class ExchangeCalendarDispatcher(object):
         self._calendars = calendars
         self._calendar_factories = dict(calendar_factories)
         self._aliases = dict(aliases)
+        # key: factory name, value: (calendar, dict of calendar kwargs)
+        self._factory_output_cache: dict(str, tuple(ExchangeCalendar, dict)) = {}
 
-    def get_calendar(self, name):
+    def _fabricate(self, name: str, **kwargs) -> ExchangeCalendar:
+        """Fabricate calendar with `name` and `**kwargs`."""
+        try:
+            factory = self._calendar_factories[name]
+        except KeyError as e:
+            raise InvalidCalendarName(calendar_name=name) from e
+        calendar = factory(**kwargs)
+        self._factory_output_cache[name] = (calendar, kwargs)
+        return calendar
+
+    def _get_cached_factory_output(
+        self, name: str, **kwargs
+    ) -> ExchangeCalendar | None:
+        """Get calendar from factory output cache.
+
+        Return None if `name` not in cache or `name` in cache although
+        calendar got with kwargs other than `**kwargs`.
         """
-        Retrieves an instance of an ExchangeCalendar whose name is given.
+        calendar, calendar_kwargs = self._factory_output_cache.get(name, (None, None))
+        if calendar is not None and calendar_kwargs == kwargs:
+            return calendar
+        else:
+            return None
+
+    def get_calendar(self, name: str, **kwargs) -> ExchangeCalendar:
+        """Get exchange calendar with a given name.
 
         Parameters
         ----------
-        name : str
-            The name of the ExchangeCalendar to be retrieved.
+        name
+            Name of the ExchangeCalendar to get, for example 'XNYS'.
+
+        **kwargs
+            Kwargs to be passed to calendar factory. `**kwargs` can only be
+            passed if `name` is registered as a calendar factory (either by
+            having being included to `calendar_factories` passed to the
+            dispatcher's constructor or having been subsequently registered
+            via the `register_calendar_type` method).
 
         Returns
         -------
-        calendar : calendars.ExchangeCalendar
-            The desired calendar.
+        ExchangeCalendar
+            Requested calendar.
+
+        Raises
+        ------
+        InvalidCalendarName
+            If `name` does not represent a registered calendar.
+
+        ValueError
+            If `**kwargs` are received although `name` is a registered
+            calendar (as opposed to a calendar factory).
+
+            If `start` or `end` are included to `**kwargs` although do not
+            parse as a date that could represent a session.
         """
-        canonical_name = self.resolve_alias(name)
+        # will raise InvalidCalendarName if name not valid
+        name = self.resolve_alias(name)
 
-        try:
-            return self._calendars[canonical_name]
-        except KeyError:
-            # We haven't loaded this calendar yet, so make a new one.
-            pass
+        if name in self._calendars:
+            if kwargs:
+                raise ValueError(
+                    f"Receieved constructor arguments `start` and/or `end`"
+                    f" although calendar {name} is registered as a specific"
+                    f" instance of class {self._calendars[name].__class__},"
+                    f" not as a calendar factory."
+                )
+            else:
+                return self._calendars[name]
 
-        try:
-            factory = self._calendar_factories[canonical_name]
-        except KeyError:
-            # We don't have a factory registered for this name.  Barf.
-            raise InvalidCalendarName(calendar_name=name)
+        if kwargs.get("start"):
+            kwargs["start"] = parse_session(kwargs["start"], "start", strict=None)
+        else:
+            kwargs["start"] = None
+        if kwargs.get("end"):
+            kwargs["end"] = parse_session(kwargs["end"], "end", strict=None)
+        else:
+            kwargs["end"] = None
 
-        # Cache the calendar for future use.
-        calendar = self._calendars[canonical_name] = factory()
-        return calendar
+        cached = self._get_cached_factory_output(name, **kwargs)
+        return cached if cached is not None else self._fabricate(name, **kwargs)
 
     def get_calendar_names(
         self, include_aliases: bool = True, sort: bool = True

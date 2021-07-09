@@ -4,7 +4,7 @@ from itertools import chain
 import pandas as pd
 from pytz import UTC, timezone
 
-from .exchange_calendar import HolidayCalendar, ExchangeCalendar, end_default
+from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 from .xtks_holidays import (
     AutumnalEquinoxes,
     ChildrensDay,
@@ -44,8 +44,6 @@ from .xtks_holidays import (
     VernalEquinoxes,
 )
 
-XTKS_START_DEFAULT = pd.Timestamp("2000-01-01", tz=UTC)
-
 
 class XTKSExchangeCalendar(ExchangeCalendar):
     """
@@ -78,11 +76,6 @@ class XTKSExchangeCalendar(ExchangeCalendar):
     - Emperor's Birthday (Dec. 23)
     """
 
-    def __init__(self, start=XTKS_START_DEFAULT, end=end_default):
-        # because we are not tracking holiday info farther back than 2000,
-        # make the default start date 01-01-2000
-        super(XTKSExchangeCalendar, self).__init__(start=start, end=end)
-
     name = "XTKS"
 
     tz = timezone("Asia/Tokyo")
@@ -90,6 +83,11 @@ class XTKSExchangeCalendar(ExchangeCalendar):
     open_times = ((None, time(9)),)
 
     close_times = ((None, time(15)),)
+
+    @property
+    def bound_start(self) -> pd.Timestamp:
+        # not tracking holiday info farther back than 2000
+        return pd.Timestamp("2000-01-01", tz=UTC)
 
     @property
     def regular_holidays(self):

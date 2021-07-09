@@ -15,39 +15,16 @@ class XHKGCalendarTestCase(ExchangeCalendarTestBase, TestCase):
     answer_key_filename = "xhkg"
     calendar_class = XHKGExchangeCalendar
 
+    START_BOUND = T("1960-01-01")
+    END_BOUND = T("2049-12-31")
     HAVE_BREAKS = True
+    SESSION_WITH_BREAK = pd.Timestamp("2018-12-13", tz="UTC")
+    SESSION_WITHOUT_BREAK = pd.Timestamp("2018-12-31", tz="UTC")
 
     MAX_SESSION_HOURS = 6.5
 
     # Asia/Hong_Kong does not have daylight savings
     DAYLIGHT_SAVINGS_DATES = []
-
-    def test_constrain_construction_dates(self):
-        # the lunisolar holidays are currently computed for the years:
-        # [1981, 2050), attempting to create the XHKG calendar outside of that
-        # range should fail.
-
-        with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("1958-12-31"), T("2000-01-01"))
-
-        self.assertEqual(
-            str(e.exception),
-            (
-                "the lunisolar holidays have only been computed back to 1960,"
-                " cannot instantiate the XHKG calendar back to 1958"
-            ),
-        )
-
-        with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("2000-01-01"), T("2050-01-03"))
-
-        self.assertEqual(
-            str(e.exception),
-            (
-                "the lunisolar holidays have only been computed through 2049,"
-                " cannot instantiate the XHKG calendar in 2050"
-            ),
-        )
 
     def test_session_break(self):
         # Test that the calendar correctly reports itself as closed during

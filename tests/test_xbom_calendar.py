@@ -11,6 +11,9 @@ class XBOMCalendarTestCase(ExchangeCalendarTestBase, TestCase):
     answer_key_filename = "xbom"
     calendar_class = XBOMExchangeCalendar
 
+    START_BOUND = T("1997-01-01")
+    END_BOUND = T("2021-12-31")
+
     # BSE is open from 9:15 am to 3:30 pm
     MAX_SESSION_HOURS = 6.25
 
@@ -34,27 +37,3 @@ class XBOMCalendarTestCase(ExchangeCalendarTestBase, TestCase):
 
         for session_label in expected_holidays_2017:
             self.assertNotIn(session_label, self.calendar.all_sessions)
-
-    def test_constrain_construction_dates(self):
-        # the XBOM calendar currently goes from 1997 to 2021, inclusive.
-        with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("1996-12-31"), T("1998-01-01"))
-
-        self.assertEqual(
-            str(e.exception),
-            (
-                "The XBOM holidays are only recorded back to 1997,"
-                " cannot instantiate the XBOM calendar back to 1996."
-            ),
-        )
-
-        with self.assertRaises(ValueError) as e:
-            self.calendar_class(T("1998-01-01"), T("2022-01-03"))
-
-        self.assertEqual(
-            str(e.exception),
-            (
-                "The XBOM holidays are only recorded to 2021,"
-                " cannot instantiate the XBOM calendar for 2022."
-            ),
-        )

@@ -1,26 +1,27 @@
 from unittest import TestCase
 
 import pandas as pd
-from pytz import UTC
 
 from exchange_calendars.exchange_calendar_xtae import XTAEExchangeCalendar
-
 from .test_exchange_calendar import ExchangeCalendarTestBase
+from .test_utils import T
 
 
 class XTAECalendarTestCase(ExchangeCalendarTestBase, TestCase):
 
+    SESSION_WITHOUT_BREAK = T("2019-06-12")
+
     # Custom values for start/end test, needed due to XTAE-specific weekmask.
-    TEST_START_END_FIRST = pd.Timestamp("2010-01-02", tz=UTC)
-    TEST_START_END_LAST = pd.Timestamp("2010-01-09", tz=UTC)
-    TEST_START_END_EXPECTED_FIRST = pd.Timestamp("2010-01-03", tz=UTC)
-    TEST_START_END_EXPECTED_LAST = pd.Timestamp("2010-01-07", tz=UTC)
+    TEST_START_END_FIRST = T("2010-01-02")
+    TEST_START_END_LAST = T("2010-01-09")
+    TEST_START_END_EXPECTED_FIRST = T("2010-01-03")
+    TEST_START_END_EXPECTED_LAST = T("2010-01-07")
 
     # XTAE doesn't have early closes.
     HAVE_EARLY_CLOSES = False
 
-    MINUTE_INDEX_TO_SESSION_LABELS_START = pd.Timestamp("2019-01-07", tz=UTC)
-    MINUTE_INDEX_TO_SESSION_LABELS_END = pd.Timestamp("2019-04-07", tz=UTC)
+    MINUTE_INDEX_TO_SESSION_LABELS_START = T("2019-01-07")
+    MINUTE_INDEX_TO_SESSION_LABELS_END = T("2019-04-07")
 
     DAYLIGHT_SAVINGS_DATES = ["2019-03-31", "2019-10-27"]
 

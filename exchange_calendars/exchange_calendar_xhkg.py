@@ -49,8 +49,8 @@ from .exchange_calendar import (
     TUESDAY,
     WEDNESDAY,
     HolidayCalendar,
-    ExchangeCalendar,
 )
+from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
 from .utils.pandas_utils import vectorized_sunday_to_monday
 
 # Useful resources for making changes to this file:
@@ -232,7 +232,7 @@ def boxing_day_obs(dt):
     return dt
 
 
-class XHKGExchangeCalendar(ExchangeCalendar):
+class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
     """
     Exchange calendar for the Hong Kong Stock Exchange (XHKG).
 
@@ -282,37 +282,6 @@ class XHKGExchangeCalendar(ExchangeCalendar):
         (pd.Timestamp("2011-03-07"), time(12, 00)),
     )
 
-    def __init__(self, *args, **kwargs):
-        super(XHKGExchangeCalendar, self).__init__(*args, **kwargs)
-
-        lunisolar_holidays = (
-            chinese_buddhas_birthday_dates,
-            chinese_lunar_new_year_dates,
-            day_after_mid_autumn_festival_dates,
-            double_ninth_festival_dates,
-            dragon_boat_festival_dates,
-            qingming_festival_dates,
-        )
-        earliest_precomputed_year = max(map(np.min, lunisolar_holidays)).year
-        if earliest_precomputed_year > self.first_trading_session.year:
-            raise ValueError(
-                "the lunisolar holidays have only been computed back to {},"
-                " cannot instantiate the XHKG calendar back to {}".format(
-                    earliest_precomputed_year,
-                    self.first_trading_session.year,
-                ),
-            )
-
-        latest_precomputed_year = min(map(np.max, lunisolar_holidays)).year
-        if latest_precomputed_year < self.last_trading_session.year:
-            raise ValueError(
-                "the lunisolar holidays have only been computed through {},"
-                " cannot instantiate the XHKG calendar in {}".format(
-                    latest_precomputed_year,
-                    self.last_trading_session.year,
-                ),
-            )
-
     @property
     def regular_holidays(self):
         return HolidayCalendar(
@@ -334,7 +303,28 @@ class XHKGExchangeCalendar(ExchangeCalendar):
         )
 
     @property
+    def precomputed_holidays(self):
+        lunisolar_holidays = (
+            chinese_buddhas_birthday_dates,
+            chinese_lunar_new_year_dates,
+            day_after_mid_autumn_festival_dates,
+            double_ninth_festival_dates,
+            dragon_boat_festival_dates,
+            qingming_festival_dates,
+        )
+        return lunisolar_holidays
+
+    @property
+    def _earliest_precomputed_year(self) -> int:
+        return max(map(np.min, self.precomputed_holidays)).year
+
+    @property
+    def _latest_precomputed_year(self) -> int:
+        return min(map(np.max, self.precomputed_holidays)).year
+
+    @property
     def adhoc_holidays(self):
+        # overrides as inherited from PrecomputedExchangeCalendar
         lunar_new_years_eve = (chinese_lunar_new_year_dates - pd.Timedelta(days=1))[
             (chinese_lunar_new_year_dates.weekday == SATURDAY)
             & (chinese_lunar_new_year_dates.year < 2013)
