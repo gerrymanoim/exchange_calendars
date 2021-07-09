@@ -7,7 +7,6 @@ from pandas.tseries.holiday import (
     sunday_to_monday,
     weekend_to_monday,
 )
-from pytz import UTC
 
 from .common_holidays import european_labour_day, new_years_day, new_years_eve
 from .exchange_calendar import MONDAY, SUNDAY
@@ -144,42 +143,42 @@ NewYearsEve = new_years_eve(observance=new_years_eve_observance)
 # --------------
 
 new_years_bridge_days = [
-    pd.Timestamp("2002-12-30", tz=UTC),
-    pd.Timestamp("2004-01-02", tz=UTC),
-    pd.Timestamp("2009-01-02", tz=UTC),
-    pd.Timestamp("2013-12-30", tz=UTC),
-    pd.Timestamp("2015-01-02", tz=UTC),
+    pd.Timestamp("2002-12-30"),
+    pd.Timestamp("2004-01-02"),
+    pd.Timestamp("2009-01-02"),
+    pd.Timestamp("2013-12-30"),
+    pd.Timestamp("2015-01-02"),
 ]
 
 asanha_bucha_bridge_days = [
-    pd.Timestamp("2009-07-06", tz=UTC),
-    pd.Timestamp("2016-07-18", tz=UTC),
+    pd.Timestamp("2009-07-06"),
+    pd.Timestamp("2016-07-18"),
 ]
 
 queens_birthday_bridge_days = [
-    pd.Timestamp("2010-08-13", tz=UTC),
-    pd.Timestamp("2014-08-11", tz=UTC),
+    pd.Timestamp("2010-08-13"),
+    pd.Timestamp("2014-08-11"),
 ]
 
 coronation_bridge_days = [
-    pd.Timestamp("2015-05-04", tz=UTC),
-    pd.Timestamp("2016-05-06", tz=UTC),
+    pd.Timestamp("2015-05-04"),
+    pd.Timestamp("2016-05-06"),
 ]
 
 vesak_bridge_days = [
-    pd.Timestamp("2011-05-16", tz=UTC),
+    pd.Timestamp("2011-05-16"),
 ]
 
 misc_adhoc = [
-    pd.Timestamp("2006-04-19", tz=UTC),  # Special Holiday
-    pd.Timestamp("2006-06-12", tz=UTC),  # Special Holiday
-    pd.Timestamp("2006-06-13", tz=UTC),  # Special Holiday
-    pd.Timestamp("2006-09-20", tz=UTC),  # Exchange Holiday
-    pd.Timestamp("2007-12-24", tz=UTC),  # Exchange Holiday
-    pd.Timestamp("2010-05-20", tz=UTC),  # Closure Due to Security Concerns
-    pd.Timestamp("2010-05-21", tz=UTC),  # Closure Due to Security Concerns
-    pd.Timestamp("2012-04-09", tz=UTC),  # Bank Holiday
-    pd.Timestamp("2017-10-26", tz=UTC),  # Cremation of King Bhumibol
+    pd.Timestamp("2006-04-19"),  # Special Holiday
+    pd.Timestamp("2006-06-12"),  # Special Holiday
+    pd.Timestamp("2006-06-13"),  # Special Holiday
+    pd.Timestamp("2006-09-20"),  # Exchange Holiday
+    pd.Timestamp("2007-12-24"),  # Exchange Holiday
+    pd.Timestamp("2010-05-20"),  # Closure Due to Security Concerns
+    pd.Timestamp("2010-05-21"),  # Closure Due to Security Concerns
+    pd.Timestamp("2012-04-09"),  # Bank Holiday
+    pd.Timestamp("2017-10-26"),  # Cremation of King Bhumibol
 ]
 
 # Lunar Holidays

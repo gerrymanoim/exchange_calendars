@@ -209,27 +209,27 @@ class XLONExchangeCalendar(ExchangeCalendar):
     def adhoc_holidays(self):
         return [
             # VE-Day Anniversary
-            pd.Timestamp("1995-05-08", tz="UTC"),  # 50th Anniversary
-            pd.Timestamp("2020-05-08", tz="UTC"),  # 75th Anniversary
+            pd.Timestamp("1995-05-08"),  # 50th Anniversary
+            pd.Timestamp("2020-05-08"),  # 75th Anniversary
             # Queen Elizabeth II Jubilees
             # Silver Jubilee
-            pd.Timestamp("1977-06-07", tz="UTC"),
+            pd.Timestamp("1977-06-07"),
             # Golden Jubilee
-            pd.Timestamp("2002-06-03", tz="UTC"),
-            pd.Timestamp("2002-06-04", tz="UTC"),
+            pd.Timestamp("2002-06-03"),
+            pd.Timestamp("2002-06-04"),
             # Diamond Jubilee
-            pd.Timestamp("2012-06-04", tz="UTC"),
-            pd.Timestamp("2012-06-05", tz="UTC"),
+            pd.Timestamp("2012-06-04"),
+            pd.Timestamp("2012-06-05"),
             # Royal Weddings
             # Wedding Day of Princess Anne and Mark Phillips
-            pd.Timestamp("1973-11-14", tz="UTC"),
+            pd.Timestamp("1973-11-14"),
             # Wedding Day of Prince Charles and Diana Spencer
-            pd.Timestamp("1981-07-29", tz="UTC"),
+            pd.Timestamp("1981-07-29"),
             # Wedding Day of Prince William and Catherine Middleton
-            pd.Timestamp("2011-04-29", tz="UTC"),
+            pd.Timestamp("2011-04-29"),
             # Miscellaneous
             # Eve of 3rd Millenium A.D.
-            pd.Timestamp("1999-12-31", tz="UTC"),
+            pd.Timestamp("1999-12-31"),
         ]
 
     @property

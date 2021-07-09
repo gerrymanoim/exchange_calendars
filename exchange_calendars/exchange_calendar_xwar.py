@@ -17,7 +17,7 @@ from datetime import time
 
 import pandas as pd
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -137,11 +137,11 @@ class XWARExchangeCalendar(ExchangeCalendar):
     @property
     def adhoc_holidays(self):
         return [
-            pd.Timestamp("2005-04-08", tz=UTC),  # Pope's Funeral.
-            pd.Timestamp("2007-12-31", tz=UTC),  # New Year's Eve (adhoc).
-            pd.Timestamp("2008-05-02", tz=UTC),  # Exchange Holiday.
-            pd.Timestamp("2009-01-02", tz=UTC),  # Exchange Holiday.
-            pd.Timestamp("2013-04-16", tz=UTC),  # Exchange Holiday.
-            pd.Timestamp("2018-01-02", tz=UTC),  # Exchange Holiday.
-            pd.Timestamp("2018-11-12", tz=UTC),  # Independence Holiday.
+            pd.Timestamp("2005-04-08"),  # Pope's Funeral.
+            pd.Timestamp("2007-12-31"),  # New Year's Eve (adhoc).
+            pd.Timestamp("2008-05-02"),  # Exchange Holiday.
+            pd.Timestamp("2009-01-02"),  # Exchange Holiday.
+            pd.Timestamp("2013-04-16"),  # Exchange Holiday.
+            pd.Timestamp("2018-01-02"),  # Exchange Holiday.
+            pd.Timestamp("2018-11-12"),  # Independence Holiday.
         ]

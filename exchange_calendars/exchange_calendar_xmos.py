@@ -18,7 +18,7 @@ from itertools import chain
 
 import pandas as pd
 from pandas.tseries.holiday import Holiday, weekend_to_monday
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import european_labour_day, new_years_day, new_years_eve
 from .exchange_calendar import WEEKDAYS, HolidayCalendar, ExchangeCalendar
@@ -151,80 +151,80 @@ NewYearsEve = new_years_eve(
 # these bridge days is not consistently the rule, so they are treated as adhoc.
 # This means that in the future there may be manual additions needed here.
 new_years_extensions = [
-    pd.Timestamp("2003-01-03", tz=UTC),
-    pd.Timestamp("2013-01-03", tz=UTC),
-    pd.Timestamp("2013-01-04", tz=UTC),
-    pd.Timestamp("2014-01-03", tz=UTC),
+    "2003-01-03",
+    "2013-01-03",
+    "2013-01-04",
+    "2014-01-03",
 ]
 
 orthodox_christmas_extensions = [
-    pd.Timestamp("2003-01-06", tz=UTC),
-    pd.Timestamp("2005-01-10", tz=UTC),
-    pd.Timestamp("2008-01-08", tz=UTC),
-    pd.Timestamp("2009-01-08", tz=UTC),
-    pd.Timestamp("2009-01-09", tz=UTC),
-    pd.Timestamp("2010-01-08", tz=UTC),
-    pd.Timestamp("2011-01-10", tz=UTC),
-    pd.Timestamp("2016-01-08", tz=UTC),
+    "2003-01-06",
+    "2005-01-10",
+    "2008-01-08",
+    "2009-01-08",
+    "2009-01-09",
+    "2010-01-08",
+    "2011-01-10",
+    "2016-01-08",
 ]
 
 defender_of_the_fatherland_extensions = [
-    pd.Timestamp("2006-02-24", tz=UTC),
-    pd.Timestamp("2010-02-22", tz=UTC),
+    "2006-02-24",
+    "2010-02-22",
 ]
 
 womens_day_extensions = [
-    pd.Timestamp("2005-03-07", tz=UTC),
-    pd.Timestamp("2011-03-07", tz=UTC),
-    pd.Timestamp("2012-03-09", tz=UTC),
+    "2005-03-07",
+    "2011-03-07",
+    "2012-03-09",
 ]
 
 labour_day_extensions = [
-    pd.Timestamp("2002-05-02", tz=UTC),
-    pd.Timestamp("2002-05-03", tz=UTC),
-    pd.Timestamp("2003-05-02", tz=UTC),
-    pd.Timestamp("2004-05-04", tz=UTC),
-    pd.Timestamp("2007-04-30", tz=UTC),
-    pd.Timestamp("2008-05-02", tz=UTC),
-    pd.Timestamp("2012-04-30", tz=UTC),
-    pd.Timestamp("2015-05-04", tz=UTC),
-    pd.Timestamp("2016-05-03", tz=UTC),
+    "2002-05-02",
+    "2002-05-03",
+    "2003-05-02",
+    "2004-05-04",
+    "2007-04-30",
+    "2008-05-02",
+    "2012-04-30",
+    "2015-05-04",
+    "2016-05-03",
 ]
 
 victory_day_extensions = [
-    pd.Timestamp("2002-05-10", tz=UTC),
-    pd.Timestamp("2005-05-10", tz=UTC),
-    pd.Timestamp("2006-05-08", tz=UTC),
-    pd.Timestamp("2017-05-08", tz=UTC),
+    "2002-05-10",
+    "2005-05-10",
+    "2006-05-08",
+    "2017-05-08",
 ]
 
 day_of_russia_extensions = [
-    pd.Timestamp("2003-06-13", tz=UTC),
-    pd.Timestamp("2007-06-11", tz=UTC),
-    pd.Timestamp("2008-06-13", tz=UTC),
-    pd.Timestamp("2012-06-11", tz=UTC),
-    pd.Timestamp("2014-06-13", tz=UTC),
+    "2003-06-13",
+    "2007-06-11",
+    "2008-06-13",
+    "2012-06-11",
+    "2014-06-13",
 ]
 
 unity_day_extensions = [
-    pd.Timestamp("2008-11-03", tz=UTC),
-    pd.Timestamp("2010-11-05", tz=UTC),
+    "2008-11-03",
+    "2010-11-05",
 ]
 
 misc_adhoc = [
     # Exchange Holidays.
-    pd.Timestamp("2002-11-07", tz=UTC),
-    pd.Timestamp("2002-11-08", tz=UTC),
-    pd.Timestamp("2002-12-12", tz=UTC),
-    pd.Timestamp("2002-12-13", tz=UTC),
-    pd.Timestamp("2003-11-07", tz=UTC),
-    pd.Timestamp("2003-12-12", tz=UTC),
-    pd.Timestamp("2004-11-08", tz=UTC),
-    pd.Timestamp("2004-12-13", tz=UTC),
-    pd.Timestamp("2008-09-18", tz=UTC),
+    "2002-11-07",
+    "2002-11-08",
+    "2002-12-12",
+    "2002-12-13",
+    "2003-11-07",
+    "2003-12-12",
+    "2004-11-08",
+    "2004-12-13",
+    "2008-09-18",
     # Trading Suspended.
-    pd.Timestamp("2008-10-10", tz=UTC),
-    pd.Timestamp("2008-10-27", tz=UTC),
+    "2008-10-10",
+    "2008-10-27",
 ]
 
 

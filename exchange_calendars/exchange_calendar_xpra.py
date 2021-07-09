@@ -18,7 +18,7 @@ from datetime import time
 import pandas as pd
 from pandas.tseries.holiday import Easter, EasterMonday, Holiday
 from pandas.tseries.offsets import Day
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import (
     christmas,
@@ -147,8 +147,8 @@ class XPRAExchangeCalendar(ExchangeCalendar):
     def adhoc_holidays(self):
         return [
             # Extreme Flooding
-            pd.Timestamp("2002-08-14", tz=UTC),
+            pd.Timestamp("2002-08-14"),
             # Restoration of the Czech Independence Day
-            pd.Timestamp("2004-01-02", tz=UTC),
-            pd.Timestamp("2005-01-03", tz=UTC),
+            pd.Timestamp("2004-01-02"),
+            pd.Timestamp("2005-01-03"),
         ]

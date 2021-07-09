@@ -18,7 +18,7 @@ from itertools import chain
 
 import pandas as pd
 from pandas.tseries.holiday import GoodFriday, Holiday
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -63,27 +63,27 @@ NewYearsEve = new_years_eve(end_date="2008")
 # Adhoc Holidays #
 ##################
 ExchangeHolidays = [
-    pd.Timestamp("2009-01-02", tz=UTC),
-    pd.Timestamp("2009-07-27", tz=UTC),
-    pd.Timestamp("2015-07-27", tz=UTC),
-    pd.Timestamp("2015-10-09", tz=UTC),
+    pd.Timestamp("2009-01-02"),
+    pd.Timestamp("2009-07-27"),
+    pd.Timestamp("2015-07-27"),
+    pd.Timestamp("2015-10-09"),
 ]
 
 NationalHolidays = [
-    pd.Timestamp("2015-01-02", tz=UTC),
+    pd.Timestamp("2015-01-02"),
 ]
 
 ASPASummit = [
-    pd.Timestamp("2012-10-01", tz=UTC),
-    pd.Timestamp("2012-10-02", tz=UTC),
+    pd.Timestamp("2012-10-01"),
+    pd.Timestamp("2012-10-02"),
 ]
 
 APECSummit = [
-    pd.Timestamp("2016-11-17", tz=UTC),
-    pd.Timestamp("2016-11-18", tz=UTC),
+    pd.Timestamp("2016-11-17"),
+    pd.Timestamp("2016-11-18"),
 ]
 
-EighthSummitOfTheAmericas = [pd.Timestamp("2018-04-13", tz=UTC)]
+EighthSummitOfTheAmericas = [pd.Timestamp("2018-04-13")]
 
 
 class XLIMExchangeCalendar(ExchangeCalendar):

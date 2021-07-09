@@ -19,7 +19,7 @@ from itertools import chain
 import pandas as pd
 from dateutil.easter import EASTER_ORTHODOX, easter
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import (
     assumption_day,
@@ -43,7 +43,7 @@ def orthodox_easter(start_date="1980", end_date="2021"):
             easter(year, method=EASTER_ORTHODOX)
             for year in range(int(start_date), int(end_date))
         ]
-    ).tz_localize(UTC)
+    )
 
 
 NewYearsDay = new_years_day()
@@ -144,22 +144,22 @@ class ASEXExchangeCalendar(ExchangeCalendar):
     def adhoc_holidays(self):
         debt_crisis = pd.date_range("2015-06-29", "2015-07-31", freq="B")
 
-        debt_crisis_holidays = [pd.Timestamp(str(date), tz=UTC) for date in debt_crisis]
+        debt_crisis_holidays = [pd.Timestamp(str(date)) for date in debt_crisis]
 
         misc_adhoc_holidays = [
             # In 2002, market closed for unknown reason
-            pd.Timestamp("2002-05-07", tz=UTC),
+            pd.Timestamp("2002-05-07"),
             # In 2004, Assumption Day fell on a sunday, observed on a Friday
-            pd.Timestamp("2004-08-13", tz=UTC),
+            pd.Timestamp("2004-08-13"),
             # In 2008, worker strikes closed the market for 2 days in March
-            pd.Timestamp("2008-03-04", tz=UTC),
-            pd.Timestamp("2008-03-05", tz=UTC),
+            pd.Timestamp("2008-03-04"),
+            pd.Timestamp("2008-03-05"),
             # In 2013, May Day strikes closed the market
-            pd.Timestamp("2013-05-07", tz=UTC),
+            pd.Timestamp("2013-05-07"),
             # In 2014, New Year's Eve was observed as a holiday
-            pd.Timestamp("2014-12-31", tz=UTC),
+            pd.Timestamp("2014-12-31"),
             # In 2016, Labour Day fell on a Sunday, observed on Tuesday
-            pd.Timestamp("2016-05-03", tz=UTC),
+            pd.Timestamp("2016-05-03"),
         ]
 
         return list(

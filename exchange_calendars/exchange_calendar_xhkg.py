@@ -142,87 +142,87 @@ day_after_mid_autumn_festival_dates = mid_autumn_festival_dates + timedelta(1)
 
 HKAdhocClosures = [
     # I dont know these days
-    pd.Timestamp("1970-07-01", tz="UTC"),
-    pd.Timestamp("1971-07-01", tz="UTC"),
-    pd.Timestamp("1973-07-02", tz="UTC"),
-    pd.Timestamp("1974-07-01", tz="UTC"),
-    pd.Timestamp("1975-07-01", tz="UTC"),
-    pd.Timestamp("1976-07-01", tz="UTC"),
-    pd.Timestamp("1977-07-01", tz="UTC"),
-    pd.Timestamp("1979-07-02", tz="UTC"),
-    pd.Timestamp("1980-07-01", tz="UTC"),
-    pd.Timestamp("1981-07-01", tz="UTC"),
-    pd.Timestamp("1982-07-01", tz="UTC"),
-    pd.Timestamp("1971-03-22", tz="UTC"),
-    pd.Timestamp("1971-12-06", tz="UTC"),
-    pd.Timestamp("1971-12-20", tz="UTC"),
-    pd.Timestamp("1975-07-28", tz="UTC"),
-    pd.Timestamp("1985-07-29", tz="UTC"),
+    pd.Timestamp("1970-07-01"),
+    pd.Timestamp("1971-07-01"),
+    pd.Timestamp("1973-07-02"),
+    pd.Timestamp("1974-07-01"),
+    pd.Timestamp("1975-07-01"),
+    pd.Timestamp("1976-07-01"),
+    pd.Timestamp("1977-07-01"),
+    pd.Timestamp("1979-07-02"),
+    pd.Timestamp("1980-07-01"),
+    pd.Timestamp("1981-07-01"),
+    pd.Timestamp("1982-07-01"),
+    pd.Timestamp("1971-03-22"),
+    pd.Timestamp("1971-12-06"),
+    pd.Timestamp("1971-12-20"),
+    pd.Timestamp("1975-07-28"),
+    pd.Timestamp("1985-07-29"),
     # Weather related closures
-    pd.Timestamp("1970-07-16", tz="UTC"),  # 台风Ruby7003
-    pd.Timestamp("1970-09-14", tz="UTC"),  # 台风Georgia7011
-    pd.Timestamp("1971-07-22", tz="UTC"),  # 台风Lucy7114
-    pd.Timestamp("1971-08-31", tz="UTC"),  # 重光纪念日?
-    pd.Timestamp("1973-04-16", tz="UTC"),  # 股灾休市?
-    pd.Timestamp("1973-07-17", tz="UTC"),  # 台风Dot7304
-    pd.Timestamp("1974-04-25", tz="UTC"),  # 英国女王生日
-    pd.Timestamp("1975-10-14", tz="UTC"),  # 台风Elsie7514
-    pd.Timestamp("1978-07-26", tz="UTC"),  # 台风Agnes7807
-    pd.Timestamp("1978-07-27", tz="UTC"),
-    pd.Timestamp("1979-01-26", tz="UTC"),  # 春节补假
-    pd.Timestamp("1979-08-02", tz="UTC"),  # 台风Hope7908
-    pd.Timestamp("1980-05-21", tz="UTC"),  # 台风Georgia8004
-    pd.Timestamp("1980-07-22", tz="UTC"),  # 台风Joy8007
-    pd.Timestamp("1981-04-27", tz="UTC"),  # 英国女王生日
-    pd.Timestamp("1981-07-06", tz="UTC"),  # 台风Lynn8106
-    pd.Timestamp("1981-07-07", tz="UTC"),
-    pd.Timestamp("1981-07-29", tz="UTC"),  # 查理斯王子与戴安娜婚礼
-    pd.Timestamp("1983-09-09", tz="UTC"),  # 台风Ellen8309
-    pd.Timestamp("1985-06-24", tz="UTC"),  # 台风Hal8504
-    pd.Timestamp("1986-04-01", tz="UTC"),  # 复活节星期一翌日
-    pd.Timestamp("1986-10-22", tz="UTC"),  # 英女王伊丽莎白二世访港
-    pd.Timestamp("1987-10-20", tz="UTC"),  # 黑色星期一后,休市4天
-    pd.Timestamp("1987-10-21", tz="UTC"),
-    pd.Timestamp("1987-10-22", tz="UTC"),
-    pd.Timestamp("1987-10-23", tz="UTC"),
-    pd.Timestamp("1988-04-05", tz="UTC"),  # 清明节翌日
-    # Timestamp('1988-06-13', tz='UTC'),  # 英国女王生日
-    pd.Timestamp("1991-06-18", tz="UTC"),  # 英国女王生日翌日
-    pd.Timestamp("1992-07-22", tz="UTC"),  # 台风Cary9207
-    # pd.Timestamp('1993-06-14', tz='UTC'),  # 英国女王生日
-    pd.Timestamp("1993-09-17", tz="UTC"),  # 台风Becky9316
-    pd.Timestamp("1994-06-14", tz="UTC"),  # 英国女王生日翌日,端午节翌日
-    pd.Timestamp("1997-06-30", tz="UTC"),  # 英国女王生日
-    pd.Timestamp("1997-07-02", tz="UTC"),  # 香港回归纪念日翌日
-    pd.Timestamp("1997-08-18", tz="UTC"),  # 抗战胜利纪念日
-    pd.Timestamp("1997-10-02", tz="UTC"),  # 国庆节翌日
-    pd.Timestamp("1998-08-17", tz="UTC"),  # 抗战胜利纪念日
-    pd.Timestamp("1998-10-02", tz="UTC"),  # 国庆节翌日
-    pd.Timestamp("1999-04-06", tz="UTC"),  # 清明节翌日
-    pd.Timestamp("1999-09-16", tz="UTC"),  # 台风约克
-    pd.Timestamp("1999-12-31", tz="UTC"),  # 千年虫
-    pd.Timestamp("2001-07-06", tz="UTC"),  # 台风尤特0104
-    pd.Timestamp("2001-07-25", tz="UTC"),  # 台风玉兔0107
-    # pd.Timestamp(2008-06-25', tz='UTC'),  # 台风风神0806,上午休市
-    pd.Timestamp("2008-08-06", tz="UTC"),  # 台风北冕0809
-    pd.Timestamp("2008-08-22", tz="UTC"),  # 台风鹦鹉0810
-    # pd.Timestamp(2009-09-15', tz='UTC'),  # 台风巨爵0915,上午休市
-    pd.Timestamp("2010-04-06", tz="UTC"),  # 清明节翌日
-    pd.Timestamp("2011-09-29", tz="UTC"),  # 台风纳沙1117
-    # pd.Timestamp(2012-07-24', tz='UTC'),  # 台风韦森特1208,上午休市
-    pd.Timestamp("2012-10-02", tz="UTC"),  # 中秋节补假
-    # pd.Timestamp(2013-05-22', tz='UTC'),  # 暴雨,上午休市
-    pd.Timestamp("2013-08-14", tz="UTC"),  # 台风尤特1311
-    # pd.Timestamp(2013-09-23', tz='UTC'),  # 台风天兔1319,上午休市
-    # pd.Timestamp(2014-09-16', tz='UTC'),  # 台风海鸥1415,上午休市
-    pd.Timestamp("2015-04-07", tz="UTC"),  # 复活节+清明节补假
-    # pd.Timestamp(2015-07-09', tz='UTC'),  # 台风莲花1520,期货夜盘休市
-    pd.Timestamp("2015-09-03", tz="UTC"),  # 抗战70周年纪念
-    # pd.Timestamp(2016-08-01', tz='UTC'),  # 台风妮妲1604,期货夜盘20:55收市
-    pd.Timestamp("2016-08-02", tz="UTC"),  # 台风妮妲1604
-    pd.Timestamp("2016-10-21", tz="UTC"),  # 台风海马1622
-    # pd.Timestamp(2017-06-12', tz='UTC'),  # 台风苗柏1702,期货夜盘17:35休市
-    pd.Timestamp("2017-08-23", tz="UTC"),  # 台风天鸽1713
+    pd.Timestamp("1970-07-16"),  # 台风Ruby7003
+    pd.Timestamp("1970-09-14"),  # 台风Georgia7011
+    pd.Timestamp("1971-07-22"),  # 台风Lucy7114
+    pd.Timestamp("1971-08-31"),  # 重光纪念日?
+    pd.Timestamp("1973-04-16"),  # 股灾休市?
+    pd.Timestamp("1973-07-17"),  # 台风Dot7304
+    pd.Timestamp("1974-04-25"),  # 英国女王生日
+    pd.Timestamp("1975-10-14"),  # 台风Elsie7514
+    pd.Timestamp("1978-07-26"),  # 台风Agnes7807
+    pd.Timestamp("1978-07-27"),
+    pd.Timestamp("1979-01-26"),  # 春节补假
+    pd.Timestamp("1979-08-02"),  # 台风Hope7908
+    pd.Timestamp("1980-05-21"),  # 台风Georgia8004
+    pd.Timestamp("1980-07-22"),  # 台风Joy8007
+    pd.Timestamp("1981-04-27"),  # 英国女王生日
+    pd.Timestamp("1981-07-06"),  # 台风Lynn8106
+    pd.Timestamp("1981-07-07"),
+    pd.Timestamp("1981-07-29"),  # 查理斯王子与戴安娜婚礼
+    pd.Timestamp("1983-09-09"),  # 台风Ellen8309
+    pd.Timestamp("1985-06-24"),  # 台风Hal8504
+    pd.Timestamp("1986-04-01"),  # 复活节星期一翌日
+    pd.Timestamp("1986-10-22"),  # 英女王伊丽莎白二世访港
+    pd.Timestamp("1987-10-20"),  # 黑色星期一后,休市4天
+    pd.Timestamp("1987-10-21"),
+    pd.Timestamp("1987-10-22"),
+    pd.Timestamp("1987-10-23"),
+    pd.Timestamp("1988-04-05"),  # 清明节翌日
+    # Timestamp('1988-06-13'),  # 英国女王生日
+    pd.Timestamp("1991-06-18"),  # 英国女王生日翌日
+    pd.Timestamp("1992-07-22"),  # 台风Cary9207
+    # pd.Timestamp('1993-06-14'),  # 英国女王生日
+    pd.Timestamp("1993-09-17"),  # 台风Becky9316
+    pd.Timestamp("1994-06-14"),  # 英国女王生日翌日,端午节翌日
+    pd.Timestamp("1997-06-30"),  # 英国女王生日
+    pd.Timestamp("1997-07-02"),  # 香港回归纪念日翌日
+    pd.Timestamp("1997-08-18"),  # 抗战胜利纪念日
+    pd.Timestamp("1997-10-02"),  # 国庆节翌日
+    pd.Timestamp("1998-08-17"),  # 抗战胜利纪念日
+    pd.Timestamp("1998-10-02"),  # 国庆节翌日
+    pd.Timestamp("1999-04-06"),  # 清明节翌日
+    pd.Timestamp("1999-09-16"),  # 台风约克
+    pd.Timestamp("1999-12-31"),  # 千年虫
+    pd.Timestamp("2001-07-06"),  # 台风尤特0104
+    pd.Timestamp("2001-07-25"),  # 台风玉兔0107
+    # pd.Timestamp(2008-06-25'),  # 台风风神0806,上午休市
+    pd.Timestamp("2008-08-06"),  # 台风北冕0809
+    pd.Timestamp("2008-08-22"),  # 台风鹦鹉0810
+    # pd.Timestamp(2009-09-15'),  # 台风巨爵0915,上午休市
+    pd.Timestamp("2010-04-06"),  # 清明节翌日
+    pd.Timestamp("2011-09-29"),  # 台风纳沙1117
+    # pd.Timestamp(2012-07-24'),  # 台风韦森特1208,上午休市
+    pd.Timestamp("2012-10-02"),  # 中秋节补假
+    # pd.Timestamp(2013-05-22'),  # 暴雨,上午休市
+    pd.Timestamp("2013-08-14"),  # 台风尤特1311
+    # pd.Timestamp(2013-09-23'),  # 台风天兔1319,上午休市
+    # pd.Timestamp(2014-09-16'),  # 台风海鸥1415,上午休市
+    pd.Timestamp("2015-04-07"),  # 复活节+清明节补假
+    # pd.Timestamp(2015-07-09'),  # 台风莲花1520,期货夜盘休市
+    pd.Timestamp("2015-09-03"),  # 抗战70周年纪念
+    # pd.Timestamp(2016-08-01'),  # 台风妮妲1604,期货夜盘20:55收市
+    pd.Timestamp("2016-08-02"),  # 台风妮妲1604
+    pd.Timestamp("2016-10-21"),  # 台风海马1622
+    # pd.Timestamp(2017-06-12'),  # 台风苗柏1702,期货夜盘17:35休市
+    pd.Timestamp("2017-08-23"),  # 台风天鸽1713
 ]
 
 

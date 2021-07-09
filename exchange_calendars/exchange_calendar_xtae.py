@@ -127,15 +127,15 @@ class XTAEExchangeCalendar(ExchangeCalendar):
         return [
             # 2019
             # Election Day
-            pd.Timestamp("2019-04-09", tz="Asia/Jerusalem"),
+            pd.Timestamp("2019-04-09"),
             # Election Day
-            pd.Timestamp("2019-09-17", tz="Asia/Jerusalem"),
+            pd.Timestamp("2019-09-17"),
             # 2020
             # Election Day
-            pd.Timestamp("2020-03-02", tz="Asia/Jerusalem"),
+            pd.Timestamp("2020-03-02"),
             # 2021
             # Election Day
-            pd.Timestamp("2021-03-23", tz="Asia/Jerusalem"),
+            pd.Timestamp("2021-03-23"),
         ]
 
     @property

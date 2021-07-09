@@ -18,7 +18,7 @@ from datetime import time
 import pandas as pd
 from pandas.tseries.holiday import MO, GoodFriday, Holiday
 from pandas.tseries.offsets import DateOffset
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import (
     christmas,
@@ -132,5 +132,5 @@ class XMEXExchangeCalendar(ExchangeCalendar):
     def adhoc_holidays(self):
         return [
             # Bicentennial Celebration.
-            pd.Timestamp("2010-09-17", tz=UTC),
+            pd.Timestamp("2010-09-17"),
         ]

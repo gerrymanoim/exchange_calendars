@@ -253,6 +253,11 @@ class ExchangeCalendarTestBase(object):
     def test_calculated_against_csv(self):
         tm.assert_index_equal(self.calendar.schedule.index, self.answers.index)
 
+    def test_adhoc_holidays_specification(self):
+        """adhoc holidays should be tz-naive (#33, #39)."""
+        dti = pd.DatetimeIndex(self.calendar.adhoc_holidays)
+        assert dti.tz is None
+
     def test_is_open_on_minute(self):
         one_minute = pd.Timedelta(minutes=1)
 

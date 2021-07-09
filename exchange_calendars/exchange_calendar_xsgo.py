@@ -18,7 +18,7 @@ from datetime import time, timedelta
 import pandas as pd
 from pandas.tseries.holiday import Easter, GoodFriday, Holiday
 from pandas.tseries.offsets import Day
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -245,15 +245,15 @@ class XSGOExchangeCalendar(ExchangeCalendar):
     def adhoc_holidays(self):
         return [
             # Bicentennial Celebration.
-            pd.Timestamp("2010-09-17", tz=UTC),
-            pd.Timestamp("2010-09-20", tz=UTC),
+            pd.Timestamp("2010-09-17"),
+            pd.Timestamp("2010-09-20"),
             # New Year's Day Observed. It is unclear why this happened only for
             # this one year.
-            pd.Timestamp("2017-01-02", tz=UTC),
+            pd.Timestamp("2017-01-02"),
             # Census Day.
-            pd.Timestamp("2017-04-19", tz=UTC),
+            pd.Timestamp("2017-04-19"),
             # Pope Visit.
-            pd.Timestamp("2018-01-16", tz=UTC),
+            pd.Timestamp("2018-01-16"),
         ]
 
     @property

@@ -31,7 +31,7 @@ from pandas.tseries.holiday import (
     previous_workday,
     weekend_to_monday,
 )
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import anzac_day, boxing_day, christmas, new_years_day
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
@@ -111,17 +111,17 @@ BusinessDayPriorToNewYearsDay = Holiday(
 )
 
 # Further ad-hoc holidays and closures sourced from gaps in index series
-XMAS22DEC86 = Timestamp("1986-12-22", tz=UTC)
-XMAS23DEC86 = Timestamp("1986-12-23", tz=UTC)
-XMAS24DEC86 = Timestamp("1986-12-24", tz=UTC)
-XMAS29DEC86 = Timestamp("1986-12-29", tz=UTC)
-XMAS30DEC86 = Timestamp("1986-12-30", tz=UTC)
-XMAS31DEC86 = Timestamp("1986-12-31", tz=UTC)
-XMAS24DEC90 = Timestamp("1990-12-24", tz=UTC)
-XMAS31DEC90 = Timestamp("1990-12-31", tz=UTC)
-XMAS27DEC91 = Timestamp("1991-12-27", tz=UTC)
-NYDX03JAN92 = Timestamp("1992-01-03", tz=UTC)
-XMAS31DEC99 = Timestamp("1999-12-31", tz=UTC)
+XMAS22DEC86 = Timestamp("1986-12-22")
+XMAS23DEC86 = Timestamp("1986-12-23")
+XMAS24DEC86 = Timestamp("1986-12-24")
+XMAS29DEC86 = Timestamp("1986-12-29")
+XMAS30DEC86 = Timestamp("1986-12-30")
+XMAS31DEC86 = Timestamp("1986-12-31")
+XMAS24DEC90 = Timestamp("1990-12-24")
+XMAS31DEC90 = Timestamp("1990-12-31")
+XMAS27DEC91 = Timestamp("1991-12-27")
+NYDX03JAN92 = Timestamp("1992-01-03")
+XMAS31DEC99 = Timestamp("1999-12-31")
 
 
 class XNZEExchangeCalendar(ExchangeCalendar):

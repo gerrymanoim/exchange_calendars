@@ -122,8 +122,6 @@ AnoNovo = Holiday(
     day=31,
     observance=previous_friday,
 )
-# Brazil hosted World Cup and played Croatia (and won 3-1!)
-CopaDoMundo2014 = Holiday("Copa Do Mundo 2014", month=6, day=12, year=2014)
 
 
 class BVMFExchangeCalendar(ExchangeCalendar):
@@ -170,7 +168,8 @@ class BVMFExchangeCalendar(ExchangeCalendar):
 
     @property
     def adhoc_holidays(self):
-        return [CopaDoMundo2014]
+        # CopaDoMundo2014 Brazil hosted World Cup and played Croatia (and won 3-1!)
+        return [pd.Timestamp("2014-06-12")]
 
     @property
     def regular_holidays(self):

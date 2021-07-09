@@ -25,7 +25,7 @@ from pandas.tseries.holiday import (
     sunday_to_monday,
     weekend_to_monday,
 )
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import (
     anzac_day,
@@ -94,7 +94,7 @@ AnzacDay = anzac_day(start_date="2011")
 # also observed as a public holiday. Note that this isn't defined as a
 # rule, because it will happen next in 2095 (and then in  2163), and
 # there isn't a great way to tell how this will be handled at that point.
-EasterTuesday2011AdHoc = Timestamp("2011-04-26", tz=UTC)
+EasterTuesday2011AdHoc = Timestamp("2011-04-26")
 
 QueensBirthday = Holiday(
     "Queen's Birthday",
@@ -124,10 +124,10 @@ LastTradingDayOfCalendarYear = Holiday(
 )
 
 # additional ad-hoc holidays
-NYEMonday1984AdHoc = Timestamp("1984-12-31", tz=UTC)
-NYEMonday1990AdHoc = Timestamp("1990-12-31", tz=UTC)
-Bicentennial1988 = Timestamp("1988-01-25", tz=UTC)
-Y2KTesting = Timestamp("1999-12-31", tz=UTC)
+NYEMonday1984AdHoc = Timestamp("1984-12-31")
+NYEMonday1990AdHoc = Timestamp("1990-12-31")
+Bicentennial1988 = Timestamp("1988-01-25")
+Y2KTesting = Timestamp("1999-12-31")
 
 
 class XASXExchangeCalendar(ExchangeCalendar):

@@ -18,7 +18,7 @@ from datetime import time
 from pandas import Timestamp
 from pandas.tseries.holiday import Easter, GoodFriday, Holiday, sunday_to_monday
 from pandas.tseries.offsets import Day
-from pytz import UTC, timezone
+from pytz import timezone
 
 from .common_holidays import new_years_day
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
@@ -135,7 +135,7 @@ class XJSEExchangeCalendar(ExchangeCalendar):
     @property
     def adhoc_holidays(self):
         return [
-            Timestamp(date, tz=UTC)
+            Timestamp(date)
             for date in [
                 # Election holidays
                 "2004-04-14",
