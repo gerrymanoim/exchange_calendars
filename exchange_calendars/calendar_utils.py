@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .calendar_helpers import parse_session
+from .calendar_helpers import parse_date
 from .always_open import AlwaysOpenCalendar
 from .errors import CalendarNameCollision, CyclicCalendarAlias, InvalidCalendarName
 from .exchange_calendar import ExchangeCalendar
@@ -244,11 +244,11 @@ class ExchangeCalendarDispatcher(object):
                 return self._calendars[name]
 
         if kwargs.get("start"):
-            kwargs["start"] = parse_session(kwargs["start"], "start", strict=None)
+            kwargs["start"] = parse_date(kwargs["start"], "start")
         else:
             kwargs["start"] = None
         if kwargs.get("end"):
-            kwargs["end"] = parse_session(kwargs["end"], "end", strict=None)
+            kwargs["end"] = parse_date(kwargs["end"], "end")
         else:
             kwargs["end"] = None
 

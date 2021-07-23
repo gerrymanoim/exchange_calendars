@@ -90,41 +90,33 @@ class ScheduleFunctionInvalidCalendar(CalendarError):
 
 
 class NotSessionError(ValueError):
-    """
+    """Input does not represent a valid session.
+
     Raised if parameter expecting a session label receives input that
     parses correctly (UTC midnight) although is not a session.
 
     Parameters
     ----------
-    calendar :
+    calendar
         Calendar for which `ts` assumed as a session.
 
-    ts :
+    ts
         Timestamp assumed as a session.
 
-    param_name : optional
-        Name of a parameter that was to receive a session label. If passed
-        then error message will make reference to the parameter by name.
+    param_name
+        Name of a parameter that was to receive a session label.
     """
 
-    def __init__(
-        self,
-        calendar: ExchangeCalendar,
-        ts: pd.Timestamp,
-        param_name: str | None = None,
-    ):
+    def __init__(self, calendar: ExchangeCalendar, ts: pd.Timestamp, param_name: str):
         self.calendar = calendar
         self.ts = ts
         self.param_name = param_name
 
     def __str__(self) -> str:
-        if self.param_name is not None:
-            msg = (
-                f"Parameter `{self.param_name}` takes a session label"
-                f" although received input that parsed to '{self.ts}' which"
-            )
-        else:
-            msg = f"'{self.ts}'"
+        msg = (
+            f"Parameter `{self.param_name}` takes a session label"
+            f" although received input that parsed to '{self.ts}' which"
+        )
 
         if self.ts < self.calendar.first_session:
             msg += (
@@ -138,4 +130,89 @@ class NotSessionError(ValueError):
             )
         else:
             msg += f" is not a session of calendar '{self.calendar.name}'."
+        return msg
+
+
+class DateOutOfBounds(ValueError):
+    """A date required to be within sessions' bounds is not.
+
+    Parameters
+    ----------
+    calendar
+        Calendar for which `date` required to be within sessions'
+        bounds.
+
+    date
+        Date required to be within `calendar`'s sessions' bounds.
+
+    param_name
+        Name of a parameter receiving date.
+    """
+
+    def __init__(self, calendar: ExchangeCalendar, date: pd.Timestamp, param_name: str):
+        self.calendar = calendar
+        self.date = date
+        self.param_name = param_name
+
+    def __str__(self) -> str:
+        msg = f"Parameter `{self.param_name}` receieved as '{self.date}' although"
+        if self.date < self.calendar.first_session:
+            msg += (
+                " cannot be earlier than the first session of calendar"
+                f" '{self.calendar.name}' ('{self.calendar.first_session}')."
+            )
+        elif self.date > self.calendar.last_session:
+            msg += (
+                " cannot be later than the last session of calendar"
+                f" '{self.calendar.name}' ('{self.calendar.last_session}')."
+            )
+        else:
+            assert (
+                self.date < self.calendar.first_session
+                or self.date > self.calendar.last_session
+            )
+        return msg
+
+
+class MinuteOutOfBounds(ValueError):
+    """A minute required to be within bounds of trading minutes is not.
+
+    Parameters
+    ----------
+    calendar
+        Calendar for which `minute` required to be within bounds of
+        trading minutes.
+
+    minute
+        Minute required to be within bounds of `calendar`'s trading
+        minutes.
+
+    param_name
+        Name of a parameter receiving `minute`.
+    """
+
+    def __init__(
+        self, calendar: ExchangeCalendar, minute: pd.Timestamp, param_name: str
+    ):
+        self.calendar = calendar
+        self.minute = minute
+        self.param_name = param_name
+
+    def __str__(self) -> str:
+        msg = f"Parameter `{self.param_name}` receieved as '{self.minute}' although"
+        if self.minute < self.calendar.first_trading_minute:
+            msg += (
+                " cannot be earlier than the first trading minute of calendar"
+                f" '{self.calendar.name}' ('{self.calendar.first_trading_minute}')."
+            )
+        elif self.minute > self.calendar.last_trading_minute:
+            msg += (
+                " cannot be later than the last trading minute of calendar"
+                f" '{self.calendar.name}' ('{self.calendar.last_trading_minute}')."
+            )
+        else:
+            assert (
+                self.minute < self.calendar.first_trading_minute
+                or self.minute > self.calendar.last_trading_minute
+            )
         return msg
