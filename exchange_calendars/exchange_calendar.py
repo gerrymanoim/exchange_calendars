@@ -81,7 +81,7 @@ class ExchangeCalendar(ABC):
 
     For exchanges that do not observe an intraday break a session
     represents a contiguous set of minutes. Where an exchange observes
-    an intraday break a session represents two contiguous set of minutes
+    an intraday break a session represents two contiguous sets of minutes
     separated by the intraday break.
 
     Each session has a label that is midnight UTC. It is important to note
