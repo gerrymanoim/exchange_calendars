@@ -791,6 +791,10 @@ class ExchangeCalendar(ABC):
         -----
         Raises ValueError if the given session is the last session in this
         calendar.
+
+        See Also
+        --------
+        date_to_session_label
         """
         session_label = parse_session(self, session_label, "session_label")
         idx = self.schedule.index.get_loc(session_label)
@@ -823,6 +827,10 @@ class ExchangeCalendar(ABC):
         -----
         Raises ValueError if the given session is the first session in this
         calendar.
+
+        See Also
+        --------
+        date_to_session_label
         """
         session_label = parse_session(self, session_label, "session_label")
         idx = self.schedule.index.get_loc(session_label)
@@ -1189,6 +1197,64 @@ class ExchangeCalendar(ABC):
 
     def execution_time_from_close(self, close_dates):
         return close_dates
+
+    def date_to_session_label(
+        self, date: Date, direction: str = "none"
+    ) -> pd.Timestamp:
+        """Return a session label corresponding to a given date.
+
+        Parameters
+        ----------
+        date
+            Date for which require session label. Can be a date that does not
+            represent an actual session (see `direction`).
+
+        direction : default: "none"
+            Defines behaviour if `date` does not represent a session:
+                "next" - return first session label following `date`.
+                "previous" - return first session label prior to `date`.
+                "none" - raise ValueError.
+
+        Returns
+        -------
+        pd.Timestamp (midnight UTC)
+            Label of the corresponding session.
+
+        See Also
+        --------
+        next_session_label
+        previous_session_label
+        """
+        date = parse_date(date, "date")
+        if self.is_session(date):
+            return date
+        elif direction in ["next", "previous"]:
+            if direction == "previous" and date < self.first_session:
+                raise ValueError(
+                    "Cannot get a session label prior to the first calendar"
+                    f" session ('{self.first_session}'). Consider passing"
+                    f" `direction` as 'next'."
+                )
+            if direction == "next" and date > self.last_session:
+                raise ValueError(
+                    "Cannot get a session label later than the last calendar"
+                    f" session ('{self.last_session}'). Consider passing"
+                    f" `direction` as 'previous'."
+                )
+            idx = self.all_sessions.values.astype(np.int64).searchsorted(date.value)
+            if direction == "previous":
+                idx -= 1
+            return self.all_sessions[idx]
+        elif direction == "none":
+            raise ValueError(
+                f"`date` '{date}' is not a session label. Consider passing"
+                " a `direction`."
+            )
+        else:
+            raise ValueError(
+                f"'{direction}' is not a valid `direction`. Valid `direction`"
+                ' values are "next", "previous" and "none".'
+            )
 
     def minute_to_session_label(self, dt, direction="next"):
         """

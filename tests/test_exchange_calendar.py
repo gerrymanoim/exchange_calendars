@@ -249,8 +249,9 @@ class ExchangeCalendarTestBase(object):
         cls.end_date = cls.answers.index[-1]
         cls.calendar = cls.calendar_class(cls.start_date, cls.end_date)
 
-        cls.one_minute = pd.Timedelta(minutes=1)
-        cls.one_hour = pd.Timedelta(hours=1)
+        cls.one_minute = pd.Timedelta(1, "T")
+        cls.one_hour = pd.Timedelta(1, "H")
+        cls.one_day = pd.Timedelta(1, "D")
         cls.today = pd.Timestamp.now(tz="UTC").floor("D")
 
     @classmethod
@@ -452,6 +453,72 @@ class ExchangeCalendarTestBase(object):
                 self.assertEqual(
                     close_minute, self.calendar.previous_minute(hour_after_close)
                 )
+
+    def test_date_to_session_label(self):
+        m = self.calendar.date_to_session_label
+        sessions = self.answers.index[:30]  # first 30 sessions
+
+        # test for error if request session prior to first calendar session.
+        date = self.answers.index[0] - self.one_day
+        error_msg = (
+            "Cannot get a session label prior to the first calendar"
+            f" session ('{self.answers.index[0]}'). Consider passing"
+            " `direction` as 'next'."
+        )
+        with pytest.raises(ValueError, match=re.escape(error_msg)):
+            m(date, "previous")
+
+        # direction as "previous"
+        dates = pd.date_range(sessions[0], sessions[-1], freq="D")
+        last_session = None
+        for date in dates:
+            session_label = m(date, "previous")
+            if date in sessions:
+                assert session_label == date
+                last_session = session_label
+            else:
+                assert session_label == last_session
+
+        # direction as "next"
+        last_session = None
+        for date in dates.sort_values(ascending=False):
+            session_label = m(date, "next")
+            if date in sessions:
+                assert session_label == date
+                last_session = session_label
+            else:
+                assert session_label == last_session
+
+        # test for error if request session after last calendar session.
+        date = self.answers.index[-1] + self.one_day
+        error_msg = (
+            "Cannot get a session label later than the last calendar"
+            f" session ('{self.answers.index[-1]}'). Consider passing"
+            " `direction` as 'previous'."
+        )
+        with pytest.raises(ValueError, match=re.escape(error_msg)):
+            m(date, "next")
+
+        if self.GAPS_BETWEEN_SESSIONS:
+            not_sessions = dates[~dates.isin(sessions)][:5]
+            for not_session in not_sessions:
+                error_msg = (
+                    f"`date` '{not_session}' is not a session label. Consider"
+                    " passing a `direction`."
+                )
+                with pytest.raises(ValueError, match=re.escape(error_msg)):
+                    m(not_session, "none")
+                # test default behaviour
+                with pytest.raises(ValueError, match=re.escape(error_msg)):
+                    m(not_session)
+
+            # non-valid direction (can only be thrown if no gaps between sessions)
+            error_msg = (
+                "'not a direction' is not a valid `direction`. Valid `direction`"
+                ' values are "next", "previous" and "none".'
+            )
+            with pytest.raises(ValueError, match=re.escape(error_msg)):
+                m(not_session, "not a direction")
 
     def test_minute_to_session_label(self):
         # minute is prior to first session's open
