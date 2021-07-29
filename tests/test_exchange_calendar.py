@@ -301,7 +301,7 @@ class ExchangeCalendarTestBase(object):
     def test_is_open_on_minute(self):
         one_minute = pd.Timedelta(minutes=1)
 
-        for market_minute in self.answers.market_open:
+        for market_minute in self.answers.market_open[1:]:
             market_minute_utc = market_minute
             # The exchange should be classified as open on its first minute
             self.assertTrue(self.calendar.is_open_on_minute(market_minute_utc))
@@ -312,7 +312,7 @@ class ExchangeCalendarTestBase(object):
                 pre_market = market_minute_utc - one_minute
                 self.assertFalse(self.calendar.is_open_on_minute(pre_market))
 
-        for market_minute in self.answers.market_close:
+        for market_minute in self.answers.market_close[:-1]:
             close_minute_utc = market_minute
             # should be open on its last minute
             self.assertTrue(self.calendar.is_open_on_minute(close_minute_utc))

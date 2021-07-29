@@ -78,6 +78,21 @@ class ScheduleFunctionWithoutCalendar(CalendarError):
     )
 
 
+class NoSessionsError(CalendarError):
+    """Raised if a requested calendar would have no sessions.
+
+    NoSessionsError should be raised if `get_calendar` `start` and `end`
+    parameters are passed as dates between and inclusive of which there are
+    no sessions for the given calendar.
+    """
+
+    msg = (
+        "The requested ExchangeCalendar, {calendar_name}, cannot be created as"
+        " there would be no sessions between the requested `start` ('{start}')"
+        " and `end` ('{end}') dates."
+    )
+
+
 class ScheduleFunctionInvalidCalendar(CalendarError):
     """
     Raised when schedule_function is called with an invalid calendar argument.

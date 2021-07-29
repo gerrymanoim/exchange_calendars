@@ -52,15 +52,14 @@ def compute_all_minutes(
     break_starts_in_ns: np.ndarray,
     break_ends_in_ns: np.ndarray,
     closes_in_ns: np.ndarray,
+    side: str = "both",
 ) -> np.ndarray:
-    """
-    Given arrays of opens and closes (in nanoseconds) and optionally
-    break_starts and break ends, return an array of each minute between the
-    opens and closes.
+    """Return array of trading minutes."""
+    start_ext = 0 if side in ["left", "both"] else NANOSECONDS_PER_MINUTE
+    # NOTE: Add an extra minute to ending boundaries (break_start and close)
+    # so we include the last bar (arange doesn't include its stop).
+    end_ext = NANOSECONDS_PER_MINUTE if side in ["right", "both"] else 0
 
-    NOTE: Add an extra minute to ending boundaries (break_start and close)
-    so we include the last bar (arange doesn't include its stop).
-    """
     pieces = []
     for open_time, break_start_time, break_end_time, close_time in zip(
         opens_in_ns, break_starts_in_ns, break_ends_in_ns, closes_in_ns
@@ -68,28 +67,42 @@ def compute_all_minutes(
         if break_start_time != NP_NAT:
             pieces.append(
                 np.arange(
-                    open_time,
-                    break_start_time + NANOSECONDS_PER_MINUTE,
+                    open_time + start_ext,
+                    break_start_time + end_ext,
                     NANOSECONDS_PER_MINUTE,
                 )
             )
             pieces.append(
                 np.arange(
-                    break_end_time,
-                    close_time + NANOSECONDS_PER_MINUTE,
+                    break_end_time + start_ext,
+                    close_time + end_ext,
                     NANOSECONDS_PER_MINUTE,
                 )
             )
         else:
             pieces.append(
                 np.arange(
-                    open_time,
-                    close_time + NANOSECONDS_PER_MINUTE,
+                    open_time + start_ext,
+                    close_time + end_ext,
                     NANOSECONDS_PER_MINUTE,
                 )
             )
     out = np.concatenate(pieces).view("datetime64[ns]")
     return out
+
+
+def one_minute_earlier(arr: np.ndarray) -> np.ndarray:
+    """Return an array of nanos one minute behind a given array."""
+    arr = arr.copy()
+    arr[arr != NP_NAT] -= NANOSECONDS_PER_MINUTE
+    return arr
+
+
+def one_minute_later(arr: np.ndarray) -> np.ndarray:
+    """Return an array of nanos one minute ahead of a given array."""
+    arr = arr.copy()
+    arr[arr != NP_NAT] += NANOSECONDS_PER_MINUTE
+    return arr
 
 
 def parse_timestamp(

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .calendar_helpers import parse_date
+from .calendar_helpers import parse_date, Date
 from .always_open import AlwaysOpenCalendar
 from .errors import CalendarNameCollision, CyclicCalendarAlias, InvalidCalendarName
 from .exchange_calendar import ExchangeCalendar
@@ -197,7 +197,13 @@ class ExchangeCalendarDispatcher(object):
         else:
             return None
 
-    def get_calendar(self, name: str, **kwargs) -> ExchangeCalendar:
+    def get_calendar(
+        self,
+        name: str,
+        start: Date | None = None,
+        end: Date | None = None,
+        side: str | None = None,
+    ) -> ExchangeCalendar:
         """Get exchange calendar with a given name.
 
         Parameters
@@ -205,12 +211,32 @@ class ExchangeCalendarDispatcher(object):
         name
             Name of the ExchangeCalendar to get, for example 'XNYS'.
 
-        **kwargs
-            Kwargs to be passed to calendar factory. `**kwargs` can only be
-            passed if `name` is registered as a calendar factory (either by
-            having been included to `calendar_factories` passed to the
-            dispatcher's constructor or having been subsequently registered
-            via the `register_calendar_type` method).
+        The following arguments will be passed to the calendar factory.
+        These arguments can only be passed if `name` is registered as a
+        calendar factory (either by having been included to
+        `calendar_factories` passed to the dispatcher's constructor or
+        having been subsequently registered via the
+        `register_calendar_type` method).
+
+        start : default: as default for calendar factory
+            First calendar session will be `start`, if `start` is a
+            session, or first session after `start`.
+
+        end : default: as default for calendar factory
+            Last calendar session will be `end`, if `end` is a session, or
+            last session before `end`.
+
+        side : default: as default for calendar factory
+            Define which of session open/close and break start/end should
+                be treated as a trading minute:
+            "left" - treat session open and break_start as trading minutes,
+                do not treat session close or break_end as trading minutes.
+            "right" - treat session close and break_end as trading minutes,
+                do not treat session open or break_start as tradng minutes.
+            "both" - treat all of session open, session close, break_start
+                and break_end as trading minutes.
+            "neither" - treat none of session open, session close,
+                break_start or break_end as trading minutes.
 
         Returns
         -------
@@ -223,22 +249,26 @@ class ExchangeCalendarDispatcher(object):
             If `name` does not represent a registered calendar.
 
         ValueError
-            If `**kwargs` are received although `name` is a registered
-            calendar (as opposed to a calendar factory).
+            If `start`, `end` or `side` are received although `name` is a
+            registered calendar (as opposed to a calendar factory).
 
-            If `start` or `end` are included to `**kwargs` although do not
-            parse as a date that could represent a session.
+            If `start` or `end` are received although do not parse as a
+            date that could represent a session.
         """
         # will raise InvalidCalendarName if name not valid
         name = self.resolve_alias(name)
 
+        kwargs = {}
+        for k, v in zip(["start", "end", "side"], [start, end, side]):
+            if v is not None:
+                kwargs[k] = v
+
         if name in self._calendars:
             if kwargs:
                 raise ValueError(
-                    f"Receieved constructor arguments `start` and/or `end`"
-                    f" although calendar {name} is registered as a specific"
-                    f" instance of class {self._calendars[name].__class__},"
-                    f" not as a calendar factory."
+                    f"Receieved calendar arguments although {name} is registered"
+                    f" as a specific instance of class"
+                    f" {self._calendars[name].__class__}, not as a calendar factory."
                 )
             else:
                 return self._calendars[name]
