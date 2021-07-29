@@ -545,7 +545,7 @@ class ExchangeCalendarTestBase(object):
             )
 
         # minute is between first session's open and last session's close
-        for idx, (session_label, open_minute, close_minute) in enumerate(
+        for idx, (session_label, open_minute, close_minute, _, _) in enumerate(
             self.answers.iloc[1:-2].itertuples(name=None)
         ):
             hour_into_session = open_minute + self.one_hour
@@ -940,7 +940,7 @@ class ExchangeCalendarTestBase(object):
         self.assertEqual(one_day_distance, 1)
 
     def test_open_and_close_for_session(self):
-        for session_label, open_answer, close_answer in self.answers.itertuples(
+        for session_label, open_answer, close_answer, _, _ in self.answers.itertuples(
             name=None
         ):
 

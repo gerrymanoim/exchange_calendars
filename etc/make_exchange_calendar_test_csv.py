@@ -16,11 +16,10 @@ cal_name = sys.argv[1]
 cal = get_calendar(cal_name.upper())
 
 df = pd.DataFrame(
-    list(zip(cal.opens, cal.closes)),
-    columns=["market_open", "market_close"],
+    list(zip(cal.opens, cal.closes, cal.break_starts, cal.break_ends)),
+    columns=["market_open", "market_close", "break_start", "break_end"],
     index=cal.closes.index,
 )
-df.index = df.index.date
 
 destination = normpath(
     join(
@@ -30,4 +29,4 @@ destination = normpath(
 )
 print("Writing test CSV file to {}".format(destination))
 
-df.to_csv(destination)
+df.to_csv(destination, date_format="%Y-%m-%dT%H:%M:%SZ")
