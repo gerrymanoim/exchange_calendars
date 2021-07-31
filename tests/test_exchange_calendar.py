@@ -17,6 +17,10 @@ from datetime import time
 from os.path import abspath, dirname, join
 from unittest import TestCase
 import re
+import functools
+import itertools
+import pathlib
+from collections import abc
 
 import pytest
 import numpy as np
@@ -33,7 +37,11 @@ from exchange_calendars.calendar_utils import (
     _default_calendar_aliases,
     _default_calendar_factories,
 )
-from exchange_calendars.errors import CalendarNameCollision, InvalidCalendarName
+from exchange_calendars.errors import (
+    CalendarNameCollision,
+    InvalidCalendarName,
+    NoSessionsError,
+)
 from exchange_calendars.exchange_calendar import ExchangeCalendar, days_at_time
 from .test_utils import T
 
@@ -1172,3 +1180,768 @@ class NoDSTExchangeCalendarTestBase(ExchangeCalendarTestBase):
         so we need to skip over this test for those markets
         """
         pass
+
+
+def get_csv(name: str) -> pd.DataFrame:
+    """Get csv file as DataFrame for given calendar `name`."""
+    filename = name.replace("/", "-").lower() + ".csv"
+    path = pathlib.Path(__file__).parent.joinpath("resources", filename)
+
+    df = pd.read_csv(
+        path,
+        index_col=0,
+        parse_dates=[0, 1, 2, 3, 4],
+        infer_datetime_format=True,
+    )
+    df.index = df.index.tz_localize("UTC")
+    for col in df:
+        df[col] = df[col].dt.tz_localize("UTC")
+    return df
+
+
+class Answers:
+    """Answers for a given calendar and side.
+
+    Parameters
+    ----------
+    calendar_name
+        Canonical name of calendar for which require answer info. For
+        example, 'XNYS'.
+
+    side {'both', 'left', 'right', 'neither'}
+        Side of sessions to treat as trading minutes.
+    """
+
+    ONE_MIN = pd.Timedelta(1, "T")
+    TWO_MIN = pd.Timedelta(2, "T")
+    ONE_DAY = pd.Timedelta(1, "D")
+
+    LEFT_SIDES = ["left", "both"]
+    RIGHT_SIDES = ["right", "both"]
+
+    def __init__(
+        self,
+        calendar_name: str,
+        side: str,
+    ):
+        self._name = calendar_name.upper()
+        self._side = side
+
+    # exposed constructor arguments
+
+    @property
+    def name(self) -> str:
+        """Name of corresponding calendar."""
+        return self._name
+
+    @property
+    def side(self) -> str:
+        """Side of calendar for which answers valid."""
+        return self._side
+
+    # properties read (indirectly) from csv file
+
+    @functools.lru_cache(maxsize=1)
+    def _answers(self) -> pd.DataFrame:
+        return get_csv(self.name)
+
+    @property
+    def answers(self) -> pd.DataFrame:
+        """Answers as correspoding csv."""
+        return self._answers()
+
+    @property
+    def sessions(self) -> pd.DatetimeIndex:
+        """Session labels."""
+        return self.answers.index
+
+    @property
+    def opens(self) -> pd.Series:
+        """Market open time for each session."""
+        return self.answers.market_open
+
+    @property
+    def closes(self) -> pd.Series:
+        """Market close time for each session."""
+        return self.answers.market_close
+
+    @property
+    def break_starts(self) -> pd.Series:
+        """Break start time for each session."""
+        return self.answers.break_start
+
+    @property
+    def break_ends(self) -> pd.Series:
+        """Break end time for each session."""
+        return self.answers.break_end
+
+    # get and helper methods
+
+    def get_session_open(self, session: pd.Timestamp) -> pd.Timestamp:
+        """Open for `session`."""
+        return self.answers.loc[session].market_open
+
+    def get_session_close(self, session: pd.Timestamp) -> pd.Timestamp:
+        """Close for `session`."""
+        return self.answers.loc[session].market_close
+
+    def get_session_break_start(self, session: pd.Timestamp) -> pd.Timestamp | pd.NaT:
+        """Break start for `session`."""
+        return self.answers.loc[session].break_start
+
+    def get_session_break_end(self, session: pd.Timestamp) -> pd.Timestamp | pd.NaT:
+        """Break end for `session`."""
+        return self.answers.loc[session].break_end
+
+    def get_session_first_trading_minute(self, session: pd.Timestamp) -> pd.Timestamp:
+        """First trading minute of `session`."""
+        open_ = self.get_session_open(session)
+        return open_ if self.side in self.LEFT_SIDES else open_ + self.ONE_MIN
+
+    def get_session_last_trading_minute(self, session: pd.Timestamp) -> pd.Timestamp:
+        """Last trading minute of `session`."""
+        close = self.get_session_close(session)
+        return close if self.side in self.RIGHT_SIDES else close - self.ONE_MIN
+
+    def get_session_last_am_minute(
+        self, session: pd.Timestamp
+    ) -> pd.Timestamp | pd.NaT:
+        """Last trading minute of am subsession of `session`."""
+        break_start = self.get_session_break_start(session)
+        if pd.isna(break_start):
+            return pd.NaT
+        return (
+            break_start if self.side in self.RIGHT_SIDES else break_start - self.ONE_MIN
+        )
+
+    def get_session_first_pm_minute(
+        self, session: pd.Timestamp
+    ) -> pd.Timestamp | pd.NaT:
+        """First trading minute of pm subsession of `session`."""
+        break_end = self.get_session_break_end(session)
+        if pd.isna(break_end):
+            return pd.NaT
+        return break_end if self.side in self.LEFT_SIDES else break_end + self.ONE_MIN
+
+    def get_next_sessions(
+        self, session: pd.Timestamp, count: int = 1
+    ) -> pd.DatetimeIndex:
+        """Get session(s) that immediately follow `session`.
+
+        count : default: 1
+            Number of sessions following `session` to get.
+        """
+        assert count > 0 and session in self.sessions
+        assert (
+            session not in self.sessions[-count:]
+        ), "Cannot get session later than last answers' session."
+        idx = self.sessions.get_loc(session) + 1
+        return self.sessions[idx : idx + count]
+
+    # general evaluated properties
+
+    @functools.lru_cache(maxsize=1)
+    def _has_a_break(self) -> pd.DatetimeIndex:
+        return self.break_starts.notna().any()
+
+    @property
+    def has_a_break(self) -> bool:
+        """Does any session of answers have a break."""
+        return self._has_a_break()
+
+    # evaluated properties for sessions
+
+    @property
+    def _breaks_mask(self) -> pd.Series:
+        return self.break_starts.notna()
+
+    @functools.lru_cache(maxsize=1)
+    def _sessions_with_breaks(self) -> pd.DatetimeIndex:
+        return self.sessions[self._breaks_mask]
+
+    @property
+    def sessions_with_breaks(self) -> pd.DatetimeIndex:
+        return self._sessions_with_breaks()
+
+    @functools.lru_cache(maxsize=1)
+    def _sessions_without_breaks(self) -> pd.DatetimeIndex:
+        return self.sessions[~self._breaks_mask]
+
+    @property
+    def sessions_without_breaks(self) -> pd.DatetimeIndex:
+        return self._sessions_without_breaks()
+
+    def session_has_break(self, session: pd.Timestamp) -> bool:
+        """Query if `session` has a break."""
+        return session in self.sessions_with_breaks
+
+    @property
+    def _sessions_with_no_gap_after_mask(self) -> pd.Series:
+        if self.side == "neither":
+            # will always have gap after if neither open or close are trading
+            # minutes (assuming sessions cannot overlap)
+            return pd.Series(False, index=self.sessions)
+
+        elif self.side == "both":
+            # a trading minute cannot be a minute of more than one session.
+            assert not (self.closes == self.opens.shift(-1)).any()
+            # there will be no gap if next open is one minute after previous close
+            closes_plus_min = self.closes + pd.Timedelta(1, "T")
+            return self.opens.shift(-1) == closes_plus_min
+
+        else:
+            return self.closes == self.opens.shift(-1)
+
+    @property
+    def _sessions_with_no_gap_before_mask(self) -> pd.Series:
+        if self.side == "neither":
+            # will always have gap before if neither open or close are trading
+            # minutes (assuming sessions cannot overlap)
+            return pd.Series(False, index=self.sessions)
+
+        elif self.side == "both":
+            # a trading minute cannot be a minute of more than one session.
+            assert not (self.closes == self.opens.shift(-1)).any()
+            # there will be no gap if previous close is one minute before next open
+            opens_minus_one = self.opens - pd.Timedelta(1, "T")
+            return self.closes.shift(1) == opens_minus_one
+
+        else:
+            return self.closes.shift(1) == self.opens
+
+    @functools.lru_cache(maxsize=1)
+    def _sessions_with_no_gap_after(self) -> pd.DatetimeIndex:
+        mask = self._sessions_with_no_gap_after_mask
+        return self.sessions[mask][:-1]
+
+    @property
+    def sessions_with_no_gap_after(self) -> pd.DatetimeIndex:
+        """Sessions not followed by a non-trading minute.
+
+        Rather, sessions immeidately followed by first trading minute of
+        next session.
+        """
+        return self._sessions_with_no_gap_after()
+
+    @functools.lru_cache(maxsize=1)
+    def _sessions_with_gap_after(self) -> pd.DatetimeIndex:
+        mask = self._sessions_with_no_gap_after_mask
+        return self.sessions[~mask][:-1]
+
+    @property
+    def sessions_with_gap_after(self) -> pd.DatetimeIndex:
+        """Sessions followed by a non-trading minute."""
+        return self._sessions_with_gap_after()
+
+    @functools.lru_cache(maxsize=1)
+    def _sessions_with_no_gap_before(self) -> pd.DatetimeIndex:
+        mask = self._sessions_with_no_gap_before_mask
+        return self.sessions[mask][1:]
+
+    @property
+    def sessions_with_no_gap_before(self) -> pd.DatetimeIndex:
+        """Sessions not preceeded by a non-trading minute.
+
+        Rather, sessions immediately preceeded by last trading minute of
+        previous session.
+        """
+        return self._sessions_with_no_gap_before()
+
+    @functools.lru_cache(maxsize=1)
+    def _sessions_with_gap_before(self) -> pd.DatetimeIndex:
+        mask = self._sessions_with_no_gap_before_mask
+        return self.sessions[~mask][1:]
+
+    @property
+    def sessions_with_gap_before(self) -> pd.DatetimeIndex:
+        """Sessions preceeded by a non-trading minute."""
+        return self._sessions_with_gap_before()
+
+    # evaluated properties for first and last sessions
+
+    @property
+    def first_session(self) -> pd.Timestamp:
+        """First session covered by answers."""
+        return self.sessions[0]
+
+    @property
+    def last_session(self) -> pd.Timestamp:
+        """Last session covered by answers."""
+        return self.sessions[-1]
+
+    @property
+    def first_trading_minute(self) -> pd.Timestamp:
+        return self.get_session_first_trading_minute(self.first_session)
+
+    @property
+    def last_trading_minute(self) -> pd.Timestamp:
+        return self.get_session_last_trading_minute(self.last_session)
+
+    # evaluated properties for minutes
+
+    def trading_minutes(
+        self,
+    ) -> abc.Iterator[tuple[list[pd.Timestamp], pd.Timestamp]]:
+        """Generator of edge trading minutes.
+
+        Yields
+        ------
+        tuple[List[trading_minutes], session]
+
+            List[trading_minutes]: inlcludes:
+                first two trading minutes of a session.
+                last two trading minutes of a session.
+                If breaks:
+                    last two trading minutes of session's am subsession.
+                    first two trading minutes of session's pm subsession.
+
+            session
+                Session of trading_minutes
+        """
+        for session in self.sessions[-500:]:
+            first_trading_minute = self.get_session_first_trading_minute(session)
+            last_trading_minute = self.get_session_last_trading_minute(session)
+            mins = [
+                first_trading_minute,
+                first_trading_minute + self.ONE_MIN,
+                last_trading_minute,
+                last_trading_minute - self.ONE_MIN,
+            ]
+            if self.has_a_break and self.session_has_break(session):
+                last_am_minute = self.get_session_last_am_minute(session)
+                first_pm_minute = self.get_session_first_pm_minute(session)
+                mins.append(last_am_minute)
+                mins.append(last_am_minute - self.ONE_MIN)
+                mins.append(first_pm_minute)
+                mins.append(first_pm_minute + self.ONE_MIN)
+            yield (mins, session)
+
+    def break_minutes(self) -> abc.Iterator[tuple[list[pd.Timestamp], pd.Timestamp]]:
+        """Generator of edge break minutes.
+
+        Yields
+        ------
+        tuple[List[break_minutes], session]
+
+            List[break_minutes]:
+                first two minutes of a break.
+                last two minutes of a break.
+
+            session
+                Session of break_minutes
+        """
+        if not self.has_a_break:
+            return
+        for session in self.sessions_with_breaks[-500:]:
+            last_am_minute = self.get_session_last_am_minute(session)
+            first_pm_minute = self.get_session_first_pm_minute(session)
+            mins = [
+                last_am_minute + self.ONE_MIN,
+                last_am_minute + self.TWO_MIN,
+                first_pm_minute - self.ONE_MIN,
+                first_pm_minute - self.TWO_MIN,
+            ]
+            yield (mins, session)
+
+    # evaluted properties that are not sessions or minutes
+
+    def non_trading_minutes(
+        self,
+    ) -> abc.Iterator[tuple[list[pd.Timestamp], pd.Timestamp, pd.Timestamp]]:
+        """Generator of 'edge' non_trading_minutes. Does not include break minutes.
+
+        Yields
+        -------
+        tuple[List[non-trading minute], previous session, next session]
+
+            List[non-trading minute]
+                Two non-trading minutes.
+                    [0] first non-trading minute to follow a session.
+                    [1] last non-trading minute prior to the next session.
+
+            previous session
+                Session that preceeds non-trading minutes.
+
+            next session
+                Session that follows non-trading minutes.
+
+        See Also
+        --------
+        break_minutes
+        """
+        for session in self.sessions_with_gap_after[-500:]:
+            previous_session = session
+            next_session = self.get_next_sessions(previous_session)[0]
+            non_trading_mins = [
+                self.get_session_last_trading_minute(previous_session) + self.ONE_MIN,
+                self.get_session_first_trading_minute(next_session) - self.ONE_MIN,
+            ]
+            yield (non_trading_mins, previous_session, next_session)
+
+    @property
+    def non_sessions(self) -> pd.DatetimeIndex:
+        """Dates (UTC midnight) within answers range that are not sessions."""
+        all_dates = pd.date_range(
+            start=self.first_session, end=self.last_session, freq="D"
+        )
+        return all_dates.difference(self.sessions)
+
+    @property
+    def non_sessions_run(self) -> pd.DatetimeIndex:
+        """Longest run of non_sessions."""
+        ser = self.sessions.to_series()
+        diff = ser.shift(-1) - ser
+        max_diff = diff.max()
+        if max_diff == pd.Timedelta(1, "D"):
+            return pd.DatetimeIndex([])
+        session_before_run = diff[diff == max_diff].index[-1]
+        run = pd.date_range(
+            start=session_before_run + pd.Timedelta(1, "D"),
+            periods=(max_diff // pd.Timedelta(1, "D")) - 1,
+            freq="D",
+        )
+        assert run.isin(self.non_sessions).all()
+        assert run[0] > self.first_session
+        assert run[-1] < self.last_session
+        return run
+
+    # out-of-bounds properties
+
+    @property
+    def minute_too_early(self) -> pd.Timestamp:
+        """Minute earlier than first trading minute."""
+        return self.first_trading_minute - self.ONE_MIN
+
+    @property
+    def minute_too_late(self) -> pd.Timestamp:
+        """Minute later than last trading minute."""
+        return self.last_trading_minute + self.ONE_MIN
+
+    @property
+    def session_too_early(self) -> pd.Timestamp:
+        """Date earlier than first session."""
+        return self.first_session - self.ONE_DAY
+
+    @property
+    def session_too_late(self) -> pd.Timestamp:
+        """Date later than last session."""
+        return self.last_session + self.ONE_DAY
+
+    # dunder
+
+    def __repr__(self) -> str:
+        return f"<Answers: calendar {self.name}, side {self.side}>"
+
+
+class ExchangeCalendarTestBaseProposal:
+
+    # subclass should override the following fixtures
+    @pytest.fixture(scope="class")
+    def calendar_class(self) -> abc.Iterator[ExchangeCalendar]:
+        raise NotImplementedError("fixture must be implemented on subclass")
+
+    # if subclass does not accommodate all side options then subclass should
+    # override this fixture to redefine fixture decorator's params argument
+    # TODO, work on whether's there a way to prevent having to override
+    # this fixture on the subclass. Issue is that params arg cannot call a
+    # fixture. Could look at a 'sides_' attribute defined for the class, although
+    # that in turn would need to be evaluated from interrogation of the csv,
+    # which requires the calendar name or class which in turn needs to be able
+    #  to be overriden by subclasses.
+    @pytest.fixture(scope="class", params=["both", "left", "right", "neither"])
+    def all_calendars_with_answers(
+        self, request, calendars, answers
+    ) -> abc.Iterator[ExchangeCalendar, Answers]:
+        """Parameterized calendars and answers for each side."""
+        yield (calendars[request.param], answers[request.param])
+
+    # base class fixtures
+
+    @pytest.fixture(scope="class")
+    def name(self, calendar_class) -> abc.Iterator[str]:
+        """Calendar name."""
+        yield calendar_class.name
+
+    @pytest.fixture(scope="class")
+    def has_24h_session(self, name) -> abc.Iterator[bool]:
+        df = get_csv(name)
+        yield (df.market_close == df.market_open.shift(-1)).any()
+
+    @pytest.fixture(scope="class")
+    def default_side(self, has_24h_session) -> abc.Iterator[str]:
+        """Default calendar side."""
+        if has_24h_session:
+            yield "left"
+        else:
+            yield "both"
+
+    @pytest.fixture(scope="class")
+    def sides(self, has_24h_session) -> abc.Iterator[list[str]]:
+        """All valid sides options for calendar."""
+        if has_24h_session:
+            yield ["left", "right"]
+        else:
+            yield ["both", "left", "right", "neither"]
+
+    # calendars and answers
+
+    @pytest.fixture(scope="class")
+    def answers(self, name, sides) -> abc.Iterator[dict[str, Answers]]:
+        yield {side: Answers(name, side) for side in sides}
+
+    @pytest.fixture(scope="class")
+    def default_answers(self, answers, default_side) -> abc.Iterator[Answers]:
+        yield answers[default_side]
+
+    @pytest.fixture(scope="class")
+    def calendars(
+        self, calendar_class, default_answers, sides
+    ) -> abc.Iterator[dict[str, ExchangeCalendar]]:
+        """Dict of calendars, key as side, value as corresoponding calendar."""
+        start = default_answers.first_session
+        end = default_answers.last_session
+        yield {side: calendar_class(start, end, side) for side in sides}
+
+    @pytest.fixture(scope="class")
+    def calendars_with_answers(
+        self, calendars, answers, sides
+    ) -> abc.Iterator[dict[str, tuple[ExchangeCalendar, Answers]]]:
+        """Dict of calendars and answers, key as side."""
+        yield {side: (calendars[side], answers[side]) for side in sides}
+
+    # general use fixtures
+
+    @pytest.fixture(scope="class")
+    def one_minute(self) -> abc.Iterator[pd.Timedelta]:
+        yield pd.Timedelta(1, "T")
+
+    @pytest.fixture(scope="class", params=["next", "previous", "none"])
+    def all_directions(self, request) -> abc.Iterator[str]:
+        """Parameterised fixture of direction to go if minute is not a trading minute"""
+        yield request.param
+
+    # TESTS
+
+    def test_all_minutes(self, all_calendars_with_answers, one_minute):
+        """Test trading minutes at sessions' bounds."""
+        calendar, ans = all_calendars_with_answers
+
+        side = ans.side
+        mins = calendar.all_minutes
+        assert isinstance(mins, pd.DatetimeIndex)
+        assert not mins.empty
+        mins_plus_1 = mins + one_minute
+        mins_less_1 = mins - one_minute
+
+        if side in ["left", "neither"]:
+            # Test that close and break_start not in mins,
+            # but are in mins_plus_1 (unless no gap after)
+
+            # do not test here for sessions with no gap after as for "left" these
+            # sessions' close IS a trading minute as it's the same as next session's
+            # open.
+            # NB For "neither" all sessions will have gap after.
+            closes = ans.closes[ans.sessions_with_gap_after]
+            # closes should not be in minutes
+            assert not mins.isin(closes).any()
+            # all closes should be in minutes plus 1
+            # for speed increase, use only subset of mins that are of interest
+            mins_plus_1_on_close = mins_plus_1[mins_plus_1.isin(closes)]
+            assert closes.isin(mins_plus_1_on_close).all()
+
+            # as noted above, if no gap after then close should be a trading minute
+            # as will be first minute of next session.
+            closes = ans.closes[ans.sessions_with_no_gap_after]
+            mins_on_close = mins[mins.isin(closes)]
+            assert closes.isin(mins_on_close).all()
+
+            if ans.has_a_break:
+                # break start should not be in minutes
+                assert not mins.isin(ans.break_starts).any()
+                # break start should be in minutes plus 1
+                break_starts = ans.break_starts[ans.sessions_with_breaks]
+                mins_plus_1_on_start = mins_plus_1[mins_plus_1.isin(break_starts)]
+                assert break_starts.isin(mins_plus_1_on_start).all()
+
+        if side in ["left", "both"]:
+            # Test that open and break_end are in mins,
+            # but not in mins_plus_1 (unless no gap before)
+            mins_on_open = mins[mins.isin(ans.opens)]
+            assert ans.opens.isin(mins_on_open).all()
+
+            opens = ans.opens[ans.sessions_with_gap_before]
+            assert not mins_plus_1.isin(opens).any()
+
+            opens = ans.opens[ans.sessions_with_no_gap_before]
+            mins_plus_1_on_open = mins_plus_1[mins_plus_1.isin(opens)]
+            assert opens.isin(mins_plus_1_on_open).all()
+
+            if ans.has_a_break:
+                break_ends = ans.break_ends[ans.sessions_with_breaks]
+                mins_on_end = mins[mins.isin(ans.break_ends)]
+                assert break_ends.isin(mins_on_end).all()
+
+        if side in ["right", "neither"]:
+            # Test that open and break_end are not in mins,
+            # but are in mins_less_1 (unless no gap before)
+            opens = ans.opens[ans.sessions_with_gap_before]
+            assert not mins.isin(opens).any()
+
+            mins_less_1_on_open = mins_less_1[mins_less_1.isin(opens)]
+            assert opens.isin(mins_less_1_on_open).all()
+
+            opens = ans.opens[ans.sessions_with_no_gap_before]
+            mins_on_open = mins[mins.isin(opens)]
+            assert opens.isin(mins_on_open).all()
+
+            if ans.has_a_break:
+                assert not mins.isin(ans.break_ends).any()
+                break_ends = ans.break_ends[ans.sessions_with_breaks]
+                mins_less_1_on_end = mins_less_1[mins_less_1.isin(break_ends)]
+                assert break_ends.isin(mins_less_1_on_end).all()
+
+        if side in ["right", "both"]:
+            # Test that close and break_start are in mins,
+            # but not in mins_less_1 (unless no gap after)
+            mins_on_close = mins[mins.isin(ans.closes)]
+            assert ans.closes.isin(mins_on_close).all()
+
+            closes = ans.closes[ans.sessions_with_gap_after]
+            assert not mins_less_1.isin(closes).any()
+
+            closes = ans.closes[ans.sessions_with_no_gap_after]
+            mins_less_1_on_close = mins_less_1[mins_less_1.isin(closes)]
+            assert closes.isin(mins_less_1_on_close).all()
+
+            if ans.has_a_break:
+                break_starts = ans.break_starts[ans.sessions_with_breaks]
+                mins_on_start = mins[mins.isin(ans.break_starts)]
+                assert break_starts.isin(mins_on_start).all()
+
+    def test_minute_to_session_label(self, all_calendars_with_answers, all_directions):
+        direction = all_directions
+        calendar, ans = all_calendars_with_answers
+        m = calendar.minute_to_session_label
+
+        for non_trading_mins, prev_session, next_session in ans.non_trading_minutes():
+            for non_trading_min in non_trading_mins:
+                if direction == "none":
+                    with pytest.raises(ValueError):
+                        m(non_trading_min, direction)
+                else:
+                    session = m(non_trading_min, direction)
+                    if direction == "next":
+                        assert session == next_session
+                    else:
+                        assert session == prev_session
+
+        for trading_minutes, session in ans.trading_minutes():
+            for trading_minute in trading_minutes:
+                rtrn = m(trading_minute, direction)
+                assert rtrn == session
+
+        if ans.has_a_break:
+            for i, (break_minutes, session) in enumerate(ans.break_minutes()):
+                if i == 15:
+                    break
+                for break_minute in break_minutes:
+                    rtrn = m(break_minute, direction)
+                    assert rtrn == session
+
+        oob_minute = ans.minute_too_early
+        if direction in ["previous", "none"]:
+            error_msg = (
+                f"Received `minute` as '{oob_minute}' although this is earlier than"
+                f" the calendar's first trading minute ({ans.first_trading_minute})"
+            )
+            with pytest.raises(ValueError, match=re.escape(error_msg)):
+                calendar.minute_to_session_label(oob_minute, direction)
+        else:
+            session = calendar.minute_to_session_label(oob_minute, direction)
+            assert session == ans.first_session
+
+        oob_minute = ans.minute_too_late
+        if direction in ["next", "none"]:
+            error_msg = (
+                f"Received `minute` as '{oob_minute}' although this is later"
+                f" than the calendar's last trading minute ({ans.last_trading_minute})"
+            )
+            with pytest.raises(ValueError, match=re.escape(error_msg)):
+                calendar.minute_to_session_label(oob_minute, direction)
+        else:
+            session = calendar.minute_to_session_label(oob_minute, direction)
+            assert session == ans.last_session
+
+    def test_minute_index_to_session_labels(self, all_calendars_with_answers):
+        """Test for effect of calendar side."""
+        calendar, ans = all_calendars_with_answers
+
+        for minutes, _, _ in itertools.islice(ans.non_trading_minutes(), 10):
+            for minute in minutes:
+                with pytest.raises(ValueError):
+                    calendar.minute_index_to_session_labels(pd.DatetimeIndex([minute]))
+
+        mins, sessions = [], []
+        for trading_minutes, session in itertools.islice(ans.trading_minutes(), 30):
+            mins.extend(trading_minutes)
+            sessions.extend([session] * len(trading_minutes))
+
+        index = pd.DatetimeIndex(mins).sort_values()
+        sessions_labels = calendar.minute_index_to_session_labels(index)
+        assert sessions_labels.equals(pd.DatetimeIndex(sessions).sort_values())
+
+    def test_is_open_on_minute(self, all_calendars_with_answers):
+        calendar, ans = all_calendars_with_answers
+
+        for non_trading_mins, _, _ in ans.non_trading_minutes():
+            for non_trading_min in non_trading_mins:
+                assert calendar.is_open_on_minute(non_trading_min) is False
+
+        for trading_minutes, _ in ans.trading_minutes():
+            for trading_min in trading_minutes:
+                assert calendar.is_open_on_minute(trading_min) is True
+
+        if ans.has_a_break:
+            for break_minutes, _ in ans.break_minutes():
+                for break_min in break_minutes:
+                    rtrn = calendar.is_open_on_minute(break_min, ignore_breaks=True)
+                    assert rtrn is True
+                    rtrn = calendar.is_open_on_minute(break_min)
+                    assert rtrn is False
+
+    def test_invalid_input(self, calendar_class, sides, default_answers, name):
+        ans = default_answers
+
+        invalid_side = "both" if "both" not in sides else "invalid_side"
+        error_msg = f"`side` must be in {sides} although received as {invalid_side}."
+        with pytest.raises(ValueError, match=re.escape(error_msg)):
+            calendar_class(side=invalid_side)
+
+        start = ans.sessions[1]
+        end_same_as_start = ans.sessions[1]
+        error_msg = (
+            "`start` must be earlier than `end` although `start` parsed as"
+            f" '{start}' and `end` as '{end_same_as_start}'."
+        )
+        with pytest.raises(ValueError, match=re.escape(error_msg)):
+            calendar_class(start=start, end=end_same_as_start)
+
+        end_before_start = ans.sessions[0]
+        error_msg = (
+            "`start` must be earlier than `end` although `start` parsed as"
+            f" '{start}' and `end` as '{end_before_start}'."
+        )
+        with pytest.raises(ValueError, match=re.escape(error_msg)):
+            calendar_class(start=start, end=end_before_start)
+
+        non_sessions = ans.non_sessions_run
+        if not non_sessions.empty:
+            start = non_sessions[0]
+            end = non_sessions[-1]
+            error_msg = (
+                f"The requested ExchangeCalendar, {name.upper()}, cannot be created as"
+                f" there would be no sessions between the requested `start` ('{start}')"
+                f" and `end` ('{end}') dates."
+            )
+            with pytest.raises(NoSessionsError, match=re.escape(error_msg)):
+                calendar_class(start=start, end=end)

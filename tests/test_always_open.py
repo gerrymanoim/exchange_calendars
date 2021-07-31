@@ -1,14 +1,22 @@
+from __future__ import annotations
 from unittest import TestCase
+from collections import abc
 
+import pytest
 import pandas as pd
 import pandas.testing as tm
 from pytz import UTC
 
 from exchange_calendars.always_open import AlwaysOpenCalendar
+from exchange_calendars import ExchangeCalendar
+from .test_exchange_calendar import (
+    ExchangeCalendarTestBase,
+    ExchangeCalendarTestBaseProposal,
+    Answers,
+)
 
-from .test_exchange_calendar import ExchangeCalendarTestBase
 
-
+@pytest.mark.skip
 class AlwaysOpenTestCase(ExchangeCalendarTestBase, TestCase):
 
     answer_key_filename = "24-7"
@@ -56,3 +64,16 @@ class AlwaysOpenTestCase(ExchangeCalendarTestBase, TestCase):
 
         self.assertTrue(calendar.first_trading_session == start)
         self.assertTrue(calendar.last_trading_session == end)
+
+
+class TestAlwaysOpenCalendarCase(ExchangeCalendarTestBaseProposal):
+    @pytest.fixture(scope="class")
+    def calendar_class(self) -> abc.Iterator[ExchangeCalendar]:
+        yield AlwaysOpenCalendar
+
+    @pytest.fixture(scope="class", params=["left", "right"])
+    def all_calendars_with_answers(
+        self, request, calendars, answers
+    ) -> abc.Iterator[ExchangeCalendar, Answers]:
+        """Parameterized calendars and answers for each side."""
+        yield (calendars[request.param], answers[request.param])

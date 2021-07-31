@@ -1,12 +1,18 @@
+from __future__ import annotations
 from datetime import time
 from unittest import TestCase
+from collections import abc
 
+import pytest
 import pandas as pd
 from pytz import UTC
 
 from exchange_calendars.exchange_calendar_xhkg import XHKGExchangeCalendar
 
-from .test_exchange_calendar import ExchangeCalendarTestBase
+from .test_exchange_calendar import (
+    ExchangeCalendarTestBase,
+    ExchangeCalendarTestBaseProposal,
+)
 from .test_utils import T
 
 
@@ -278,3 +284,9 @@ class XHKGCalendarTestCase(ExchangeCalendarTestBase, TestCase):
             "Asia/Hong_Kong",
         )
         self.assertEqual({time(16)}, set(local_time_close.dt.time))
+
+
+class TestXHKGCalendarCase(ExchangeCalendarTestBaseProposal):
+    @pytest.fixture(scope="class")
+    def calendar_class(self) -> abc.Iterator[XHKGExchangeCalendar]:
+        yield XHKGExchangeCalendar

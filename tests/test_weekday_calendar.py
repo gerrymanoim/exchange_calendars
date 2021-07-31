@@ -1,14 +1,22 @@
+from __future__ import annotations
 from unittest import TestCase
+from collections import abc
 
+import pytest
 import pandas as pd
 import pandas.testing as tm
 from pytz import UTC
 
 from exchange_calendars.weekday_calendar import WeekdayCalendar
+from exchange_calendars import ExchangeCalendar
+from .test_exchange_calendar import (
+    ExchangeCalendarTestBase,
+    ExchangeCalendarTestBaseProposal,
+    Answers,
+)
 
-from .test_exchange_calendar import ExchangeCalendarTestBase
 
-
+@pytest.mark.skip
 class WeekdayCalendarTestCase(ExchangeCalendarTestBase, TestCase):
 
     answer_key_filename = "24-5"
@@ -59,3 +67,16 @@ class WeekdayCalendarTestCase(ExchangeCalendarTestBase, TestCase):
             # The pandas weekday is defined as Monday=0 to Sunday=6.
             minutes[minutes.weekday <= 4],
         )
+
+
+class TestWeekdayCalendarCase(ExchangeCalendarTestBaseProposal):
+    @pytest.fixture(scope="class")
+    def calendar_class(self) -> abc.Iterator[ExchangeCalendar]:
+        yield WeekdayCalendar
+
+    @pytest.fixture(scope="class", params=["left", "right"])
+    def all_calendars_with_answers(
+        self, request, calendars, answers
+    ) -> abc.Iterator[ExchangeCalendar, Answers]:
+        """Parameterized calendars and answers for each side."""
+        yield (calendars[request.param], answers[request.param])
