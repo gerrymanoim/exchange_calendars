@@ -14,4 +14,5 @@ class WeekdayCalendar(ExchangeCalendar):
     name = "24/5"
     tz = UTC
     open_times = ((None, time(0)),)
-    close_times = ((None, time(23, 59)),)
+    close_times = ((None, time(0)),)
+    close_offset = 1

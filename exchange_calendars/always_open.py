@@ -12,4 +12,5 @@ class AlwaysOpenCalendar(ExchangeCalendar):
     tz = UTC
     weekmask = "1111111"
     open_times = ((None, time(0)),)
-    close_times = ((None, time(23, 59)),)
+    close_times = ((None, time(0, 0)),)
+    close_offset = 1

@@ -108,7 +108,7 @@ class ExchangeCalendar(ABC):
         Last calendar session will be `end`, if `end` is a session, or last
         session before `end`.
 
-    side : default: "both"
+    side : default: "both" ("left" for 24 hour calendars)
         Define which of session open/close and break start/end should
             be treated as a trading minute:
         "left" - treat session open and break_start as trading minutes,
@@ -157,12 +157,12 @@ class ExchangeCalendar(ABC):
         self,
         start: Date | None = None,
         end: Date | None = None,
-        side: str = "both",
+        side: str | None = None,
     ):
-        valid_side_values = ["left", "right", "both", "neither"]
-        if side not in valid_side_values:
+        side = side if side is not None else self.default_side
+        if side not in self.valid_sides:
             raise ValueError(
-                f"`side` must be in {valid_side_values} although received as {side}."
+                f"`side` must be in {self.valid_sides} although received as {side}."
             )
         self._side = side
 
@@ -421,6 +421,22 @@ class ExchangeCalendar(ABC):
         time is constant throughout the calendar, use None for the start_date.
         """
         raise NotImplementedError()
+
+    @property
+    def valid_sides(self) -> list[str]:
+        """List of valid `side` options."""
+        if self.close_times == self.open_times:
+            return ["left", "right"]
+        else:
+            return ["both", "left", "right", "neither"]
+
+    @property
+    def default_side(self) -> str:
+        """Default `side` option."""
+        if self.close_times == self.open_times:
+            return "right"
+        else:
+            return "both"
 
     @property
     def weekmask(self):

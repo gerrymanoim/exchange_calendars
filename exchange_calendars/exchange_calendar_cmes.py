@@ -57,7 +57,7 @@ class CMESExchangeCalendar(ExchangeCalendar):
 
     tz = timezone("America/Chicago")
 
-    open_times = ((None, time(17, 1)),)
+    open_times = ((None, time(17)),)
 
     close_times = ((None, time(17)),)
 

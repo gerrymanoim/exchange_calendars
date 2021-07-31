@@ -37,7 +37,7 @@ class QuantopianUSFuturesCalendar(ExchangeCalendar):
 
     name = "us_futures"
     tz = timezone("America/New_York")
-    open_times = ((None, time(18, 1)),)
+    open_times = ((None, time(18)),)
     close_times = ((None, time(18)),)
     open_offset = -1
 
