@@ -46,8 +46,9 @@ def four_day_weekend0(dt, include_mon: bool = True, include_fri: bool = True):
     include_fri : boolean
          If holiday falls on a Thursday, following Friday becomes a holiday.
     """
-    mon = dt[include_mon & dt.weekday == TUESDAY] - timedelta(1)  # mv Tues back one day
-    fri = dt[include_fri & dt.weekday == THURSDAY] + timedelta(1)  # mv Thurs ahead one day
+    print(type(dt))
+    mon = dt[include_mon & (dt.weekday == TUESDAY)] - timedelta(1)  # mv Tues back one day
+    fri = dt[include_fri & (dt.weekday == THURSDAY)] + timedelta(1)  # mv Thurs ahead one day
     return dt.append([mon, fri])
 
 
