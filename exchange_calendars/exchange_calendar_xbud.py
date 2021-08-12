@@ -31,7 +31,7 @@ from .common_holidays import (
 from .exchange_calendar import THURSDAY, TUESDAY, HolidayCalendar, ExchangeCalendar
 
 
-def four_day_weekend0(dt, include_mon: boolean = True, include_fri: boolean = True):
+def four_day_weekend0(dt, include_mon: bool = True, include_fri: bool = True):
     """
     Custom observance function as for almost all holidays in the XBUD calendar,
     if the holiday falls on a Tuesday the previous Monday also becomes a holiday,
