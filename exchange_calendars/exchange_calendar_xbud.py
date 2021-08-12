@@ -31,22 +31,34 @@ from .common_holidays import (
 from .exchange_calendar import THURSDAY, TUESDAY, HolidayCalendar, ExchangeCalendar
 
 
-def four_day_weekend(dt):
+def four_day_weekend0(dt, include_mon: boolean = True, include_fri: boolean = True):
     """
-    For almost all holidays in the XBUD calendar, if the holiday
-    falls on a Tuesday the previous Monday also becomes a holiday,
-    and if the holiday falls on a Thursday the following Friday also
-    becomes a holiday.
+    Custom observance function as for almost all holidays in the XBUD calendar,
+    if the holiday falls on a Tuesday the previous Monday also becomes a holiday,
+    and if the holiday falls on a Thursday the following Friday also becomes a holiday.
+
+    Parameters
+    ----------
+    dt : datetime
+         Unadjusted raw holiday datetimes
+    include_mon : boolean
+         If holiday falls on a Tuesday, previous Monday becomes a holiday.
+    include_fri : boolean
+         If holiday falls on a Thursday, following Friday becomes a holiday.
     """
-    mon = dt[dt.weekday == TUESDAY] - timedelta(1)  # mv Tues back one day
-    fri = dt[dt.weekday == THURSDAY] + timedelta(1)  # mv Thurs ahead one day
+    mon = dt[include_mon & dt.weekday == TUESDAY] - timedelta(1)  # mv Tues back one day
+    fri = dt[include_fri & dt.weekday == THURSDAY] + timedelta(1)  # mv Thurs ahead one day
     return dt.append([mon, fri])
+
+
+def four_day_weekend(dt):
+    return four_day_weekend0(dt, include_mon=True, include_fri=True)
 
 
 NewYearsDay = new_years_day(observance=four_day_weekend)
 
 NationalHoliday1 = Holiday(
-    "National Holiday 1", month=3, day=15, observance=four_day_weekend
+    "National Day", month=3, day=15, observance=four_day_weekend
 )
 
 # Need custom start year so can't use pandas GoodFriday
@@ -66,7 +78,7 @@ StStephensDay = Holiday(
 )
 
 NationalHoliday2 = Holiday(
-    "National Holiday 2",
+    "National Day",
     month=10,
     day=23,
     observance=four_day_weekend,
@@ -94,7 +106,10 @@ SecondDayOfChristmasAddFriday = Holiday(
     month=12,
     day=26,
     start_date="2013",
-    observance=four_day_weekend,
+    # Don't apply the rule here where the previous Monday also becomes a holiday if this falls onto a Tuesday.
+    # Rationale: The previous Monday in this case is Christmas which is already defined as a holiday above.
+    # Apply the other rule where the following Friday becomes a holiday if it falls onto a Thursday as usual.
+    observance=lambda dt: four_day_weekend0(dt, include_mon=False, include_fri=True),
 )
 
 # Starting in 2011, New Year's Eve is observed as a holiday every year.
