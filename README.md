@@ -83,11 +83,11 @@ ecal XNYS 2020
     [12] 13  14  15  16  17 [18]   [ 9] 10  11  12  13  14 [15]   [ 8]  9  10  11  12  13 [14]
     [19][20] 21  22  23  24 [25]   [16][17] 18  19  20  21 [22]   [15] 16  17  18  19  20 [21]
     [26] 27  28  29  30  31        [23] 24  25  26  27  28 [29]   [22] 23  24  25  26  27 [28]
-                                                                [29] 30  31
+                                                                  [29] 30  31
 
             April                           May                            June
     Su  Mo  Tu  We  Th  Fr  Sa     Su  Mo  Tu  We  Th  Fr  Sa     Su  Mo  Tu  We  Th  Fr  Sa
-                1   2   3 [ 4]                         1 [ 2]         1   2   3   4   5 [ 6]
+                  1   2   3 [ 4]                         1 [ 2]         1   2   3   4   5 [ 6]
     [ 5]  6   7   8   9 [10][11]   [ 3]  4   5   6   7   8 [ 9]   [ 7]  8   9  10  11  12 [13]
     [12] 13  14  15  16  17 [18]   [10] 11  12  13  14  15 [16]   [14] 15  16  17  18  19 [20]
     [19] 20  21  22  23  24 [25]   [17] 18  19  20  21  22 [23]   [21] 22  23  24  25  26 [27]
@@ -96,7 +96,7 @@ ecal XNYS 2020
 
                 July                          August                       September
     Su  Mo  Tu  We  Th  Fr  Sa     Su  Mo  Tu  We  Th  Fr  Sa     Su  Mo  Tu  We  Th  Fr  Sa
-                1   2 [ 3][ 4]                           [ 1]             1   2   3   4 [ 5]
+                  1   2 [ 3][ 4]                           [ 1]             1   2   3   4 [ 5]
     [ 5]  6   7   8   9  10 [11]   [ 2]  3   4   5   6   7 [ 8]   [ 6][ 7]  8   9  10  11 [12]
     [12] 13  14  15  16  17 [18]   [ 9] 10  11  12  13  14 [15]   [13] 14  15  16  17  18 [19]
     [19] 20  21  22  23  24 [25]   [16] 17  18  19  20  21 [22]   [20] 21  22  23  24  25 [26]
@@ -105,7 +105,7 @@ ecal XNYS 2020
 
             October                        November                       December
     Su  Mo  Tu  We  Th  Fr  Sa     Su  Mo  Tu  We  Th  Fr  Sa     Su  Mo  Tu  We  Th  Fr  Sa
-                    1   2 [ 3]                                            1   2   3   4 [ 5]
+                      1   2 [ 3]                                            1   2   3   4 [ 5]
     [ 4]  5   6   7   8   9 [10]   [ 1]  2   3   4   5   6 [ 7]   [ 6]  7   8   9  10  11 [12]
     [11] 12  13  14  15  16 [17]   [ 8]  9  10  11  12  13 [14]   [13] 14  15  16  17  18 [19]
     [18] 19  20  21  22  23 [24]   [15] 16  17  18  19  20 [21]   [20] 21  22  23  24 [25][26]
@@ -169,17 +169,17 @@ Similar logic applies to exchanges with lunchbreaks.
 | ICE US                          | IEPA     | USA            | 1.0           | https://www.theice.com/index                                 |
 | Toronto Stock Exchange          | XTSE     | Canada         | 1.0           | https://www.tsx.com/                                         |
 | BMF Bovespa                     | BVMF     | Brazil         | 1.0           | http://www.b3.com.br/en_us/                                  |
-| London Stock Exchange           | XLON     | England        | 1.0           | https://www.londonstockexchange.com/home/homepage.htm        |
+| London Stock Exchange           | XLON     | England        | 1.0           | https://www.londonstockexchange.com/                         |
 | Euronext Amsterdam              | XAMS     | Netherlands    | 1.2           | https://www.euronext.com/en/regulation/amsterdam             |
 | Euronext Brussels               | XBRU     | Belgium        | 1.2           | https://www.euronext.com/en/regulation/brussels              |
 | Euronext Lisbon                 | XLIS     | Portugal       | 1.2           | https://www.euronext.com/en/regulation/lisbon                |
 | Euronext Paris                  | XPAR     | France         | 1.2           | https://www.euronext.com/en/regulation/paris                 |
 | Frankfurt Stock Exchange        | XFRA     | Germany        | 1.2           | http://en.boerse-frankfurt.de/                               |
-| SIX Swiss Exchange              | XSWX     | Switzerland    | 1.2           | https://www.six-group.com/exchanges/index.html               |
+| SIX Swiss Exchange              | XSWX     | Switzerland    | 1.2           | https://www.six-group.com/en/home.html                       |
 | Tokyo Stock Exchange            | XTKS     | Japan          | 1.2           | https://www.jpx.co.jp/english/                               |
 | Austrialian Securities Exchange | XASX     | Australia      | 1.3           | https://www.asx.com.au/                                      |
-| Bolsa de Madrid                 | XMAD     | Spain          | 1.3           | http://www.bolsamadrid.es/ing/aspx/Portada/Portada.aspx      |
-| Borsa Italiana                  | XMIL     | Italy          | 1.3           | https://www.borsaitaliana.it/homepage/homepage.en.htm        |
+| Bolsa de Madrid                 | XMAD     | Spain          | 1.3           | https://www.bolsamadrid.es                                   |
+| Borsa Italiana                  | XMIL     | Italy          | 1.3           | https://www.borsaitaliana.it                                 |
 | New Zealand Exchange            | XNZE     | New Zealand    | 1.3           | https://www.nzx.com/                                         |
 | Wiener Borse                    | XWBO     | Austria        | 1.3           | https://www.wienerborse.at/en/                               |
 | Hong Kong Stock Exchange        | XHKG     | Hong Kong      | 1.3           | https://www.hkex.com.hk/?sc_lang=en                          |
@@ -194,8 +194,8 @@ Similar logic applies to exchanges with lunchbreaks.
 | Korea Exchange                  | XKRX     | South Korea    | 1.6           | http://global.krx.co.kr                                      |
 | Iceland Stock Exchange          | XICE     | Iceland        | 1.7           | http://www.nasdaqomxnordic.com/                              |
 | Poland Stock Exchange           | XWAR     | Poland         | 1.9           | http://www.gpw.pl                                            |
-| Santiago Stock Exchange         | XSGO     | Chile          | 1.9           | http://inter.bolsadesantiago.com/sitios/en/Paginas/home.aspx |
-| Colombia Securities Exchange    | XBOG     | Colombia       | 1.9           | https://www.bvc.com.co/nueva/index_en.html                   |
+| Santiago Stock Exchange         | XSGO     | Chile          | 1.9           | https://www.bolsadesantiago.com/                             |
+| Colombia Securities Exchange    | XBOG     | Colombia       | 1.9           | https://www.bvc.com.co/nueva/https://www.bvc.com.co/nueva/   |
 | Mexican Stock Exchange          | XMEX     | Mexico         | 1.9           | https://www.bmv.com.mx                                       |
 | Lima Stock Exchange             | XLIM     | Peru           | 1.9           | https://www.bvl.com.pe                                       |
 | Prague Stock Exchange           | XPRA     | Czech Republic | 1.9           | https://www.pse.cz/en/                                       |
@@ -205,12 +205,14 @@ Similar logic applies to exchanges with lunchbreaks.
 | Johannesburg Stock Exchange     | XJSE     | South Africa   | 1.10          | https://www.jse.co.za/z                                      |
 | Malaysia Stock Exchange         | XKLS     | Malaysia       | 1.11          | http://www.bursamalaysia.com/market/                         |
 | Moscow Exchange                 | XMOS     | Russia         | 1.11          | https://www.moex.com/en/                                     |
-| Philippine Stock Exchange       | XPHS     | Philippines    | 1.11          | https://www.pse.com.ph/stockMarket/home.html                 |
+| Philippine Stock Exchange       | XPHS     | Philippines    | 1.11          | https://www.pse.com.ph/                                      |
 | Stock Exchange of Thailand      | XBKK     | Thailand       | 1.11          | https://www.set.or.th/set/mainpage.do?language=en&country=US |
 | Indonesia Stock Exchange        | XIDX     | Indonesia      | 1.11          | https://www.idx.co.id/                                       |
 | Taiwan Stock Exchange Corp.     | XTAI     | Taiwan         | 1.11          | https://www.twse.com.tw/en/                                  |
 | Buenos Aires Stock Exchange     | XBUE     | Argentina      | 1.11          | https://www.bcba.sba.com.ar/                                 |
 | Pakistan Stock Exchange         | XKAR     | Pakistan       | 1.11          | https://www.psx.com.pk/                                      |
+| Xetra                           | XETR     | Germany        | 2.1           | https://www.xetra.com/                                       |
+| Tel Aviv Stock Exchange         | XTAE     | Israel         | 2.1           | https://www.tase.co.il/                                      |
 | Astana International Exchange   | AIXK     | Kazakhstan     | 3.2           | https://www.aix.kz/                                          |
 | Bucharest Stock Exchange        | XBSE     | Romania        | 3.2           | https://www.bvb.ro/                                          |
 
