@@ -2,8 +2,9 @@
 
 [![PyPI](https://img.shields.io/pypi/v/exchange-calendars)](https://pypi.org/project/exchange-calendars/) ![Python Support](https://img.shields.io/pypi/pyversions/exchange_calendars) ![PyPI Downloads](https://img.shields.io/pypi/dd/exchange-calendars) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+A Python library for defining and querying calendars for security exchanges.
 
-A Python library of exchange calendars.
+Calendars for more than [50 exchanges](#Calendars) available out-the-box! If you can't find what you're looking for, [create a new calendar](#How-can-I-create-a-new-calendar).
 
 ## Installation
 
@@ -14,63 +15,106 @@ $ pip install exchange_calendars
 ## Quick Start
 
 ```python
-import exchange_calendars as ecals
-import pandas as pd
-import pytz
+import exchange_calendars as xcals
 ```
 
-Get all registered calendars with `get_calendar_names`:
+Get a list of available calendars:
 
 ```python
->>> ecals.get_calendar_names()[:5]
-['XPHS', 'FWB', 'CFE', 'CMES', 'XSGO']
+>>> xcals.get_calendar_names(include_aliases=False)[5:10]
+['CMES', 'IEPA', 'XAMS', 'XASX', 'XBKK']
 ```
 
-Get a calendar with `get_calendar`:
+Get a calendar:
 
 ```python
->>> xnys = ecals.get_calendar("XNYS")
+>>> xnys = xcals.get_calendar("XNYS")  # New York Stock Exchange
+>>> xhkg = xcals.get_calendar(
+        "XHKG",
+        start="2018-01",
+        end="2021-12-31",
+        side="left"
+)  # Hong Kong Stock Exchange
 ```
-
-Working with sessions:
+Query the schedule:
 
 ```python
->>> xnys.is_session(pd.Timestamp("2020-01-01"))
+>>> xhkg.schedule.loc["2020-12-29":"2021-01-05"]
+```
+<!-- output from `xhkg.schedule.loc["2020-12-29":"2021-01-05"].to_html()` -->
+<table border="1" class="dataframe">  <thead>    <tr style="text-align: right; font-size: 13px">      <th></th>      <th>market_open</th>      <th>break_start</th>      <th>break_end</th>      <th>market_close</th>    </tr>  </thead>  <tbody style="text-align: right; font-size: 11px">    <tr>      <th>2020-12-29 00:00:00+00:00</th>      <td>2020-12-29 01:30:00</td>      <td>2020-12-29 04:00:00</td>      <td>2020-12-29 05:00:00</td>      <td>2020-12-29 08:00:00</td>    </tr>    <tr>      <th>2020-12-30 00:00:00+00:00</th>      <td>2020-12-30 01:30:00</td>      <td>2020-12-30 04:00:00</td>      <td>2020-12-30 05:00:00</td>      <td>2020-12-30 08:00:00</td>    </tr>    <tr>      <th>2020-12-31 00:00:00+00:00</th>      <td>2020-12-31 01:30:00</td>      <td>NaT</td>      <td>NaT</td>      <td>2020-12-31 04:00:00</td>    </tr>    <tr>      <th>2021-01-04 00:00:00+00:00</th>      <td>2021-01-04 01:30:00</td>      <td>2021-01-04 04:00:00</td>      <td>2021-01-04 05:00:00</td>      <td>2021-01-04 08:00:00</td>    </tr>    <tr>      <th>2021-01-05 00:00:00+00:00</th>      <td>2021-01-05 01:30:00</td>      <td>2021-01-05 04:00:00</td>      <td>2021-01-05 05:00:00</td>      <td>2021-01-05 08:00:00</td>    </tr>  </tbody></table>
+
+### Working with **sessions**
+<!--TODO revise section post any renaming -->
+```python
+>>> xnys.is_session("2020-01-01")
 False
 
->>> xnys.next_open(pd.Timestamp("2020-01-01"))
-Timestamp('2020-01-02 14:31:00+0000', tz='UTC')
+>>> xnys.sessions_in_range("2021-01-01", "2021-01-11")
+DatetimeIndex(['2021-01-04 00:00:00+00:00', '2021-01-05 00:00:00+00:00',
+               '2021-01-06 00:00:00+00:00', '2021-01-07 00:00:00+00:00',
+               '2021-01-08 00:00:00+00:00', '2021-01-11 00:00:00+00:00'],
+              dtype='datetime64[ns, UTC]', freq='C')
 
->>> pd.Timestamp("2020-01-01", tz=pytz.UTC)+xnys.day
-Timestamp('2020-01-02 00:00:00+0000', tz='UTC')
+>>> xnys.sessions_window("2021-01-04", 7)
+DatetimeIndex(['2021-01-04 00:00:00+00:00', '2021-01-05 00:00:00+00:00',
+               '2021-01-06 00:00:00+00:00', '2021-01-07 00:00:00+00:00',
+               '2021-01-08 00:00:00+00:00', '2021-01-11 00:00:00+00:00',
+               '2021-01-12 00:00:00+00:00', '2021-01-13 00:00:00+00:00'],
+              dtype='datetime64[ns, UTC]', freq='C')
 
->>> xnys.previous_close(pd.Timestamp("2020-01-01"))
-Timestamp('2019-12-31 21:00:00+0000', tz='UTC')
+>>> xnys.date_to_session_label("2021-01-01", direction="next")
+Timestamp('2021-01-04 00:00:00+0000', tz='UTC', freq='C')
 
->>> xnys.sessions_in_range(
->>>     pd.Timestamp("2020-01-01", tz=pytz.UTC),
->>>     pd.Timestamp("2020-01-10", tz=pytz.UTC)
->>> )
-DatetimeIndex(['2020-01-02 00:00:00+00:00', '2020-01-03 00:00:00+00:00',
-                '2020-01-06 00:00:00+00:00', '2020-01-07 00:00:00+00:00',
-                '2020-01-08 00:00:00+00:00', '2020-01-09 00:00:00+00:00',
-                '2020-01-10 00:00:00+00:00'],
-                dtype='datetime64[ns, UTC]', freq='C')
-
->>> xnys.sessions_window(
->>>     pd.Timestamp("2020-01-02", tz=pytz.UTC),
->>>     7
->>> )
-DatetimeIndex(['2020-01-02 00:00:00+00:00', '2020-01-03 00:00:00+00:00',
-                '2020-01-06 00:00:00+00:00', '2020-01-07 00:00:00+00:00',
-                '2020-01-08 00:00:00+00:00', '2020-01-09 00:00:00+00:00',
-                '2020-01-10 00:00:00+00:00', '2020-01-13 00:00:00+00:00'],
-                dtype='datetime64[ns, UTC]', freq='C')
+>>> xnys.previous_session_label("2021-01-11")
+Timestamp('2021-01-08 00:00:00+0000', tz='UTC', freq='C')
 ```
+See the [sessions tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/159f1721bd860c14278e79bd6903ac627af3eabf/docs/tutorials/sessions.ipynb) for a deeper dive into sessions.
 
-**NOTE**: see the [ExchangeCalendar class](https://github.com/gerrymanoim/exchange_calendars/blob/master/exchange_calendars/exchange_calendar.py) for more advanced usage.
+### Working with **minutes**  
+<!--TODO WRITE section...-->  
 
-Trading calendars also supports command line usage, printing a unix-cal like calendar indicating which days are trading sessions or holidays.
+```python
+>>> xhkg.minutes_for_session("2021-01-04")
+DatetimeIndex(['2021-01-04 01:30:00+00:00', '2021-01-04 01:31:00+00:00',
+               '2021-01-04 01:32:00+00:00', '2021-01-04 01:33:00+00:00',
+               '2021-01-04 01:34:00+00:00', '2021-01-04 01:35:00+00:00',
+               '2021-01-04 01:36:00+00:00', '2021-01-04 01:37:00+00:00',
+               '2021-01-04 01:38:00+00:00', '2021-01-04 01:39:00+00:00',
+               ...
+               '2021-01-04 07:50:00+00:00', '2021-01-04 07:51:00+00:00',
+               '2021-01-04 07:52:00+00:00', '2021-01-04 07:53:00+00:00',
+               '2021-01-04 07:54:00+00:00', '2021-01-04 07:55:00+00:00',
+               '2021-01-04 07:56:00+00:00', '2021-01-04 07:57:00+00:00',
+               '2021-01-04 07:58:00+00:00', '2021-01-04 07:59:00+00:00'],
+              dtype='datetime64[ns, UTC]', length=330, freq=None)
+
+>>> mins = [ "2021-01-04 " + tm for tm in ["01:29", "01:30", "04:20", "07:59", "08:00"] ]
+>>> [ xhkg.is_trading_minute(minute) for minute in mins ]
+[False, True, False, True, False]
+
+>>> xhkg.is_break_minute("2021-01-04 04:20")
+True
+
+>>> xhkg.previous_close("2021-01-04 21:10")
+Timestamp('2021-01-04 08:00:00+0000', tz='UTC')
+
+>>> xhkg.previous_minute("2021-01-04 21:10")
+Timestamp('2021-01-04 07:59:00+0000', tz='UTC')
+```
+Check out the [minutes tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/159f1721bd860c14278e79bd6903ac627af3eabf/docs/tutorials/minutes.ipynb) for a deeper dive that includes an explanation of the concept of 'minutes' and covers how the "side" option determines which minutes are treated as trading minutes.
+
+## Tutorials
+<!--TODO CHECK ALL LINKS HERE WORKING...-->
+[sessions.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/159f1721bd860c14278e79bd6903ac627af3eabf/docs/tutorials/sessions.ipynb) - all things [sessions](#Working-with-sessions).  
+[minutes.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/159f1721bd860c14278e79bd6903ac627af3eabf/docs/tutorials/minutes.ipynb) - all things [minutes](#Working-with-minutes). Don't miss this one!  
+[calendar_properties.ipynb](docs/tutorials/calendar_properties.ipynb) - a walk through the schedule and all other calendar properties.  
+[calendar_methods.ipynb](docs/tutorials/calendar_methods.ipynb) - a walk through all the methods available to interrogate a calendar.
+
+Hopefully you'll find that exchange calendars has the method you need to get the information you want. If it doesn't, [raise an issue](https://github.com/gerrymanoim/exchange_calendars/issues) and let us know!
+
+## Command Line Usage
+Print a unix-cal like calendar straight from the command line (holidays are indicated by brackets)...
 
 ```bash
 ecal XNYS 2020
@@ -126,40 +170,31 @@ ecal XNYS 1 2020
 
 ## Frequently Asked Questions
 
-### Why is `<holiday>` missing for `<calendar>`?
+### **How can I create a new calendar?**
 
-`exchange_calendar` holidays are **all** user contributed. If a calendar you care about is missing a holiday, please open a PR.
+First off, make sure the calendar you're after hasn't already been defined; exchange calendars comes with over [50 pre-defined calendars](#Calendars), including major security exchanges.
 
-### What times are considered open and closed?
+If you can't find what you're after, a custom calendar can be created as a subclass of [ExchangeCalendar]()<!--TODO ADD REFERENCE-->. The subclass should override those calendar-definition properties relevant to it. 
 
-`exchange_calendars` attempts to be broadly useful and thus maps to "intuitive" exchange open/closings, rather than the technically true ones. This may hide some technical aspects of the exchange (for example: auction durations).
+We're working on improving the documentation for creating calendars (contributions welcome!). In the meantime it's a (not too complicated) matter of referring to the `ExchangeCalendar` abstract properties' documentation and reading the comments in the code to ascertain which properties are relevant to the subclass and how they should be defined.
 
-In general, the all times within the closed set `[open_time, close_time]` are treated as open.
+To access the new calendar via `get_calendar` call either `xcals.register_calendar` or `xcals.register_calendar_type` to register, respectively, a specific calendar instance or a calendar factory (i.e. the subclass).
 
-On a regular trading day for NYSE (open 9:30 AM to 4:00 PM EST):
+### **Can I contribute a new calendar to exchange calendars?**
 
-- 9:29:59 is treated as closed.
-- 9:30:00 is the first time treated as open.
-- 9:30:01 is treated as open.
-- 16:00:00 is treated as open
-- 16:00:01 is treated as closed
+Yes please! The checklist [here](https://github.com/gerrymanoim/exchange_calendars/issues/59#issuecomment-883284979) pretty much covers the process. (anyone with time to offer a PR more fully documentating 'How to contribute a new calendar', please do!)
 
-On a regular trading day for XHKG (open 9:30 AM to 12:00 PM, 1:00 PM to 4:00 PM HKT)
+### **`<calendar>` is missing a holiday, has a wrong time, should have a break etc...**
 
-- 9:29:59 is treated as closed.
-- 9:30:00 is the first time treated as open.
-- 9:30:01 is treated as open.
-- 12:00:00 is treated as open
-- 12:00:01 is treated as closed
-- 12:59:59 is treated as closed
-- 13:00:00 is treated as open
-- 16:00:00 is treated as open
-- 16:00:01 is treated as closed
+**All** of the exchange calendars are maintained by user contributions. If a calendar you care about needs revising, please open a PR - that's how this thing works!
 
-Similar logic applies to exchanges with lunchbreaks.
+### **What times are considered open and closed?**
 
+`exchange_calendars` attempts to be broadly useful by considering an exchange to be open only during periods of regular trading. During any pre-trading, post-trading or auction period the exchange is treated as closed. An exchange is also treated as closed during any observed lunch break.
 
-## Calendar Support
+See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanation of which minutes an exchange is considered open over. If you previously used `trading_calendars`, or `exchange_calendars` prior to release 3.4, then this is the place to look for answers to questions of how the definition of trading minutes has changed over time (and is now stable and flexible!).
+
+## Calendars
 
 | Exchange                        | ISO Code | Country        | Version Added | Exchange Website (English)                                   |
 | ------------------------------- | -------- | -------------- | ------------- | ------------------------------------------------------------ |
