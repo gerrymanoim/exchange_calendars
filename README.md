@@ -69,7 +69,7 @@ Timestamp('2021-01-04 00:00:00+0000', tz='UTC', freq='C')
 >>> xnys.previous_session_label("2021-01-11")
 Timestamp('2021-01-08 00:00:00+0000', tz='UTC', freq='C')
 ```
-See the [sessions tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/159f1721bd860c14278e79bd6903ac627af3eabf/docs/tutorials/sessions.ipynb) for a deeper dive into sessions.
+See the [sessions tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/sessions.ipynb) for a deeper dive into sessions.
 
 ### Working with **minutes**  
 <!--TODO WRITE section...-->  
@@ -102,14 +102,14 @@ Timestamp('2021-01-04 08:00:00+0000', tz='UTC')
 >>> xhkg.previous_minute("2021-01-04 21:10")
 Timestamp('2021-01-04 07:59:00+0000', tz='UTC')
 ```
-Check out the [minutes tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/159f1721bd860c14278e79bd6903ac627af3eabf/docs/tutorials/minutes.ipynb) for a deeper dive that includes an explanation of the concept of 'minutes' and covers how the "side" option determines which minutes are treated as trading minutes.
+Check out the [minutes tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/minutes.ipynb) for a deeper dive that includes an explanation of the concept of 'minutes' and covers how the "side" option determines which minutes are treated as trading minutes.
 
 ## Tutorials
-<!--TODO CHECK ALL LINKS HERE WORKING...-->
-[sessions.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/159f1721bd860c14278e79bd6903ac627af3eabf/docs/tutorials/sessions.ipynb) - all things [sessions](#Working-with-sessions).  
-[minutes.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/159f1721bd860c14278e79bd6903ac627af3eabf/docs/tutorials/minutes.ipynb) - all things [minutes](#Working-with-minutes). Don't miss this one!  
-[calendar_properties.ipynb](docs/tutorials/calendar_properties.ipynb) - a walk through the schedule and all other calendar properties.  
-[calendar_methods.ipynb](docs/tutorials/calendar_methods.ipynb) - a walk through all the methods available to interrogate a calendar.
+<!--THESE NEED CHANGING ON ANY CHANGE TO A TUTORIAL! NB sessions.ipynb and minutes.ipynb are also linked to elsewhere in the README. Alternative is a link to the GitHub page and then hope users find their way to the nbviewer version via the link to the top left of the GitHub viewer -->
+[sessions.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/sessions.ipynb) - all things [sessions](#Working-with-sessions).  
+[minutes.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/minutes.ipynb) - all things [minutes](#Working-with-minutes). Don't miss this one!  
+[calendar_properties.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/calendar_properties.ipynb) - a walk through the schedule and all other calendar properties.  
+[calendar_methods.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/calendar_methods.ipynb) - a walk through all the methods available to interrogate a calendar.
 
 Hopefully you'll find that exchange calendars has the method you need to get the information you want. If it doesn't, [raise an issue](https://github.com/gerrymanoim/exchange_calendars/issues) and let us know!
 
@@ -192,7 +192,7 @@ Yes please! The checklist [here](https://github.com/gerrymanoim/exchange_calenda
 
 `exchange_calendars` attempts to be broadly useful by considering an exchange to be open only during periods of regular trading. During any pre-trading, post-trading or auction period the exchange is treated as closed. An exchange is also treated as closed during any observed lunch break.
 
-See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanation of which minutes an exchange is considered open over. If you previously used `trading_calendars`, or `exchange_calendars` prior to release 3.4, then this is the place to look for answers to questions of how the definition of trading minutes has changed over time (and is now stable and flexible!).
+See the [minutes tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/minutes.ipynb) for a detailed explanation of which minutes an exchange is considered open over. If you previously used `trading_calendars`, or `exchange_calendars` prior to release 3.4, then this is the place to look for answers to questions of how the definition of trading minutes has changed over time (and is now stable and flexible!).
 
 ## Calendars
 
