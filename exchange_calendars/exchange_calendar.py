@@ -1446,7 +1446,10 @@ class ExchangeCalendar(ABC):
             return pd.Series([], dtype="datetime64[ns, UTC]")
 
         result = pd.concat(merged).sort_index()
-        result = result.loc[(result >= start_date) & (result <= end_date)]
+        # end_date + one day to include all times of last day, otherwise if
+        # end_date */12/31 00:00 then */12/31 12:30 would be excluded.
+        end_rng = end_date + pd.Timedelta(1, "D")
+        result = result.loc[(result >= start_date) & (result < end_rng)]
         # exclude any special date that conincides with a holiday
         adhoc_holidays = pd.DatetimeIndex(self.adhoc_holidays, tz="UTC")
         result = result[~result.index.isin(adhoc_holidays)]
