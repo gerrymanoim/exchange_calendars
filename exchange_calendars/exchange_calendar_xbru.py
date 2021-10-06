@@ -84,15 +84,9 @@ class XBRUExchangeCalendar(ExchangeCalendar):
     # Source: https://www.euronext.com/en/calendars-hours
     regular_early_close = time(14, 5)
 
-    @property
-    def name(self):
-        # Euronext Brussels
-        return "XBRU"
-
+    name = "XBRU"  # Euronext Brussels
     tz = timezone("Europe/Brussels")
-
     open_times = ((None, time(9)),)
-
     close_times = ((None, time(17, 30)),)
 
     @property

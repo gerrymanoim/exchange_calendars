@@ -84,15 +84,9 @@ class XAMSExchangeCalendar(ExchangeCalendar):
     # Source: https://www.euronext.com/en/calendars-hours
     regular_early_close = time(14, 5)
 
-    @property
-    def name(self):
-        # Euronext Amsterdam
-        return "XAMS"
-
+    name = "XAMS"  # Euronext Amsterdam
     tz = timezone("Europe/Amsterdam")
-
     open_times = ((None, time(9)),)
-
     close_times = ((None, time(17, 30)),)
 
     @property

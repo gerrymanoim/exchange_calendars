@@ -82,15 +82,9 @@ class XPARExchangeCalendar(ExchangeCalendar):
     # Source: https://www.euronext.com/en/calendars-hours
     regular_early_close = time(14, 5)
 
-    @property
-    def name(self):
-        # Euronext Paris
-        return "XPAR"
-
+    name = "XPAR"  # Euronext Paris
     tz = timezone("Europe/Paris")
-
     open_times = ((None, time(9)),)
-
     close_times = ((None, time(17, 30)),)
 
     @property

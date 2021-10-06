@@ -1031,85 +1031,6 @@ class ExchangeCalendarTestBase(object):
             self.assertTrue(self.calendar.session_has_break(self.SESSION_WITH_BREAK))
 
 
-# TODO migrate all subclasses of EuronextCalendarTestBase together under same commit.
-class EuronextCalendarTestBase(ExchangeCalendarTestBase):
-    """
-    Shared tests for countries on the Euronext exchange.
-    """
-
-    # Early close is 2:05 PM.
-    # Source: https://www.euronext.com/en/calendars-hours
-    TIMEDELTA_TO_EARLY_CLOSE = pd.Timedelta(hours=14, minutes=5)
-
-    def test_normal_year(self):
-        expected_holidays_2014 = [
-            pd.Timestamp("2014-01-01", tz=UTC),  # New Year's Day
-            pd.Timestamp("2014-04-18", tz=UTC),  # Good Friday
-            pd.Timestamp("2014-04-21", tz=UTC),  # Easter Monday
-            pd.Timestamp("2014-05-01", tz=UTC),  # Labor Day
-            pd.Timestamp("2014-12-25", tz=UTC),  # Christmas
-            pd.Timestamp("2014-12-26", tz=UTC),  # Boxing Day
-        ]
-
-        for session_label in expected_holidays_2014:
-            self.assertNotIn(session_label, self.calendar.all_sessions)
-
-        early_closes_2014 = [
-            pd.Timestamp("2014-12-24", tz=UTC),  # Christmas Eve
-            pd.Timestamp("2014-12-31", tz=UTC),  # New Year's Eve
-        ]
-
-        for early_close_session_label in early_closes_2014:
-            self.assertIn(
-                early_close_session_label,
-                self.calendar.early_closes,
-            )
-
-    def test_holidays_fall_on_weekend(self):
-        # Holidays falling on a weekend should not be made up during the week.
-        expected_sessions = [
-            # In 2010, Labor Day fell on a Saturday, so the market should be
-            # open on both the prior Friday and the following Monday.
-            pd.Timestamp("2010-04-30", tz=UTC),
-            pd.Timestamp("2010-05-03", tz=UTC),
-            # Christmas also fell on a Saturday, meaning Boxing Day fell on a
-            # Sunday. The market should still be open on both the prior Friday
-            # and the following Monday.
-            pd.Timestamp("2010-12-24", tz=UTC),
-            pd.Timestamp("2010-12-27", tz=UTC),
-        ]
-
-        for session_label in expected_sessions:
-            self.assertIn(session_label, self.calendar.all_sessions)
-
-    def test_half_days(self):
-        half_days = [
-            # In 2010, Christmas Eve and NYE are on Friday, so they should be
-            # half days.
-            pd.Timestamp("2010-12-24", tz=self.TZ),
-            pd.Timestamp("2010-12-31", tz=self.TZ),
-        ]
-        full_days = [
-            # In Dec 2011, Christmas Eve and NYE were both on a Saturday, so
-            # the preceding Fridays should be full days.
-            pd.Timestamp("2011-12-23", tz=self.TZ),
-            pd.Timestamp("2011-12-30", tz=self.TZ),
-        ]
-
-        for half_day in half_days:
-            half_day_close_time = self.calendar.next_close(half_day)
-            self.assertEqual(
-                half_day_close_time,
-                half_day + self.TIMEDELTA_TO_EARLY_CLOSE,
-            )
-        for full_day in full_days:
-            full_day_close_time = self.calendar.next_close(full_day)
-            self.assertEqual(
-                full_day_close_time,
-                full_day + self.TIMEDELTA_TO_NORMAL_CLOSE,
-            )
-
-
 # TODO remove this class when all calendars migrated. No longer requried as
 #  `minute_index_to_session_labels` comprehensively tested under new suite.
 class OpenDetectionTestCase(TestCase):
@@ -2510,7 +2431,7 @@ class ExchangeCalendarTestBaseNew:
         """
         raise NotImplementedError("fixture must be implemented on subclass")
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def max_session_hours(self) -> abc.Iterator[int | float]:
         """Largest number of hours that can comprise a single session.
 
@@ -2534,13 +2455,13 @@ class ExchangeCalendarTestBaseNew:
     # subclass should override the following fixtures in the event that the
     # default defined here does not apply.
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def start_bound(self) -> abc.Iterator[pd.Timestamp | None]:
         """Earliest date for which calendar can be instantiated, or None if
         there is no start bound."""
         yield None
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def end_bound(self) -> abc.Iterator[pd.Timestamp | None]:
         """Latest date for which calendar can be instantiated, or None if
         there is no end bound."""
@@ -2551,7 +2472,7 @@ class ExchangeCalendarTestBaseNew:
     # by the fixture. Where fixtures are not overriden the associated tests
     # will be skipped.
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def regular_holidays_sample(self) -> abc.Iterator[list[str]]:
         """Sample of known regular calendar holidays. Empty list if no holidays.
 
@@ -2563,7 +2484,7 @@ class ExchangeCalendarTestBaseNew:
         """
         yield []
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def adhoc_holidays_sample(self) -> abc.Iterator[list[str]]:
         """Sample of adhoc calendar holidays. Empty list if no adhoc holidays.
 
@@ -2575,7 +2496,7 @@ class ExchangeCalendarTestBaseNew:
         """
         yield []
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def non_holidays_sample(self) -> abc.Iterator[list[str]]:
         """Sample of known dates that are not holidays.
 
@@ -2591,7 +2512,7 @@ class ExchangeCalendarTestBaseNew:
         """
         yield []
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def late_opens_sample(self) -> abc.Iterator[list[str]]:
         """Sample of known calendar sessions with late opens.
 
@@ -2603,7 +2524,7 @@ class ExchangeCalendarTestBaseNew:
         """
         yield []
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def early_closes_sample(self) -> abc.Iterator[list[str]]:
         """Sample of known calendar sessions with early closes.
 
@@ -2615,7 +2536,7 @@ class ExchangeCalendarTestBaseNew:
         """
         yield []
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def early_closes_sample_time(self) -> abc.Iterator[pd.Timedelta | None]:
         """Local close time of sessions of `early_closes_sample` fixture.
 
@@ -2636,7 +2557,7 @@ class ExchangeCalendarTestBaseNew:
         """
         yield None
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def non_early_closes_sample(self) -> abc.Iterator[list[str]]:
         """Sample of known calendar sessions with normal close times.
 
@@ -2651,7 +2572,7 @@ class ExchangeCalendarTestBaseNew:
         """
         yield []
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def non_early_closes_sample_time(self) -> abc.Iterator[pd.Timedelta | None]:
         """Local close time of sessions of `non_early_closes_sample` fixture.
 
@@ -4041,3 +3962,72 @@ class ExchangeCalendarTestBaseNew:
 
         # Additional belt-and-braces test to reconcile with cal.all_minutes
         assert f(ans.first_session, ans.last_session) == len(cal.all_minutes)
+
+
+class EuronextCalendarTestBase(ExchangeCalendarTestBaseNew):
+    """Common calendar-specific fixtures for Euronext exchanges."""
+
+    # Subclass should override the following fixtures if close times differ
+    # from the default yielded.
+
+    @pytest.fixture
+    def early_closes_sample_time(self):
+        # Early close is 2:05 PM.
+        # Source: https://www.euronext.com/en/calendars-hours
+        yield pd.Timedelta(hours=14, minutes=5)
+
+    @pytest.fixture
+    def non_early_closes_sample_time(self):
+        yield pd.Timedelta(hours=17, minutes=30)
+
+    # Subclass can override the following fixtures to add to calendar-specific samples.
+
+    @pytest.fixture
+    def additional_regular_holidays_sample(self):
+        yield []
+
+    @pytest.fixture
+    def additional_non_holidays_sample(self):
+        yield []
+
+    # Subclass should NOT override any of the following fixtures.
+
+    @pytest.fixture
+    def max_session_hours(self):
+        yield 8.5
+
+    @pytest.fixture
+    def regular_holidays_sample(self, additional_regular_holidays_sample):
+        yield additional_regular_holidays_sample + [
+            # 2014
+            "2014-01-01",  # New Year's Day
+            "2014-04-18",  # Good Friday
+            "2014-04-21",  # Easter Monday
+            "2014-05-01",  # Labor Day
+            "2014-12-25",  # Christmas
+            "2014-12-26",  # Boxing Day
+        ]
+
+    @pytest.fixture
+    def non_holidays_sample(self, additional_non_holidays_sample):
+        yield additional_non_holidays_sample + [
+            # Holidays falling on a weekend that are not made up. Ensure
+            # surrounding sessions are not holidays...
+            # In 2010, Labor Day fell on a Saturday, so the market should be open...
+            "2010-04-30",  # ...on prior Friday...
+            "2010-05-03",  # ...and following Monday.
+            # Christmas fell on a Saturday and Boxing Day on a Sunday...
+            "2010-12-24",  # market should be open on both the prior Friday...
+            "2010-12-27",  # ...and following Monday.
+        ]
+
+    @pytest.fixture
+    def early_closes_sample(self):
+        # Christmas Eve, New Year's Eve, Christmas Eve, New Year's Eve
+        yield ["2010-12-24", "2010-12-31", "2014-12-24", "2014-12-31"]
+
+    @pytest.fixture
+    def non_early_closes_sample(self):
+        # In Dec 2011, Christmas Eve and NYE were both on a Saturday, so
+        # the preceding Fridays should be full days.
+        yield ["2011-12-23", "2011-12-30"]
