@@ -9,11 +9,11 @@ class TestXLONCalendar(ExchangeCalendarTestBaseNew):
     def calendar_cls(self):
         yield XLONExchangeCalendar
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def max_session_hours(self):
         yield 8.5
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def regular_holidays_sample(self):
         yield [
             # 2012
@@ -27,7 +27,7 @@ class TestXLONCalendar(ExchangeCalendarTestBaseNew):
             "2012-12-26",  # Boxing Day
         ]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def adhoc_holidays_sample(self):
         yield [
             "2002-06-03",  # Spring Bank 2002
@@ -38,12 +38,12 @@ class TestXLONCalendar(ExchangeCalendarTestBaseNew):
             "2020-05-08",  # VE Day
         ]
 
-    @pytest.fixture(scope="class")
-    def sessions_sample(self):
+    @pytest.fixture
+    def non_holidays_sample(self):
         # May Bank Holiday was instead observed on VE Day in 2020.
         yield ["2020-05-04"]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def early_closes_sample(self):
         yield [
             "2012-12-24",  # Christmas Eve

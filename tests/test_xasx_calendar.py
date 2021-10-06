@@ -10,11 +10,11 @@ class TestXASXCalendar(ExchangeCalendarTestBaseNew):
     def calendar_cls(self):
         yield XASXExchangeCalendar
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def max_session_hours(self):
         yield 6
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def regular_holidays_sample(self):
         yield [
             # 2018
@@ -46,12 +46,12 @@ class TestXASXCalendar(ExchangeCalendarTestBaseNew):
             "2010-12-28",
         ]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def non_holidays_sample(self):
         # Anzac Day on a Saturday, does not have a make-up (prior to 2010).
         yield ["2015-04-27", "2004-04-26"]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def early_closes_sample(self):
         yield [
             # In 2018, the last trading days before Christmas and New Year's
@@ -68,15 +68,15 @@ class TestXASXCalendar(ExchangeCalendarTestBaseNew):
             "2016-12-30",
         ]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def early_closes_sample_time(self):
         yield pd.Timedelta(hours=14, minutes=10)
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def non_early_closes_sample(self):
         # In 2009 the early close rules should not be in effect yet.
         yield ["2009-12-24", "2009-12-31"]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def non_early_closes_sample_time(self):
         yield pd.Timedelta(16, "H")

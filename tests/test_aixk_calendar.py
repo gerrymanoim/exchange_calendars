@@ -10,15 +10,15 @@ class TestAIXKCalendar(ExchangeCalendarTestBaseNew):
     def calendar_cls(self):
         yield AIXKExchangeCalendar
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def max_session_hours(self):
         yield 6
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def start_bound(self):
         yield T("2017-01-01")
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def regular_holidays_sample(self):
         yield [
             # 2021
@@ -53,7 +53,7 @@ class TestAIXKCalendar(ExchangeCalendarTestBaseNew):
             "2019-07-08",
         ]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def adhoc_holidays_sample(self):
         # Bridge Days
         yield [

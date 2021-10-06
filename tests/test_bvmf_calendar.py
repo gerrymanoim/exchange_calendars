@@ -9,11 +9,11 @@ class TestBVMFCalendar(ExchangeCalendarTestBaseNew):
     def calendar_cls(self):
         yield BVMFExchangeCalendar
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def max_session_hours(self):
         yield 7
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def regular_holidays_sample(self):
         yield [
             # 2017
@@ -46,11 +46,11 @@ class TestBVMFCalendar(ExchangeCalendarTestBaseNew):
             "2013-12-31",  # 2014: Jan 1 is Wednesday, so Tuesday 12/31 should be closed
         ]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def adhoc_holidays_sample(self):
         yield ["2014-06-12"]  # world-cup
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def non_holidays_sample(self):
         yield [
             "1997-07-09",  # year prior to first Constitutionalist Revolution holiday

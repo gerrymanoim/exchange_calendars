@@ -14,16 +14,16 @@ class TestCMESCalendar(ExchangeCalendarTestBaseNew):
     def calendar_cls(self):
         yield CMESExchangeCalendar
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def max_session_hours(self):
         yield 24
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def regular_holidays_sample(self):
         # good friday, christmas, new years
         yield ["2016-03-25", "2016-12-26", "2016-01-02"]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def early_closes_sample(self):
         yield [
             "2016-01-18",  # mlk day
@@ -34,6 +34,6 @@ class TestCMESCalendar(ExchangeCalendarTestBaseNew):
             "2016-11-24",  # thanksgiving
         ]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def early_closes_sample_time(self):
         yield pd.Timedelta(12, "H")

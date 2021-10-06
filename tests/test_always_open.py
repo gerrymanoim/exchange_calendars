@@ -16,7 +16,7 @@ class TestAlwaysOpenCalendar(ExchangeCalendarTestBaseNew):
     def calendar_cls(self):
         yield AlwaysOpenCalendar
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def max_session_hours(self):
         yield 24
 

@@ -1,6 +1,5 @@
-import datetime
-
 import pytest
+import pandas as pd
 
 from exchange_calendars.exchange_calendar_xhkg import XHKGExchangeCalendar
 from .test_exchange_calendar import ExchangeCalendarTestBaseNew
@@ -12,19 +11,19 @@ class TestXHKGCalendar(ExchangeCalendarTestBaseNew):
     def calendar_cls(self):
         yield XHKGExchangeCalendar
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def max_session_hours(self):
         yield 6.5
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def start_bound(self):
         yield T("1960-01-01")
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def end_bound(self):
         yield T("2049-12-31")
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def adhoc_holidays_sample(self):
         # Lunar Month 12 2002 is the 12th month of the lunar year that begins
         # in 2002; this month actually takes place in January 2003.
@@ -180,13 +179,10 @@ class TestXHKGCalendar(ExchangeCalendarTestBaseNew):
 
         yield lunar_2003 + lunar_2018 + lunar_2017
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def early_closes_sample(self):
         yield ["2018-02-15", "2017-01-27"]
 
-    # Calendar-specific tests
-
-    def test_early_close_time(self, default_calendar, early_closes_sample):
-        cal = default_calendar
-        for early_close in early_closes_sample:
-            assert cal.closes[early_close].time() == datetime.time(4, 0)
+    @pytest.fixture
+    def early_closes_sample_time(self):
+        yield pd.Timedelta(12, "H")

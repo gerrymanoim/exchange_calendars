@@ -10,12 +10,12 @@ class TestASEXCalendar(ExchangeCalendarTestBaseNew):
     def calendar_cls(self):
         yield ASEXExchangeCalendar
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def max_session_hours(self):
         # The ASEX is open from 10:00 to 5:20PM on its longest trading day
         yield 7 + (1 / 3)
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def regular_holidays_sample(self):
         yield [
             # 2019
@@ -70,7 +70,7 @@ class TestASEXCalendar(ExchangeCalendarTestBaseNew):
             "2018-02-19",
         ]
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def adhoc_holidays_sample(self):
         adhocs = [
             "2002-05-07",  # Market Holiday
@@ -86,7 +86,7 @@ class TestASEXCalendar(ExchangeCalendarTestBaseNew):
         crisis_dates = pd.date_range("2015-06-29", "2015-07-31")
         yield adhocs + crisis_dates.strftime("%Y-%m-%d").to_list()
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def non_holidays_sample(self):
         yield [
             # Holidays NOT made up despite falling on weekend. Following ensures
