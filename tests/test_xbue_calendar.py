@@ -1,137 +1,102 @@
-from unittest import TestCase
-
+import pytest
 import pandas as pd
-from pytz import UTC
 
 from exchange_calendars.exchange_calendar_xbue import XBUEExchangeCalendar
+from .test_exchange_calendar import ExchangeCalendarTestBaseNew
 
-from .test_exchange_calendar import ExchangeCalendarTestBase
 
+class TestXBUECalendar(ExchangeCalendarTestBaseNew):
+    @pytest.fixture(scope="class")
+    def calendar_cls(self):
+        yield XBUEExchangeCalendar
 
-class XBUECalendarTestCase(ExchangeCalendarTestBase, TestCase):
+    @pytest.fixture
+    def max_session_hours(self):
+        # The XBUE is open from 11:00AM to 5:00PM
+        yield 6
 
-    answer_key_filename = "xbue"
-    calendar_class = XBUEExchangeCalendar
-
-    # The XBUE is open from 11:00AM to 5:00PM
-    MAX_SESSION_HOURS = 6
-
-    # Daylight Savings was observed in Buenos Aires from 2007-2009
-    DAYLIGHT_SAVINGS_DATES = ["2008-10-20", "2008-03-17"]
-
-    # TODO: Verify Christmas Eve, NYE early closes
-    HAVE_EARLY_CLOSES = True
-
-    def test_regular_holidays(self):
-        all_sessions = self.calendar.all_sessions
-
-        expected_holidays = [
-            pd.Timestamp("2019-01-01", tz=UTC),  # New Year's Day
-            pd.Timestamp("2019-03-04", tz=UTC),  # Carnival Monday
-            pd.Timestamp("2019-03-05", tz=UTC),  # Carnival Tuesday
-            pd.Timestamp("2017-03-24", tz=UTC),  # Truth and Justice Mem Day
-            pd.Timestamp("2019-04-02", tz=UTC),  # Malvinas Day
-            pd.Timestamp("2019-04-13", tz=UTC),  # Maundy Thursday
-            pd.Timestamp("2019-04-14", tz=UTC),  # Good Friday
-            pd.Timestamp("2019-05-01", tz=UTC),  # Labour Day
-            pd.Timestamp("2018-05-25", tz=UTC),  # May Day Revolution
-            pd.Timestamp("2019-06-17", tz=UTC),  # Martin Miguel de-Guemes Day
-            pd.Timestamp("2019-06-20", tz=UTC),  # National Flag Day
-            pd.Timestamp("2019-07-09", tz=UTC),  # Independence Day
-            pd.Timestamp("2019-08-19", tz=UTC),  # San Martin's Day
-            pd.Timestamp("2019-10-14", tz=UTC),  # Cultural Diversity Day
-            pd.Timestamp("2019-11-18", tz=UTC),  # Day of Natl Sovereignty
-            pd.Timestamp("2017-12-08", tz=UTC),  # Immaculate Conception
-            pd.Timestamp("2019-12-25", tz=UTC),  # Christmas Day
+    @pytest.fixture
+    def regular_holidays_sample(self):
+        yield [
+            # 2019
+            "2019-01-01",  # New Year's Day
+            "2019-03-04",  # Carnival Monday
+            "2019-03-05",  # Carnival Tuesday
+            "2017-03-24",  # Truth and Justice Mem Day
+            "2019-04-02",  # Malvinas Day
+            "2019-04-13",  # Maundy Thursday
+            "2019-04-14",  # Good Friday
+            "2019-05-01",  # Labour Day
+            "2018-05-25",  # May Day Revolution
+            "2019-06-17",  # Martin Miguel de-Guemes Day
+            "2019-06-20",  # National Flag Day
+            "2019-07-09",  # Independence Day
+            "2019-08-19",  # San Martin's Day
+            "2019-10-14",  # Cultural Diversity Day
+            "2019-11-18",  # Day of Natl Sovereignty
+            "2017-12-08",  # Immaculate Conception
+            "2019-12-25",  # Christmas Day
+            #
+            # Day of Respect for Cultural Diversity follows a "nearest Monday"
+            # rule. When Oct 12 falls on a Tuesday or Wednesday the holiday is
+            # observed on the previous Monday, and when it falls on any other
+            # non-Monday it is observed on the following Monday.  This means
+            # the holiday will be observed on the following dates (Mondays).
+            "2019-10-14",  # Falls on Saturday
+            "2018-10-15",  # Falls on Friday
+            "2017-10-16",  # Falls on Thursday
+            "2016-10-10",  # Falls on Wednesday
+            "2015-10-12",  # Falls on Monday
+            "2014-10-13",  # Falls on Sunday
+            "2013-10-14",  # Falls on Saturday
+            "2010-10-11",  # Falls on Tuesday
         ]
 
-        for holiday_label in expected_holidays:
-            self.assertNotIn(holiday_label, all_sessions)
-
-    def test_holidays_fall_on_weekend(self):
-        all_sessions = self.calendar.all_sessions
-
-        # Holidays falling on weekends are not made up, so verify surrounding
-        # days are trading days.
-        expected_sessions = [
+    @pytest.fixture
+    def non_holidays_sample(self):
+        yield [
+            # Holidays that fall on a weekend are not made up. Ensure surrounding
+            # days are not holidays.
             # New Year's Day on Sunday, Jan 1st.
-            pd.Timestamp("2016-12-30", tz=UTC),
-            pd.Timestamp("2017-01-02", tz=UTC),
+            "2016-12-30",
+            "2017-01-02",
             # Truth and Justice Memorial Day on Sunday, Mar 24th.
-            pd.Timestamp("2019-03-22", tz=UTC),
-            pd.Timestamp("2019-03-25", tz=UTC),
+            "2019-03-22",
+            "2019-03-25",
             # Malvinas Day on Saturday, Apr 2nd.
-            pd.Timestamp("2016-04-01", tz=UTC),
-            pd.Timestamp("2016-04-04", tz=UTC),
+            "2016-04-01",
+            "2016-04-04",
             # Labour Day on Sunday, May 1st.
-            pd.Timestamp("2016-04-29", tz=UTC),
-            pd.Timestamp("2016-05-02", tz=UTC),
+            "2016-04-29",
+            "2016-05-02",
             # May Day Revolution on Saturday, May 25th.
-            pd.Timestamp("2019-05-24", tz=UTC),
-            pd.Timestamp("2019-05-27", tz=UTC),
+            "2019-05-24",
+            "2019-05-27",
             # Martin Miguel de-Guemes Day on Sunday, Jun 17th.
-            pd.Timestamp("2018-06-15", tz=UTC),
-            pd.Timestamp("2018-06-18", tz=UTC),
+            "2018-06-15",
+            "2018-06-18",
             # National Flag Day on Saturday, Jun 20th.
-            pd.Timestamp("2015-06-19", tz=UTC),
-            pd.Timestamp("2015-06-22", tz=UTC),
+            "2015-06-19",
+            "2015-06-22",
             # Independence Day on Sunday, Jul 9th.
-            pd.Timestamp("2017-07-07", tz=UTC),
-            pd.Timestamp("2017-07-10", tz=UTC),
+            "2017-07-07",
+            "2017-07-10",
             # Bank Holiday on Sunday, Nov 6th.
-            pd.Timestamp("2016-11-04", tz=UTC),
-            pd.Timestamp("2016-11-07", tz=UTC),
+            "2016-11-04",
+            "2016-11-07",
             # Immaculate Conception on Sunday, Dec 8th.
-            pd.Timestamp("2019-12-06", tz=UTC),
-            pd.Timestamp("2019-12-09", tz=UTC),
+            "2019-12-06",
+            "2019-12-09",
             # Christmas on Sunday
-            pd.Timestamp("2016-12-23", tz=UTC),
-            pd.Timestamp("2016-12-26", tz=UTC),
+            "2016-12-23",
+            "2016-12-26",
         ]
 
-        for session_label in expected_sessions:
-            self.assertIn(session_label, all_sessions)
+    @pytest.fixture
+    def early_closes_sample(self):
+        # Christmas Eve, New Year's Eve
+        yield ["2019-12-24", "2019-12-31"]
 
-    def test_cultural_diversity_day(self):
-        all_sessions = self.calendar.all_sessions
-
-        # Day of Respect for Cultural Diversity follows a "nearest Monday"
-        # rule.  When Oct 12 falls on a Tuesday or Wednesday the holiday is
-        # observed on the previous Monday, and when it falls on any other
-        # non-Monday it is observed on the following Monday.  This means
-        # the holiday will be observed between Oct 10 and Oct 16.
-        expected_holidays = [
-            pd.Timestamp("2019-10-14", tz=UTC),  # Falls on Saturday
-            pd.Timestamp("2018-10-15", tz=UTC),  # Falls on Friday
-            pd.Timestamp("2017-10-16", tz=UTC),  # Falls on Thursday
-            pd.Timestamp("2016-10-10", tz=UTC),  # Falls on Wednesday
-            pd.Timestamp("2015-10-12", tz=UTC),  # Falls on Monday
-            pd.Timestamp("2014-10-13", tz=UTC),  # Falls on Sunday
-            pd.Timestamp("2013-10-14", tz=UTC),  # Falls on Saturday
-            pd.Timestamp("2010-10-11", tz=UTC),  # Falls on Tuesday
-        ]
-
-        for holiday_label in expected_holidays:
-            self.assertNotIn(holiday_label, all_sessions)
-
-    def test_early_closes(self):
-        # The session label and close time for expected early closes.
-        buenos_aires_tz = "America/Argentina/Buenos_Aires"
-        expected_early_closes = [
-            # Christmas Eve
-            (
-                pd.Timestamp("2019-12-24", tz=UTC),
-                pd.Timestamp("2019-12-24 13:00", tz=buenos_aires_tz),
-            ),
-            # New Year's Eve
-            (
-                pd.Timestamp("2019-12-31", tz=UTC),
-                pd.Timestamp("2019-12-31 13:00", tz=buenos_aires_tz),
-            ),
-        ]
-
-        for session, expected_close in expected_early_closes:
-            self.assertEqual(
-                self.calendar.session_close(session),
-                expected_close,
-            )
+    @pytest.fixture
+    def early_closes_sample_time(self):
+        yield pd.Timedelta(13, "H")

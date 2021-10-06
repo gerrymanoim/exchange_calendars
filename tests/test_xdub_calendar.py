@@ -1,156 +1,93 @@
-from unittest import TestCase
-
+import pytest
 import pandas as pd
-from pytz import UTC
 
 from exchange_calendars.exchange_calendar_xdub import XDUBExchangeCalendar
+from .test_exchange_calendar import ExchangeCalendarTestBaseNew
 
-from .test_exchange_calendar import ExchangeCalendarTestBase
 
+class TestXDUBCalendar(ExchangeCalendarTestBaseNew):
+    @pytest.fixture(scope="class")
+    def calendar_cls(self):
+        yield XDUBExchangeCalendar
 
-class XDUBCalendarTestCase(ExchangeCalendarTestBase, TestCase):
+    @pytest.fixture
+    def max_session_hours(self):
+        # The XDUB is open from 8:00 am to 4:28 pm.
+        yield 8.467
 
-    answer_key_filename = "xdub"
-    calendar_class = XDUBExchangeCalendar
-
-    # The XDUB is open from 8:00 am to 4:28 pm.
-    MAX_SESSION_HOURS = 8.467
-
-    def test_normal_year(self):
-        all_sessions = self.calendar.all_sessions
-
-        expected_holidays = [
-            pd.Timestamp("2018-01-01", tz=UTC),  # New Year's Day
-            pd.Timestamp("2018-03-30", tz=UTC),  # Good Friday
-            pd.Timestamp("2018-04-02", tz=UTC),  # Easter Monday
-            pd.Timestamp("2018-05-07", tz=UTC),  # May Bank Holiday
-            pd.Timestamp("2018-06-04", tz=UTC),  # June Bank Holiday
-            pd.Timestamp("2018-12-25", tz=UTC),  # Christmas Day
-            pd.Timestamp("2018-12-26", tz=UTC),  # Boxing Day
-        ]
-
-        for session_label in expected_holidays:
-            self.assertNotIn(session_label, all_sessions)
-
-    def test_holidays_fall_on_weekend(self):
-        all_sessions = self.calendar.all_sessions
-
-        # Holidays falling on a weekend should be made up on the next trading
-        # day.
-        expected_holidays = [
+    @pytest.fixture
+    def regular_holidays_sample(self):
+        yield [
+            # 2018
+            "2018-01-01",  # New Year's Day
+            "2018-03-30",  # Good Friday
+            "2018-04-02",  # Easter Monday
+            "2018-05-07",  # May Bank Holiday
+            "2018-06-04",  # June Bank Holiday
+            "2018-12-25",  # Christmas Day
+            "2018-12-26",  # Boxing Day
+            #
+            # Holidays falling on a weekend are made up on what would otherwise be
+            # the next trading day.
             # In 2017 New Year's Day fell on a Sunday, so the following Monday
             # should be a holiday.
-            pd.Timestamp("2017-01-02", tz=UTC),
+            "2017-01-02",
             # In 2010 Christmas fell on a Saturday, meaning Boxing Day fell on
             # a Sunday. The following Monday and Tuesday should both be
             # holidays.
-            pd.Timestamp("2010-12-27", tz=UTC),
-            pd.Timestamp("2010-12-28", tz=UTC),
+            "2010-12-27",
+            "2010-12-28",
             # In 2016 Christmas fell on a Sunday, but again the following
             # Monday and Tuesday should both be holidays.
-            pd.Timestamp("2016-12-26", tz=UTC),
-            pd.Timestamp("2016-12-27", tz=UTC),
+            "2016-12-26",
+            "2016-12-27",
+            #
+            # Regular holiday's that later ceased to be observed.
+            "1996-03-18",  # St. Patrick's Day Observed
+            "2000-03-17",  # St. Patrick's Day
+            "2009-05-01",  # Labour Day
         ]
 
-        for session_label in expected_holidays:
-            self.assertNotIn(session_label, all_sessions)
+    @pytest.fixture
+    def adhoc_holidays_sample(self):
+        yield ["2018-03-02"]  # March 2, 2018 was closed due to sever weather.
 
-    def test_old_holidays(self):
-        """
-        Test the before and after of holidays that are no longer observed.
-        """
-        all_sessions = self.calendar.all_sessions
-
-        expected_holidays = [
-            pd.Timestamp("1996-03-18", tz=UTC),  # St. Patrick's Day Observed
-            pd.Timestamp("2000-03-17", tz=UTC),  # St. Patrick's Day
-            pd.Timestamp("2009-05-01", tz=UTC),  # Labour Day
+    @pytest.fixture
+    def non_holidays_sample(self):
+        yield [
+            # Regular holidays that earlier ceased to be observed.
+            "2001-03-19",  # St. Patrick's Day Observed
+            "2003-03-17",  # St. Patrick's Day
+            "2012-05-01",  # Labour Day
         ]
 
-        for session_label in expected_holidays:
-            self.assertNotIn(session_label, all_sessions)
-
-        expected_sessions = [
-            pd.Timestamp("2001-03-19", tz=UTC),  # St. Patrick's Day Observed
-            pd.Timestamp("2003-03-17", tz=UTC),  # St. Patrick's Day
-            pd.Timestamp("2012-05-01", tz=UTC),  # Labour Day
+    @pytest.fixture
+    def early_closes_sample(self):
+        yield [
+            "2010-12-24",  # Christmas Eve on a weekday.
+            "2018-12-24",  # Christmas Eve on a weekday.
+            "2017-12-22",  # Last trading day prior to Christmas Eve.
+            "2010-12-31",  # New Year's Eve on a weekday.
+            "2018-12-31",  # New Year's Eve on a weekday.
+            "2017-12-29",  # Last trading day prior to New Year's Eve.
+            "2018-03-01",  # Severe weather, closed early.
         ]
 
-        for session_label in expected_sessions:
-            self.assertIn(session_label, all_sessions)
+    @pytest.fixture
+    def early_closes_sample_time(self):
+        yield pd.Timedelta(hours=12, minutes=28)
 
-    def test_ad_hoc_holidays(self):
-        # March 2, 2018 was closed due to sever weather.
-        self.assertNotIn(
-            pd.Timestamp("2018-03-02", tz=UTC),
-            self.calendar.all_sessions,
-        )
-
-    def test_early_closes(self):
-        # The session label and close time for expected early closes.
-        expected_early_closes = [
-            # Christmas Eve on a weekday.
-            (
-                pd.Timestamp("2010-12-24", tz=UTC),
-                pd.Timestamp("2010-12-24 12:28", tz="Europe/Dublin"),
-            ),
-            (
-                pd.Timestamp("2018-12-24", tz=UTC),
-                pd.Timestamp("2018-12-24 12:28", tz="Europe/Dublin"),
-            ),
-            # If Christmas Eve falls on a weekend the last trading day before
-            # Christmas should be a trading day.
-            (
-                pd.Timestamp("2017-12-22", tz=UTC),
-                pd.Timestamp("2017-12-22 12:28", tz="Europe/Dublin"),
-            ),
-            # New Year's Eve on a weekday.
-            (
-                pd.Timestamp("2010-12-31", tz=UTC),
-                pd.Timestamp("2010-12-31 12:28", tz="Europe/Dublin"),
-            ),
-            (
-                pd.Timestamp("2018-12-31", tz=UTC),
-                pd.Timestamp("2018-12-31 12:28", tz="Europe/Dublin"),
-            ),
-            # If New Year's Eve falls on a weekend the last trading day of the
-            # year should be a half day.
-            (
-                pd.Timestamp("2017-12-29", tz=UTC),
-                pd.Timestamp("2017-12-29 12:28", tz="Europe/Dublin"),
-            ),
-            # March 1, 2018 was a half day due to severe weather.
-            (
-                pd.Timestamp("2018-03-01", tz=UTC),
-                pd.Timestamp("2018-03-01 12:28", tz="Europe/Dublin"),
-            ),
+    @pytest.fixture
+    def non_early_closes_sample(self):
+        yield [
+            # Prior to 2010 Christmas Eve and New Year's Eve were full days
+            "2009-12-24",
+            "2009-12-31",
+            #
+            # Just a normal day...
+            "2017-03-01",
         ]
 
-        for session, expected_close in expected_early_closes:
-            self.assertEqual(
-                self.calendar.session_close(session),
-                expected_close,
-            )
-
-        expected_full_days = [
-            # Prior to 2010 Christmas Eve and New Year's Eve were full days.
-            (
-                pd.Timestamp("2009-12-24", tz=UTC),
-                pd.Timestamp("2009-12-24 16:28", tz="Europe/Dublin"),
-            ),
-            (
-                pd.Timestamp("2009-12-31", tz=UTC),
-                pd.Timestamp("2009-12-31 16:28", tz="Europe/Dublin"),
-            ),
-            # March 1st on any other year should be a normal day.
-            (
-                pd.Timestamp("2017-03-01", tz=UTC),
-                pd.Timestamp("2017-03-01 16:28", tz="Europe/Dublin"),
-            ),
-        ]
-
-        for session, expected_close in expected_full_days:
-            self.assertEqual(
-                self.calendar.session_close(session),
-                expected_close,
-            )
+    @pytest.fixture
+    def non_early_closes_sample_time(self):
+        yield pd.Timedelta(hours=16, minutes=28)
