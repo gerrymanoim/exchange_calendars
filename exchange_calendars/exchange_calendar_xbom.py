@@ -6,13 +6,11 @@ from pytz import timezone
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
 
 """
-Precomputed BSE/NSE dates below are sourced from following parties.
-
-NSE: https://www.nseindia.com/products-services/equity-market-timings-holidays
-BSE: https://www.bseindia.com/static/markets/marketinfo/listholi.aspx
-Zerodha: https://zerodha.com/z-connect/category/traders-zone/holidays
-
-Although NSE/BSE provides only current year's dates, Zerodha provides dates till year 2013.
+References for precomputed BSE/NSE holidays:
+    NSE: https://www.nseindia.com/products-services/equity-market-timings-holidays
+    BSE: https://www.bseindia.com/static/markets/marketinfo/listholi.aspx
+    Zerodha: https://zerodha.com/z-connect/category/traders-zone/holidays
+Although NSE/BSE provides only current year's dates, Zerodha provides holidays since 2013.
 """
 
 precomputed_bse_holidays = pd.to_datetime(
