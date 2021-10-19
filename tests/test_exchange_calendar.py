@@ -2035,7 +2035,7 @@ class ExchangeCalendarTestBase:
         for name in non_valid_overrides:
             on_cls, on_base = getattr(cls, name), getattr(ExchangeCalendar, name)
             # covers properties, instance methods and class mathods...
-            assert (on_cls == on_base or on_cls.__qualname__ == on_base.__qualname__)
+            assert on_cls == on_base or on_cls.__qualname__ == on_base.__qualname__
 
     def test_calculated_against_csv(self, default_calendar_with_answers):
         calendar, ans = default_calendar_with_answers
@@ -2583,15 +2583,6 @@ class ExchangeCalendarTestBase:
         cal, ans = default_calendar_with_answers
         f = no_parsing(cal.date_to_session_label)
 
-        # test for error if request session prior to first calendar session.
-        error_msg = (
-            "Cannot get a session label prior to the first calendar"
-            f" session ('{ans.first_session}'). Consider passing"
-            " `direction` as 'next'."
-        )
-        with pytest.raises(ValueError, match=re.escape(error_msg)):
-            f(ans.session_too_early, "previous")
-
         sessions = ans.sessions
 
         # direction as "previous"
@@ -2618,15 +2609,6 @@ class ExchangeCalendarTestBase:
                 last_session = session_label
             else:
                 assert session_label == last_session
-
-        # test for error if request session after last calendar session.
-        error_msg = (
-            "Cannot get a session label later than the last calendar"
-            f" session ('{ans.last_session}'). Consider passing"
-            " `direction` as 'previous'."
-        )
-        with pytest.raises(ValueError, match=re.escape(error_msg)):
-            f(ans.session_too_late, "next")
 
         # test for non_sessions without direction
         if not ans.non_sessions.empty:

@@ -113,10 +113,10 @@ def one_minute_later(arr: np.ndarray) -> np.ndarray:
 def parse_timestamp(
     timestamp: Date | Minute,
     param_name: str,
-    utc: bool = True,
-    raise_oob: bool = False,
     calendar: ExchangeCalendar | None = None,
+    raise_oob: bool = True,
     side: str | None = None,
+    utc: bool = True,
 ) -> pd.Timestamp:
     """Parse input intended to represent either a date or a minute.
 
@@ -129,21 +129,16 @@ def parse_timestamp(
     param_name
         Name of a parameter that was to receive a Date or Minute.
 
-    utc : default: True
-        True - convert / set timezone to "UTC".
-        False - leave any timezone unchanged. Note, if timezone of
-        `timestamp` is "UTC" then will remain as "UTC".
+    calendar
+        ExchangeCalendar against which to evaluate out-of-bounds
+        timestamps. Only requried if `raise_oob` True of if relying on
+        `calendar` for `side`.
 
-    raise_oob : default: False
+    raise_oob : default: True
         True to raise MinuteOutOfBounds if `timestamp` is earlier than the
         first trading minute or later than the last trading minute of
-        `calendar`. Only use when `timestamp` represents a Minute (as
+        `calendar`. Pass as False if `timestamp` represents a Minute (as
         opposed to a Date). If True then `calendar` must be passed.
-
-    calendar
-        ExchangeCalendar against which to evaluate out-of-bounds timestamps.
-        Only requried if `raise_oob` True of if relying on `calendar` for
-        `side`.
 
     side : optional, {None, 'left', 'right', 'both', 'neither'}
         The side that determines which minutes at a session's bounds are
@@ -151,6 +146,11 @@ def parse_timestamp(
         parameter). Only required if `calendar` is not passed or if do not
         wish to rely on `calendar.side`. Ignored if `timestamp` is accurate
         to minute resolution.
+
+    utc : default: True
+        True - convert / set timezone to "UTC".
+        False - leave any timezone unchanged. Note, if timezone of
+        `timestamp` is "UTC" then will remain as "UTC".
 
     Raises
     ------
@@ -207,7 +207,7 @@ def parse_timestamp(
     if raise_oob:
         if calendar is None:
             raise ValueError("`calendar` must be passed if `raise_oob` is True.")
-        if ts < calendar.first_trading_minute or ts > calendar.last_trading_minute:
+        if calendar._minute_oob(ts):
             raise errors.MinuteOutOfBounds(calendar, ts, param_name)
 
     return ts
@@ -238,10 +238,11 @@ def parse_trading_minute(
         If `minute` parses to a valid timestamp although timestamp does not
         represent a trading minute of `calendar`.
     """
-    minute = parse_timestamp(minute, param_name, calendar=calendar)
-    # don't check via is_trading_minute to allow for more specific error
-    # message if `minute` is out-of-bounds
-    if minute.value not in calendar.all_minutes_nanos:
+    # let out-of-bounds be handled by more specific NotTradingMinuteError message.
+    minute = parse_timestamp(minute, param_name, raise_oob=False, calendar=calendar)
+    if calendar._minute_oob(minute) or not calendar.is_trading_minute(
+        minute, _parse=False
+    ):
         raise errors.NotTradingMinuteError(calendar, minute, param_name)
     return minute
 
@@ -249,8 +250,8 @@ def parse_trading_minute(
 def parse_date(
     date: Date,
     param_name: str,
-    raise_oob: bool = False,
     calendar: ExchangeCalendar | None = None,
+    raise_oob: bool = True,
 ) -> pd.Timestamp:
     """Parse input intended to represent a date.
 
@@ -263,14 +264,14 @@ def parse_date(
      param_name
          Name of a parameter that was to receive a date.
 
-    raise_oob : default: False
-        True to raise DateOutOfBounds if `date` is earlier than the
-        first session or later than the last session of `calendar`. NB if
-        True then `calendar` must be passed.
-
     calendar
         ExchangeCalendar against which to evalute out-of-bounds dates.
         Only requried if `raise_oob` True.
+
+    raise_oob : default: True
+        True to raise DateOutOfBounds if `date` is earlier than the
+        first session or later than the last session of `calendar`. NB if
+        True (default) then `calendar` must be passed.
 
     Returns
      -------
@@ -294,7 +295,7 @@ def parse_date(
     # side "left" to get it through 'second' handling. Has undesirable effect of
     # allowing `date` to be defined with a second (or more accurate) compoment
     # if it falls within the minute that follows midnight.
-    ts = parse_timestamp(date, param_name, utc=False, side="left")
+    ts = parse_timestamp(date, param_name, raise_oob=False, side="left", utc=False)
 
     if not (ts.tz is None or ts.tz.zone == "UTC"):
         raise ValueError(
@@ -314,7 +315,7 @@ def parse_date(
     if raise_oob:
         if calendar is None:
             raise ValueError("`calendar` must be passed if `raise_oob` is True.")
-        if ts < calendar.first_session or ts > calendar.last_session:
+        if calendar._date_oob(ts):
             raise errors.DateOutOfBounds(calendar, ts, param_name)
 
     return ts
@@ -352,10 +353,9 @@ def parse_session(
         If `session` parses to a valid date although date does not
         represent a session of `calendar`.
     """
-    ts = parse_date(session, param_name)
-    # don't check via is_session to allow for more specific error message if
-    # `session` is out-of-bounds
-    if ts not in calendar.schedule.index:
+    # let out-of-bounds be handled by more specific NotSessionError message.
+    ts = parse_date(session, param_name, raise_oob=False)
+    if calendar._date_oob(ts) or not calendar.is_session(ts, _parse=False):
         raise errors.NotSessionError(calendar, ts, param_name)
     return ts
 

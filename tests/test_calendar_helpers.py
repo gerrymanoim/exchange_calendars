@@ -132,10 +132,10 @@ def date_too_late(calendar, one_day) -> abc.Iterator[pd.Timestamp]:
     yield calendar.last_session + one_day
 
 
-def test_parse_timestamp_with_date(date_mult, param_name, utc):
+def test_parse_timestamp_with_date(date_mult, param_name, calendar, utc):
     date = date_mult
     date_is_utc_ts = isinstance(date, pd.Timestamp) and date.tz is not None
-    dt = m.parse_timestamp(date, param_name, utc)
+    dt = m.parse_timestamp(date, param_name, calendar, utc=utc)
     if not utc and not date_is_utc_ts:
         assert dt == pd.Timestamp("2021-06-05")
     else:
@@ -143,10 +143,10 @@ def test_parse_timestamp_with_date(date_mult, param_name, utc):
     assert dt == dt.floor("T")
 
 
-def test_parse_timestamp_with_minute(minute_mult, param_name, utc):
+def test_parse_timestamp_with_minute(minute_mult, param_name, calendar, utc):
     minute = minute_mult
     minute_is_utc_ts = isinstance(minute, pd.Timestamp) and minute.tz is not None
-    dt = m.parse_timestamp(minute, param_name, utc)
+    dt = m.parse_timestamp(minute, param_name, calendar, utc=utc)
     if not utc and not minute_is_utc_ts:
         assert dt == pd.Timestamp("2021-06-02 23:00")
     else:
@@ -162,16 +162,16 @@ def test_parse_timestamp_with_second(second, sides, param_name):
             f" component for `side` '{side}'."
         )
         with pytest.raises(ValueError, match=error_msg):
-            m.parse_timestamp(second, param_name, utc, side=side)
+            m.parse_timestamp(second, param_name, raise_oob=False, side=side)
     else:
-        parsed = m.parse_timestamp(second, param_name, side=side)
+        parsed = m.parse_timestamp(second, param_name, raise_oob=False, side=side)
         if side == "left":
             assert parsed == pd.Timestamp("2021-06-02 23:01", tz="UTC")
         else:
             assert parsed == pd.Timestamp("2021-06-02 23:02", tz="UTC")
 
 
-def test_parse_timestamp_error_malformed(malformed, param_name):
+def test_parse_timestamp_error_malformed(malformed, param_name, calendar):
     expected_error = TypeError if isinstance(malformed, tuple) else ValueError
     error_msg = re.escape(
         f"Parameter `{param_name}` receieved as '{malformed}' although a Date or"
@@ -179,40 +179,40 @@ def test_parse_timestamp_error_malformed(malformed, param_name):
         f" input to pd.Timestamp."
     )
     with pytest.raises(expected_error, match=error_msg):
-        m.parse_timestamp(malformed, param_name)
+        m.parse_timestamp(malformed, param_name, calendar)
 
 
 def test_parse_timestamp_error_oob(
     calendar, param_name, minute_too_early, minute_too_late
 ):
-    # by default parses oob
-    assert m.parse_timestamp(minute_too_early, param_name) == minute_too_early
-
+    # by default raises error if oob
     error_msg = re.escape(
         f"Parameter `{param_name}` receieved as '{minute_too_early}' although"
         f" cannot be earlier than the first trading minute of calendar"
     )
     with pytest.raises(errors.MinuteOutOfBounds, match=error_msg):
-        m.parse_timestamp(
-            minute_too_early, param_name, raise_oob=True, calendar=calendar
-        )
+        m.parse_timestamp(minute_too_early, param_name, calendar)
 
-    # by default parses oob
-    assert m.parse_timestamp(minute_too_late, param_name) == minute_too_late
+    # verify parses if oob and raise_oob False
+    rtrn = m.parse_timestamp(minute_too_early, param_name, raise_oob=False, side="left")
+    assert rtrn == minute_too_early
 
+    # by default raises error if oob
     error_msg = re.escape(
         f"Parameter `{param_name}` receieved as '{minute_too_late}' although"
         f" cannot be later than the last trading minute of calendar"
     )
     with pytest.raises(errors.MinuteOutOfBounds, match=error_msg):
-        m.parse_timestamp(
-            minute_too_late, param_name, raise_oob=True, calendar=calendar
-        )
+        m.parse_timestamp(minute_too_late, param_name, calendar)
+
+    # verify parses if oob and raise_oob False
+    rtrn = m.parse_timestamp(minute_too_late, param_name, raise_oob=False, side="left")
+    assert rtrn == minute_too_late
 
 
 def test_parse_date(date_mult, param_name):
     date = date_mult
-    dt = m.parse_date(date, param_name)
+    dt = m.parse_date(date, param_name, raise_oob=False)
     assert dt == pd.Timestamp("2021-06-05", tz="UTC")
 
 
@@ -221,31 +221,33 @@ def test_parse_date_errors(calendar, param_name, date_too_early, date_too_late):
     with pytest.raises(
         ValueError, match="a Date must be timezone naive or have timezone as 'UTC'"
     ):
-        m.parse_date(dt, param_name)
+        m.parse_date(dt, param_name, raise_oob=False)
 
     dt = pd.Timestamp("2021-06-02 13:33")
     with pytest.raises(ValueError, match="a Date must have a time component of 00:00."):
-        m.parse_date(dt, param_name)
+        m.parse_date(dt, param_name, raise_oob=False)
 
-    # by default parses oob
-    assert m.parse_date(date_too_early, param_name) == date_too_early
-
+    # by default raises error if oob
     error_msg = (
         f"Parameter `{param_name}` receieved as '{date_too_early}' although"
         f" cannot be earlier than the first session of calendar"
     )
     with pytest.raises(errors.DateOutOfBounds, match=re.escape(error_msg)):
-        m.parse_date(date_too_early, param_name, raise_oob=True, calendar=calendar)
+        m.parse_date(date_too_early, param_name, calendar)
+
+    # verify parses if oob and raise_oob False
+    assert m.parse_date(date_too_early, param_name, raise_oob=False) == date_too_early
 
     # by default parses oob
-    assert m.parse_date(date_too_late, param_name) == date_too_late
-
     error_msg = (
         f"Parameter `{param_name}` receieved as '{date_too_late}' although"
         f" cannot be later than the last session of calendar"
     )
     with pytest.raises(errors.DateOutOfBounds, match=re.escape(error_msg)):
-        m.parse_date(date_too_late, param_name, raise_oob=True, calendar=calendar)
+        m.parse_date(date_too_late, param_name, calendar)
+
+    # verify parses if oob and raise_oob False
+    assert m.parse_date(date_too_late, param_name, raise_oob=False) == date_too_late
 
 
 def test_parse_session(

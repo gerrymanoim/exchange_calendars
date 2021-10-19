@@ -274,11 +274,11 @@ class ExchangeCalendarDispatcher(object):
                 return self._calendars[name]
 
         if kwargs.get("start"):
-            kwargs["start"] = parse_date(kwargs["start"], "start")
+            kwargs["start"] = parse_date(kwargs["start"], "start", raise_oob=False)
         else:
             kwargs["start"] = None
         if kwargs.get("end"):
-            kwargs["end"] = parse_date(kwargs["end"], "end")
+            kwargs["end"] = parse_date(kwargs["end"], "end", raise_oob=False)
         else:
             kwargs["end"] = None
 
