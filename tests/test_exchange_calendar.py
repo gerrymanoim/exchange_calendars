@@ -176,9 +176,9 @@ def get_csv(name: str) -> pd.DataFrame:
         parse_dates=[0, 1, 2, 3, 4],
         infer_datetime_format=True,
     )
-    df.index = df.index.tz_localize("UTC")
+    df.index = df.index.tz_localize(UTC)
     for col in df:
-        df[col] = df[col].dt.tz_localize("UTC")
+        df[col] = df[col].dt.tz_localize(UTC)
     return df
 
 
@@ -386,7 +386,7 @@ class Answers:
     def get_session_break_minutes(self, session: pd.Timestamp) -> pd.DatetimeIndex:
         """Get break minutes for single `session`."""
         if not self.session_has_break(session):
-            return pd.DatetimeIndex([], tz="UTC")
+            return pd.DatetimeIndex([], tz=UTC)
         else:
             am_minutes, pm_minutes = self.get_session_minutes(session)
         first = am_minutes[-1] + self.ONE_MIN
@@ -471,31 +471,31 @@ class Answers:
         return self.closes[-1]
 
     @property
-    def first_trading_minute(self) -> pd.Timestamp:
+    def first_minute(self) -> pd.Timestamp:
         open_ = self.first_session_open
         return open_ if self.side in self.LEFT_SIDES else open_ + self.ONE_MIN
 
     @property
-    def last_trading_minute(self) -> pd.Timestamp:
+    def last_minute(self) -> pd.Timestamp:
         close = self.last_session_close
         return close if self.side in self.RIGHT_SIDES else close - self.ONE_MIN
 
     @property
     def trading_minutes_range(self) -> tuple[pd.Timestamp, pd.Timestamp]:
         """First and last trading minutes covered by answers."""
-        return self.first_trading_minute, self.last_trading_minute
+        return self.first_minute, self.last_minute
 
     # --- out-of-bounds properties ---
 
     @property
     def minute_too_early(self) -> pd.Timestamp:
         """Minute earlier than first trading minute."""
-        return self.first_trading_minute - self.ONE_MIN
+        return self.first_minute - self.ONE_MIN
 
     @property
     def minute_too_late(self) -> pd.Timestamp:
         """Minute later than last trading minute."""
-        return self.last_trading_minute + self.ONE_MIN
+        return self.last_minute + self.ONE_MIN
 
     @property
     def session_too_early(self) -> pd.Timestamp:
@@ -638,7 +638,7 @@ class Answers:
         """Longest run of consecutive sessions without a break."""
         s = self.break_starts.isna()
         if s.empty:
-            return pd.DatetimeIndex([], tz="UTC")
+            return pd.DatetimeIndex([], tz=UTC)
         return pandas_utils.longest_run(s)
 
     @property
@@ -771,7 +771,7 @@ class Answers:
 
         if is_break_col:
             if column_.isna().all():
-                return [pd.DatetimeIndex([], tz="UTC")] * 4
+                return [pd.DatetimeIndex([], tz=UTC)] * 4
             column_ = column_.fillna(method="ffill").fillna(method="bfill")
 
         diff = (column_.shift(-1) - column_)[:-1]
@@ -1013,7 +1013,7 @@ class Answers:
 
         for name, index in sessions_indexes:
             if index.empty:
-                blocks[name] = pd.DatetimeIndex([], tz="UTC")
+                blocks[name] = pd.DatetimeIndex([], tz=UTC)
             else:
                 session = index[0]
                 blocks[name] = self._create_changing_times_session_block(session)
@@ -1029,16 +1029,16 @@ class Answers:
                 self.sessions_with_gap_after, self.sessions_without_gap_after
             )
         else:
-            without_gap_to_with_gap = pd.DatetimeIndex([], tz="UTC")
-            with_gap_to_without_gap = pd.DatetimeIndex([], tz="UTC")
+            without_gap_to_with_gap = pd.DatetimeIndex([], tz=UTC)
+            with_gap_to_without_gap = pd.DatetimeIndex([], tz=UTC)
 
         blocks["without_gap_to_with_gap"] = without_gap_to_with_gap
         blocks["with_gap_to_without_gap"] = with_gap_to_without_gap
 
         # blocks that adjoin or contain a non_session date
-        follows_non_session = pd.DatetimeIndex([], tz="UTC")
-        preceeds_non_session = pd.DatetimeIndex([], tz="UTC")
-        contains_non_session = pd.DatetimeIndex([], tz="UTC")
+        follows_non_session = pd.DatetimeIndex([], tz=UTC)
+        preceeds_non_session = pd.DatetimeIndex([], tz=UTC)
+        contains_non_session = pd.DatetimeIndex([], tz=UTC)
         if len(self.non_sessions) > 1:
             diff = self.non_sessions[1:] - self.non_sessions[:-1]
             mask = diff != pd.Timedelta(
@@ -1122,7 +1122,7 @@ class Answers:
         d = {}
         for name, block in self.session_blocks.items():
             if block.empty:
-                d[name] = pd.DatetimeIndex([], tz="UTC")
+                d[name] = pd.DatetimeIndex([], tz=UTC)
                 continue
             d[name] = self.get_sessions_minutes(block[0], len(block))
         return d
@@ -1559,7 +1559,7 @@ class Answers:
         next_closes = self.closes[2:]
         opens_after_next = self.opens[3:]
         # add dummy row to equal lengths (won't be used)
-        _ = pd.Series(pd.Timestamp("2200-01-01", tz="UTC"))
+        _ = pd.Series(pd.Timestamp("2200-01-01", tz=UTC))
         opens_after_next = opens_after_next.append(_)
 
         stop = closes[-1]
@@ -1657,12 +1657,12 @@ class ExchangeCalendarTestBase:
     `all_calendars_with_answers` fixture. This fixture will execute the
     test against multiple calendar instances, one for each viable `side`.
 
-    The following methods directly evaluate trading minutes:
-        all_minutes
-        _last_minute_nanos()
-        _last_am_minute_nanos()
-        _first_minute_nanos()
-        _first_pm_minute_nanos()
+    The following properties directly evaluate trading minutes:
+        minutes
+        last_minutes_nanos
+        last_am_minutes_nanos
+        first_minutes_nanos
+        first_pm_minutes_nanos
     NB this list does not include methods that indirectly evaluate methods
     by way of calling (directly or indirectly) one of the above methods.
 
@@ -2031,7 +2031,7 @@ class ExchangeCalendarTestBase:
 
     @pytest.fixture(scope="class")
     def today(self) -> abc.Iterator[pd.Timedelta]:
-        yield pd.Timestamp.now(tz="UTC").floor("D")
+        yield pd.Timestamp.now(tz=UTC).floor("D")
 
     @pytest.fixture(scope="class", params=["next", "previous", "none"])
     def all_directions(self, request) -> abc.Iterator[str]:
@@ -2143,14 +2143,14 @@ class ExchangeCalendarTestBase:
             td = pd.Timedelta(hours=time_.hour, minutes=time_.minute)
             # Evaluate session opens as if were all normal open time.
             normal_opens = sessions + pd.Timedelta(cal.open_offset, "D") + td
-            normal_opens_utc = normal_opens.tz_localize(cal.tz).tz_convert("UTC")
+            normal_opens_utc = normal_opens.tz_localize(cal.tz).tz_convert(UTC)
             # Append those sessions with opens (according to answers) later than
             # what would be normal.
             dtis.append(sessions[opens > normal_opens_utc])
             if date_from != pd.Timestamp.min:
                 date_to = date_from - pd.Timedelta(1, "D")
 
-        late_opens = dtis[0].union_many(dtis[1:]).tz_localize("UTC")
+        late_opens = dtis[0].union_many(dtis[1:]).tz_localize(UTC)
         yield late_opens
 
     @pytest.fixture(scope="class")
@@ -2182,12 +2182,12 @@ class ExchangeCalendarTestBase:
             sessions = closes.index
             td = pd.Timedelta(hours=time_.hour, minutes=time_.minute)
             normal_closes = sessions + pd.Timedelta(cal.close_offset, "D") + td
-            normal_closes_utc = normal_closes.tz_localize(cal.tz).tz_convert("UTC")
+            normal_closes_utc = normal_closes.tz_localize(cal.tz).tz_convert(UTC)
             dtis.append(sessions[closes < normal_closes_utc])
             if date_from != pd.Timestamp.min:
                 date_to = date_from - pd.Timedelta(1, "D")
 
-        early_closes = dtis[0].union_many(dtis[1:]).tz_localize("UTC")
+        early_closes = dtis[0].union_many(dtis[1:]).tz_localize(UTC)
         yield early_closes
 
     # --- TESTS ---
@@ -2265,7 +2265,7 @@ class ExchangeCalendarTestBase:
                 calendar_cls(start, today)
         else:
             # verify no bound imposed
-            cal = calendar_cls(pd.Timestamp("1902-01-01", tz="UTC"), today)
+            cal = calendar_cls(pd.Timestamp("1902-01-01", tz=UTC), today)
             assert isinstance(cal, ExchangeCalendar)
 
     def test_bound_end(self, calendar_cls, end_bound, today):
@@ -2278,12 +2278,12 @@ class ExchangeCalendarTestBase:
                 calendar_cls(today, end)
         else:
             # verify no bound imposed
-            cal = calendar_cls(today, pd.Timestamp("2050-01-01", tz="UTC"))
+            cal = calendar_cls(today, pd.Timestamp("2050-01-01", tz=UTC))
             assert isinstance(cal, ExchangeCalendar)
 
     def test_sanity_check_session_lengths(self, default_calendar, max_session_hours):
         cal = default_calendar
-        cal_max_secs = (cal.market_closes_nanos - cal.market_opens_nanos).max()
+        cal_max_secs = (cal.closes_nanos - cal.opens_nanos).max()
         assert cal_max_secs / 3600000000000 <= max_session_hours
 
     def test_adhoc_holidays_specification(self, default_calendar):
@@ -2304,7 +2304,7 @@ class ExchangeCalendarTestBase:
 
         for date in daylight_savings_dates:
             # where `next day` is first session of new daylight savings regime
-            next_day = cal.date_to_session_label(T(date), "next")
+            next_day = cal.date_to_session(T(date), "next")
             open_date = next_day + pd.Timedelta(days=cal.open_offset)
 
             the_open = cal.schedule.loc[next_day].market_open
@@ -2325,10 +2325,10 @@ class ExchangeCalendarTestBase:
 
     # Tests for properties covering all sessions.
 
-    def test_all_sessions(self, default_calendar_with_answers):
+    def test_sessions(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
         ans_sessions = ans.sessions
-        cal_sessions = cal.all_sessions
+        cal_sessions = cal.sessions
         tm.assert_index_equal(ans_sessions, cal_sessions)
 
     def test_opens_closes_break_starts_ends(self, default_calendar_with_answers):
@@ -2367,12 +2367,12 @@ class ExchangeCalendarTestBase:
 
     # Tests for properties covering all minutes.
 
-    def test_all_minutes(self, all_calendars_with_answers, one_minute):
+    def test_minutes(self, all_calendars_with_answers, one_minute):
         """Test trading minutes at sessions' bounds."""
         calendar, ans = all_calendars_with_answers
 
         side = ans.side
-        mins = calendar.all_minutes
+        mins = calendar.minutes
         assert isinstance(mins, pd.DatetimeIndex)
         assert not mins.empty
         mins_plus_1 = mins + one_minute
@@ -2473,63 +2473,41 @@ class ExchangeCalendarTestBase:
             last_session
             first_session_open
             last_session_close
-            first_trading_minute
-            last_trading_minute
+            first_minute
+            last_minute
         """
         cal, ans = all_calendars_with_answers
         assert ans.first_session == cal.first_session
         assert ans.last_session == cal.last_session
         assert ans.first_session_open.tz_convert(None) == cal.first_session_open
         assert ans.last_session_close.tz_convert(None) == cal.last_session_close
-        assert ans.first_trading_minute == cal.first_trading_minute
-        assert ans.last_trading_minute == cal.last_trading_minute
+        assert ans.first_minute == cal.first_minute
+        assert ans.last_minute == cal.last_minute
 
-    def test_has_breaks(self, default_calendar_with_answers):
+    def test_has_break(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
-        f = no_parsing(cal.has_breaks)
-
-        has_a_break = ans.has_a_session_with_break
-        assert f() == has_a_break
-
-        if ans.has_a_session_without_break:
-            assert not f(*ans.sessions_without_break_range)
-
-            if has_a_break:
-                # i.e. mixed, some sessions have a break, some don't
-                block = ans.session_blocks["with_break_to_without_break"]
-                if not block.empty:
-                    # guard against starting with no breaks, then an introduction
-                    # of breaks to every session after a certain date
-                    # (i.e. there would be no with_break_to_without_break)
-                    assert f(block[0], block[-1])
-                block = ans.session_blocks["without_break_to_with_break"]
-                if not block.empty:
-                    # ...guard against opposite case (e.g. XKRX)
-                    assert f(block[0], block[-1])
-        else:
-            # in which case all sessions must have a break. Make sure...
-            assert cal.break_starts.notna().all()
+        assert cal.has_break == ans.has_a_session_with_break
 
     def test_regular_holidays_sample(self, default_calendar, regular_holidays_sample):
         """Test that calendar-specific sample of holidays are not sessions."""
         if not regular_holidays_sample:
             pytest.skip()
         for holiday in regular_holidays_sample:
-            assert T(holiday) not in default_calendar.all_sessions
+            assert T(holiday) not in default_calendar.sessions
 
     def test_adhoc_holidays_sample(self, default_calendar, adhoc_holidays_sample):
         """Test that calendar-specific sample of holidays are not sessions."""
         if not adhoc_holidays_sample:
             pytest.skip()
         for holiday in adhoc_holidays_sample:
-            assert T(holiday) not in default_calendar.all_sessions
+            assert T(holiday) not in default_calendar.sessions
 
     def test_non_holidays_sample(self, default_calendar, non_holidays_sample):
         """Test that calendar-specific sample of non-holidays are sessions."""
         if not non_holidays_sample:
             pytest.skip()
         for date in non_holidays_sample:
-            assert T(date) in default_calendar.all_sessions
+            assert T(date) in default_calendar.sessions
 
     # NOTE: As of Oct 21 no calendar tests late opens (indeed, believe that no
     # calendar defines late opens). Test commented out to prevent skip tests littering
@@ -2621,10 +2599,10 @@ class ExchangeCalendarTestBase:
         Tests following calendar methods:
             session_open
             session_close
-            open_and_close_for_session
+            session_open_close
             session_break_start
             session_break_end
-            break_start_and_end_for_session
+            session_break_start_end
         """
         # considered sufficient to limit test to sessions of session blocks.
         cal, ans = default_calendar_with_answers
@@ -2634,16 +2612,14 @@ class ExchangeCalendarTestBase:
                 ans_close = ans.closes[session]
                 assert cal.session_open(session, _parse=False) == ans_open
                 assert cal.session_close(session, _parse=False) == ans_close
-                assert cal.open_and_close_for_session(session, _parse=False) == (
+                assert cal.session_open_close(session, _parse=False) == (
                     ans_open,
                     ans_close,
                 )
 
                 break_start = cal.session_break_start(session, _parse=False)
                 break_end = cal.session_break_end(session, _parse=False)
-                break_start_and_end = cal.break_start_and_end_for_session(
-                    session, _parse=False
-                )
+                break_start_and_end = cal.session_break_start_end(session, _parse=False)
                 ans_break_start = ans.break_starts[session]
                 ans_break_end = ans.break_ends[session]
                 if pd.isna(ans_break_start):
@@ -2664,7 +2640,7 @@ class ExchangeCalendarTestBase:
             session_last_minute
             session_last_am_minute
             session_first_pm_minute
-            session_first_and_last_minute
+            session_first_last_minute
         """
         # considered sufficient to limit test to sessions of session blocks.
         cal, ans = all_calendars_with_answers
@@ -2676,7 +2652,7 @@ class ExchangeCalendarTestBase:
                     cal.session_first_minute(session, _parse=False) == ans_first_minute
                 )
                 assert cal.session_last_minute(session, _parse=False) == ans_last_minute
-                assert cal.session_first_and_last_minute(session, _parse=False) == (
+                assert cal.session_first_last_minute(session, _parse=False) == (
                     ans_first_minute,
                     ans_last_minute,
                 )
@@ -2703,8 +2679,8 @@ class ExchangeCalendarTestBase:
 
     def test_next_prev_session(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
-        f_prev = no_parsing(cal.previous_session_label)
-        f_next = no_parsing(cal.next_session_label)
+        f_prev = no_parsing(cal.previous_session)
+        f_next = no_parsing(cal.next_session)
 
         # NB non-sessions handled by methods via parse_session
 
@@ -2721,9 +2697,9 @@ class ExchangeCalendarTestBase:
         with pytest.raises(ValueError):
             f_next(ans.last_session)
 
-    def test_minutes_for_session(self, all_calendars_with_answers):
+    def test_session_minutes(self, all_calendars_with_answers):
         cal, ans = all_calendars_with_answers
-        f = no_parsing(cal.minutes_for_session)
+        f = no_parsing(cal.session_minutes)
 
         # Limit test to every session of each session block.
 
@@ -2780,9 +2756,9 @@ class ExchangeCalendarTestBase:
         for session in ans.non_sessions:
             assert not f(session)
 
-    def test_date_to_session_label(self, default_calendar_with_answers):
+    def test_date_to_session(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
-        f = no_parsing(cal.date_to_session_label)
+        f = no_parsing(cal.date_to_session)
 
         sessions = ans.sessions
 
@@ -2939,7 +2915,7 @@ class ExchangeCalendarTestBase:
 
         with pytest.raises(ValueError):
             f_prev(first_min)
-        # minutes earlier than first_trading_minute assumed handled via parse_timestamp
+        # minutes earlier than first_minute assumed handled via parse_timestamp
         assert f_next(first_min) == first_min_plus_one
         assert f_next(first_min_plus_one) == first_min_plus_one + one_minute
         assert f_prev(first_min_plus_one) == first_min
@@ -2986,7 +2962,7 @@ class ExchangeCalendarTestBase:
 
         with pytest.raises(ValueError):
             f_next(last_min)
-        # minutes later than last_trading_minute assumed handled via parse_timestamp
+        # minutes later than last_minute assumed handled via parse_timestamp
 
         if ans.has_a_session_with_break:
             for (
@@ -3018,10 +2994,10 @@ class ExchangeCalendarTestBase:
                 assert f_next(first_pm_min) == first_pm_min_plus_one
                 assert f_prev(first_pm_min_plus_one) == first_pm_min
 
-    def test_minute_to_session_label(self, all_calendars_with_answers, all_directions):
+    def test_minute_to_session(self, all_calendars_with_answers, all_directions):
         direction = all_directions
         calendar, ans = all_calendars_with_answers
-        f = no_parsing(calendar.minute_to_session_label)
+        f = no_parsing(calendar.minute_to_session)
 
         for non_trading_mins, prev_session, next_session in ans.non_trading_minutes:
             for non_trading_min in non_trading_mins:
@@ -3050,7 +3026,7 @@ class ExchangeCalendarTestBase:
         if direction in ["previous", "none"]:
             error_msg = (
                 f"Received `minute` as '{oob_minute}' although this is earlier than"
-                f" the calendar's first trading minute ({ans.first_trading_minute})"
+                f" the calendar's first trading minute ({ans.first_minute})"
             )
             with pytest.raises(ValueError, match=re.escape(error_msg)):
                 f(oob_minute, direction)
@@ -3062,7 +3038,7 @@ class ExchangeCalendarTestBase:
         if direction in ["next", "none"]:
             error_msg = (
                 f"Received `minute` as '{oob_minute}' although this is later"
-                f" than the calendar's last trading minute ({ans.last_trading_minute})"
+                f" than the calendar's last trading minute ({ans.last_minute})"
             )
             with pytest.raises(ValueError, match=re.escape(error_msg)):
                 f(oob_minute, direction)
@@ -3227,15 +3203,15 @@ class ExchangeCalendarTestBase:
 
         # Verify raising expected errors.
 
-        rtrn = f(ans.first_trading_minute, 0)
-        assert rtrn == ans.first_trading_minute
+        rtrn = f(ans.first_minute, 0)
+        assert rtrn == ans.first_minute
         with pytest.raises(errors.RequestedMinuteOutOfBounds, match="before"):
-            f(ans.first_trading_minute, -1)
+            f(ans.first_minute, -1)
 
-        rtrn = f(ans.last_trading_minute, 0)
-        assert rtrn == ans.last_trading_minute
+        rtrn = f(ans.last_minute, 0)
+        assert rtrn == ans.last_minute
         with pytest.raises(errors.RequestedMinuteOutOfBounds, match="after"):
-            f(ans.last_trading_minute, 1)
+            f(ans.last_minute, 1)
 
     def test_minute_offset_by_sessions(self, all_calendars_with_answers):
         cal, ans = all_calendars_with_answers
@@ -3368,13 +3344,13 @@ class ExchangeCalendarTestBase:
 
         # Verify expected errors raised.
 
-        minutes = [ans.first_minutes[ans.last_session], ans.last_trading_minute]
+        minutes = [ans.first_minutes[ans.last_session], ans.last_minute]
         for minute in minutes:
             for i in range(1, 3):
                 with pytest.raises(errors.RequestedMinuteOutOfBounds, match="after"):
                     f(minute, i)
 
-        minutes = [ans.first_trading_minute, ans.last_minutes[ans.first_session]]
+        minutes = [ans.first_minute, ans.last_minutes[ans.first_session]]
         for minute in minutes:
             for i in range(-2, 0):
                 with pytest.raises(errors.RequestedMinuteOutOfBounds, match="before"):
@@ -3454,9 +3430,9 @@ class ExchangeCalendarTestBase:
             rtrn = f(from_, count)
             tm.assert_index_equal(expected, rtrn)
 
-    def test_minute_index_to_session_labels(self, all_calendars_with_answers):
+    def test_minutes_to_sessions(self, all_calendars_with_answers):
         calendar, ans = all_calendars_with_answers
-        f = calendar.minute_index_to_session_labels
+        f = calendar.minutes_to_sessions
 
         trading_minute = ans.trading_minute
         for minute in ans.non_trading_minutes_only():
@@ -3497,6 +3473,32 @@ class ExchangeCalendarTestBase:
             (start, end), sessions = ans.sessions_range_defined_by_non_sessions
             tm.assert_index_equal(f(start, end), sessions)
 
+    def test_sessions_has_break(self, default_calendar_with_answers):
+        cal, ans = default_calendar_with_answers
+        f = no_parsing(cal.sessions_has_break)
+
+        has_a_break = ans.has_a_session_with_break
+        assert f(ans.first_session, ans.last_session) == has_a_break
+
+        if ans.has_a_session_without_break:
+            assert not f(*ans.sessions_without_break_range)
+
+            if has_a_break:
+                # i.e. mixed, some sessions have a break, some don't
+                block = ans.session_blocks["with_break_to_without_break"]
+                if not block.empty:
+                    # guard against starting with no breaks, then an introduction
+                    # of breaks to every session after a certain date
+                    # (i.e. there would be no with_break_to_without_break)
+                    assert f(block[0], block[-1])
+                block = ans.session_blocks["without_break_to_with_break"]
+                if not block.empty:
+                    # ...guard against opposite case (e.g. XKRX)
+                    assert f(block[0], block[-1])
+        else:
+            # in which case all sessions must have a break. Make sure...
+            assert cal.break_starts.notna().all()
+
     def test_sessions_window(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
         f = no_parsing(cal.sessions_window)
@@ -3518,9 +3520,9 @@ class ExchangeCalendarTestBase:
         with pytest.raises(ValueError):
             f(ans.sessions[-3], count=3)
 
-    def test_session_distance(self, default_calendar_with_answers):
+    def test_sessions_distance(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
-        f = no_parsing(cal.session_distance)
+        f = no_parsing(cal.sessions_distance)
 
         for _, block in ans.session_block_generator():
             distance = len(block)
@@ -3539,9 +3541,9 @@ class ExchangeCalendarTestBase:
             (start, end), sessions = ans.sessions_range_defined_by_non_sessions
             assert f(start, end) == len(sessions)
 
-    def test_minutes_for_sessions_in_range(self, all_calendars_with_answers):
+    def test_sessions_minutes(self, all_calendars_with_answers):
         cal, ans = all_calendars_with_answers
-        f = no_parsing(cal.minutes_for_sessions_in_range)
+        f = no_parsing(cal.sessions_minutes)
 
         block_minutes = ans.session_block_minutes
         for name, block in ans.session_block_generator():
@@ -3563,12 +3565,12 @@ class ExchangeCalendarTestBase:
         """Test methods that return range of open / close times.
 
         Tests methods:
-            session_opens_in_range
-            session_closes_in_range
+            sessions_opens
+            sessions_closes
         """
         cal, ans = default_calendar_with_answers
-        f_opens = no_parsing(cal.session_opens_in_range)
-        f_closes = no_parsing(cal.session_closes_in_range)
+        f_opens = no_parsing(cal.sessions_opens)
+        f_closes = no_parsing(cal.sessions_closes)
 
         # test where start and end are sessions
         start, end = ans.sessions[10], ans.sessions[-10]
@@ -3602,9 +3604,9 @@ class ExchangeCalendarTestBase:
                 f_closes(start, end), ans.closes[sessions], check_freq=False
             )
 
-    def test_minutes_count_for_sessions_in_range(self, all_calendars_with_answers):
+    def test_sessions_minutes_count(self, all_calendars_with_answers):
         cal, ans = all_calendars_with_answers
-        f = no_parsing(cal.minutes_count_for_sessions_in_range)
+        f = no_parsing(cal.sessions_minutes_count)
 
         block_minutes = ans.session_block_minutes
         for name, block in ans.session_block_generator():
@@ -3622,8 +3624,8 @@ class ExchangeCalendarTestBase:
             minutes = ans.get_sessions_minutes(sessions[0], sessions[-1])
             assert f(start, end) == len(minutes)
 
-        # Additional belt-and-braces test to reconcile with cal.all_minutes
-        assert f(ans.first_session, ans.last_session) == len(cal.all_minutes)
+        # Additional belt-and-braces test to reconcile with cal.minutes
+        assert f(ans.first_session, ans.last_session) == len(cal.minutes)
 
     def test_trading_index(self, calendars, answers):
         """Test trading index with options as default values.
@@ -3713,6 +3715,71 @@ class ExchangeCalendarTestBase:
 
                 tst_intervals_index("left", overlaps)
                 tst_intervals_index("right", overlaps)
+
+    def test_deprecated(self, default_calendar_with_answers):
+        cal, ans = default_calendar_with_answers
+
+        # deprecated properties / attributes
+        for name in [
+            "all_sessions",
+            "all_minutes",
+            "all_minutes_nanos",
+            "first_trading_minute",
+            "last_trading_minute",
+            "first_trading_session",
+            "last_trading_session",
+            "market_opens_nanos",
+            "market_closes_nanos",
+            "market_break_starts_nanos",
+            "market_break_ends_nanos",
+        ]:
+            with pytest.warns(FutureWarning):
+                getattr(cal, name)
+
+        # deprecated methods that take a single 'session' argument.
+        session = ans.sessions[-5]
+        for name in [
+            "execution_time_from_open",
+            "execution_time_from_close",
+            "execution_minutes_for_session",
+            "date_to_session_label",
+            "open_and_close_for_session",
+            "break_start_and_end_for_session",
+            "next_session_label",
+            "previous_session_label",
+            "minutes_for_session",
+        ]:
+            with pytest.warns(FutureWarning):
+                getattr(cal, name)(session, _parse=False)
+
+        # deprecated methods that take start and end session parameters.
+        start = ans.sessions[-10]
+        end = session
+        for name in [
+            "execution_minutes_for_sessions_in_range",
+            "has_breaks",
+            "session_distance",
+            "minutes_for_sessions_in_range",
+            "session_opens_in_range",
+            "session_closes_in_range",
+            "minutes_count_for_sessions_in_range",
+        ]:
+            with pytest.warns(FutureWarning):
+                getattr(cal, name)(start, end, _parse=False)
+
+        # deprecated methods that take a single 'minute' argument.
+        minute = ans.trading_minutes[len(ans.trading_minutes) // 2][0][1]
+        for name in [
+            "minute_to_session_label",
+        ]:
+            with pytest.warns(FutureWarning):
+                getattr(cal, name)(minute, _parse=False)
+
+        # deprecated methods that take a 'minutes' argument.
+        trading_minutes = ans.trading_minutes[len(ans.trading_minutes) // 2][0]
+        dti = pd.DatetimeIndex(trading_minutes).sort_values()
+        with pytest.warns(FutureWarning):
+            cal.minute_index_to_session_labels(dti)
 
 
 class EuronextCalendarTestBase(ExchangeCalendarTestBase):

@@ -31,7 +31,7 @@ class TestXIDXCalendar(ExchangeCalendarTestBase):
         for year, (total_days, monthly_days) in expected_trading_days.items():
             assert sum(monthly_days) == total_days  # Sanity check
 
-            sessions = cal.all_sessions[cal.all_sessions.year == year]
+            sessions = cal.sessions[cal.sessions.year == year]
             assert total_days == len(sessions), year
 
     @pytest.mark.parametrize(

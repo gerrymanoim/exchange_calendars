@@ -129,7 +129,7 @@ class NotSessionError(ValueError):
 
     def __str__(self) -> str:
         msg = (
-            f"Parameter `{self.param_name}` takes a session label"
+            f"Parameter `{self.param_name}` takes a session"
             f" although received input that parsed to '{self.ts}' which"
         )
 
@@ -219,7 +219,7 @@ class NotTradingMinuteError(ValueError):
             f"Parameter `{self.param_name}` takes a trading minute although"
             f" received input that parsed to '{self.minute}' which"
         )
-        if self.minute < self.calendar.first_trading_minute:
+        if self.minute < self.calendar.first_minute:
             msg += (
                 " is earlier than the first trading minute of calendar"
                 f" '{self.calendar.name}' ('{self.calendar.first_session}')."
@@ -260,20 +260,20 @@ class MinuteOutOfBounds(ValueError):
 
     def __str__(self) -> str:
         msg = f"Parameter `{self.param_name}` receieved as '{self.minute}' although"
-        if self.minute < self.calendar.first_trading_minute:
+        if self.minute < self.calendar.first_minute:
             msg += (
                 " cannot be earlier than the first trading minute of calendar"
-                f" '{self.calendar.name}' ('{self.calendar.first_trading_minute}')."
+                f" '{self.calendar.name}' ('{self.calendar.first_minute}')."
             )
-        elif self.minute > self.calendar.last_trading_minute:
+        elif self.minute > self.calendar.last_minute:
             msg += (
                 " cannot be later than the last trading minute of calendar"
-                f" '{self.calendar.name}' ('{self.calendar.last_trading_minute}')."
+                f" '{self.calendar.name}' ('{self.calendar.last_minute}')."
             )
         else:
             assert (
-                self.minute < self.calendar.first_trading_minute
-                or self.minute > self.calendar.last_trading_minute
+                self.minute < self.calendar.first_minute
+                or self.minute > self.calendar.last_minute
             )
         return msg
 
@@ -325,9 +325,7 @@ class RequestedMinuteOutOfBounds(ValueError):
         self.calendar = calendar
         self.adverb = "before" if too_early else "after"
         self.position = "first" if too_early else "last"
-        self.bound = (
-            calendar.first_trading_minute if too_early else calendar.last_trading_minute
-        )
+        self.bound = calendar.first_minute if too_early else calendar.last_minute
 
     def __str__(self) -> str:
         return (
@@ -348,9 +346,9 @@ class IntervalsOverlapError(IndexOverlapError):
         return (
             "Unable to create trading index as intervals would overlap."
             " This can occur when the frequency is longer than a break or"
-            " the period between one session's close and the next"
-            " session's open. To shorten intervals that would otherwise"
-            " overlap either pass `curtail_overlaps` as True or pass"
+            " the gap between one session's close and the next session's"
+            " open. To shorten intervals that would otherwise overlap"
+            " either pass `curtail_overlaps` as True or pass"
             " `force_close` and/or `force_break_close` as True."
         )
 
@@ -364,8 +362,8 @@ class IndicesOverlapError(IndexOverlapError):
             "Unable to create trading index as an indice would fall to the"
             " right of (later than) the subsequent indice. This can occur"
             " when the frequency is longer than a break or the frequency"
-            " is longer than the period between one session's close and"
-            " the next session's open. Consider  passing `closed` as"
-            " 'left' or passing `force_close` and/or `force_break_close`"
+            " is longer than the gap between one session's close and the"
+            " next session's open. Consider  passing `closed` as `left`"
+            " or passing `force_close` and/or `force_break_close`"
             " as True."
         )

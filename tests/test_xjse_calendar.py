@@ -17,8 +17,8 @@ class TestXJSECalendar(ExchangeCalendarTestBase):
         yield 8
 
     def test_no_weekend_sessions(self, default_calendar):
-        bv = default_calendar.all_sessions.weekday.isin((5, 6))
-        assert default_calendar.all_sessions[bv].empty
+        bv = default_calendar.sessions.weekday.isin((5, 6))
+        assert default_calendar.sessions[bv].empty
 
     @pytest.mark.parametrize(
         "year, holidays",

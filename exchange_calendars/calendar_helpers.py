@@ -52,7 +52,7 @@ def previous_divider_idx(dividers: np.ndarray, minute_val: int) -> int:
     return divider_idx - 1
 
 
-def compute_all_minutes(
+def compute_minutes(
     opens_in_ns: np.ndarray,
     break_starts_in_ns: np.ndarray,
     break_ends_in_ns: np.ndarray,
@@ -112,7 +112,7 @@ def one_minute_later(arr: np.ndarray) -> np.ndarray:
 
 def parse_timestamp(
     timestamp: Date | Minute,
-    param_name: str,
+    param_name: str = "minute",
     calendar: ExchangeCalendar | None = None,
     raise_oob: bool = True,
     side: str | None = None,
@@ -214,7 +214,7 @@ def parse_timestamp(
 
 
 def parse_trading_minute(
-    calendar: ExchangeCalendar, minute: TradingMinute, param_name: str
+    calendar: ExchangeCalendar, minute: TradingMinute, param_name: str = "minute"
 ) -> pd.Timestamp:
     """Parse input intended to represent a trading minute.
 
@@ -249,7 +249,7 @@ def parse_trading_minute(
 
 def parse_date(
     date: Date,
-    param_name: str,
+    param_name: str = "date",
     calendar: ExchangeCalendar | None = None,
     raise_oob: bool = True,
 ) -> pd.Timestamp:
@@ -322,7 +322,7 @@ def parse_date(
 
 
 def parse_session(
-    calendar: ExchangeCalendar, session: Session, param_name: str
+    calendar: ExchangeCalendar, session: Session, param_name: str = "session"
 ) -> pd.Timestamp:
     """Parse input intended to represent a session label.
 
@@ -337,7 +337,7 @@ def parse_session(
         `calendar`.
 
     param_name
-        Name of a parameter that was to receive a session label.
+        Name of a parameter that was to receive a session.
 
     Returns
     -------
@@ -388,17 +388,17 @@ class _TradingIndex:
         self.curtail_overlaps = curtail_overlaps
 
         # get session bound values over requested range
-        slice_start = calendar.all_sessions.searchsorted(start)
-        slice_end = calendar.all_sessions.searchsorted(end, side="right")
+        slice_start = calendar.sessions.searchsorted(start)
+        slice_end = calendar.sessions.searchsorted(end, side="right")
         slce = slice(slice_start, slice_end)
 
         self.interval_nanos = period.value
         self.dtype = np.int64 if self.interval_nanos < 3000000000 else np.int32
 
-        self.opens = calendar.market_opens_nanos[slce]
-        self.closes = calendar.market_closes_nanos[slce]
-        self.break_starts = calendar.market_break_starts_nanos[slce]
-        self.break_ends = calendar.market_break_ends_nanos[slce]
+        self.opens = calendar.opens_nanos[slce]
+        self.closes = calendar.closes_nanos[slce]
+        self.break_starts = calendar.break_starts_nanos[slce]
+        self.break_ends = calendar.break_ends_nanos[slce]
 
         self.mask = self.break_starts != pd.NaT.value  # break mask
         self.has_break = self.mask.any()

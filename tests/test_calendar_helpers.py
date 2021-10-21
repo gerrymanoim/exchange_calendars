@@ -16,7 +16,7 @@ from exchange_calendars import calendar_utils, errors, ExchangeCalendar
 from exchange_calendars import calendar_helpers as m
 from .test_exchange_calendar import Answers
 
-# TODO tests for next_divider_idx, previous_divider_idx, compute_all_minutes (#15)
+# TODO tests for next_divider_idx, previous_divider_idx, compute_minutes (#15)
 
 
 @pytest.fixture(scope="class")
@@ -114,12 +114,12 @@ def trading_minute() -> abc.Iterator[str]:
 
 @pytest.fixture
 def minute_too_early(calendar, one_minute) -> abc.Iterator[pd.Timestamp]:
-    yield calendar.first_trading_minute - one_minute
+    yield calendar.first_minute - one_minute
 
 
 @pytest.fixture
 def minute_too_late(calendar, one_minute) -> abc.Iterator[pd.Timestamp]:
-    yield calendar.last_trading_minute + one_minute
+    yield calendar.last_minute + one_minute
 
 
 @pytest.fixture
