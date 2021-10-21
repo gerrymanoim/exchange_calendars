@@ -2362,7 +2362,7 @@ class ExchangeCalendarTestBase:
             "first_pm_minutes",
         ):
             ans_minutes = getattr(ans, prop)
-            cal_minutes = getattr(cal, "all_" + prop)
+            cal_minutes = getattr(cal, prop)
             tm.assert_series_equal(ans_minutes, cal_minutes, check_freq=False)
 
     # Tests for properties covering all minutes.

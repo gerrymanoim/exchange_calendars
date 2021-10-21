@@ -706,37 +706,49 @@ class ExchangeCalendar(ABC):
         """
         return self.schedule.break_end
 
-    @functools.lru_cache(maxsize=1)  # cache last request
-    def _first_minute_nanos(self, side: str | None = None) -> np.ndarray:
-        side = side if side is not None else self.side
-        if side in self._LEFT_SIDES:
+    @functools.lru_cache(maxsize=1)
+    def _first_minutes_nanos(self) -> np.ndarray:
+        if self.side in self._LEFT_SIDES:
             return self.market_opens_nanos
         else:
             return one_minute_later(self.market_opens_nanos)
 
-    @functools.lru_cache(maxsize=1)  # cache last request
-    def _last_minute_nanos(self, side: str | None = None) -> np.ndarray:
-        side = side if side is not None else self.side
-        if side in self._RIGHT_SIDES:
+    @property
+    def first_minutes_nanos(self) -> np.ndarray:
+        return self._first_minutes_nanos()
+
+    @functools.lru_cache(maxsize=1)
+    def _last_minutes_nanos(self) -> np.ndarray:
+        if self.side in self._RIGHT_SIDES:
             return self.market_closes_nanos
         else:
             return one_minute_earlier(self.market_closes_nanos)
 
-    @functools.lru_cache(maxsize=1)  # cache last request
-    def _last_am_minute_nanos(self, side: str | None = None) -> np.ndarray:
-        side = side if side is not None else self.side
-        if side in self._RIGHT_SIDES:
+    @property
+    def last_minutes_nanos(self) -> np.ndarray:
+        return self._last_minutes_nanos()
+
+    @functools.lru_cache(maxsize=1)
+    def _last_am_minutes_nanos(self) -> np.ndarray:
+        if self.side in self._RIGHT_SIDES:
             return self.market_break_starts_nanos
         else:
             return one_minute_earlier(self.market_break_starts_nanos)
 
-    @functools.lru_cache(maxsize=1)  # cache last request
-    def _first_pm_minute_nanos(self, side: str | None = None) -> np.ndarray:
-        side = side if side is not None else self.side
-        if side in self._LEFT_SIDES:
+    @property
+    def last_am_minutes_nanos(self) -> np.ndarray:
+        return self._last_am_minutes_nanos()
+
+    @functools.lru_cache(maxsize=1)
+    def _first_pm_minutes_nanos(self) -> np.ndarray:
+        if self.side in self._LEFT_SIDES:
             return self.market_break_ends_nanos
         else:
             return one_minute_later(self.market_break_ends_nanos)
+
+    @property
+    def first_pm_minutes_nanos(self) -> np.ndarray:
+        return self._first_pm_minutes_nanos()
 
     def _minutes_as_series(self, nanos: np.ndarray, name: str) -> pd.Series:
         """Convert trading minute nanos to pd.Series."""
@@ -745,26 +757,24 @@ class ExchangeCalendar(ABC):
         return ser
 
     @property
-    def all_first_minutes(self) -> pd.Series:
+    def first_minutes(self) -> pd.Series:
         """First trading minute of each session."""
-        return self._minutes_as_series(self._first_minute_nanos(), "first_minutes")
+        return self._minutes_as_series(self.first_minutes_nanos, "first_minutes")
 
     @property
-    def all_last_minutes(self) -> pd.Series:
+    def last_minutes(self) -> pd.Series:
         """Last trading minute of each session."""
-        return self._minutes_as_series(self._last_minute_nanos(), "last_minutes")
+        return self._minutes_as_series(self.last_minutes_nanos, "last_minutes")
 
     @property
-    def all_last_am_minutes(self) -> pd.Series:
+    def last_am_minutes(self) -> pd.Series:
         """Last am trading minute of each session."""
-        return self._minutes_as_series(self._last_am_minute_nanos(), "last_am_minutes")
+        return self._minutes_as_series(self.last_am_minutes_nanos, "last_am_minutes")
 
     @property
-    def all_first_pm_minutes(self) -> pd.Series:
+    def first_pm_minutes(self) -> pd.Series:
         """First pm trading minute of each session."""
-        return self._minutes_as_series(
-            self._first_pm_minute_nanos(), "first_pm_minutes"
-        )
+        return self._minutes_as_series(self.first_pm_minutes_nanos, "first_pm_minutes")
 
     # Properties covering all minutes.
 
@@ -969,28 +979,28 @@ class ExchangeCalendar(ABC):
         self, session: Session, _parse: bool = True
     ) -> pd.Timestamp:
         """Return first trading minute of a given session."""
-        nanos = self._first_minute_nanos()
+        nanos = self.first_minutes_nanos
         return self._get_session_minute_from_nanos(session, nanos, _parse)
 
     def session_last_minute(
         self, session: Session, _parse: bool = True
     ) -> pd.Timestamp:
         """Return last trading minute of a given session."""
-        nanos = self._last_minute_nanos()
+        nanos = self.last_minutes_nanos
         return self._get_session_minute_from_nanos(session, nanos, _parse)
 
     def session_last_am_minute(
         self, session: Session, _parse: bool = True
     ) -> pd.Timestamp | pd.NaT:  # Literal[pd.NaT] - when move to min 3.8
         """Return last trading minute of am subsession of a given session."""
-        nanos = self._last_am_minute_nanos()
+        nanos = self.last_am_minutes_nanos
         return self._get_session_minute_from_nanos(session, nanos, _parse)
 
     def session_first_pm_minute(
         self, session: Session, _parse: bool = True
     ) -> pd.Timestamp | pd.NaT:  # Literal[pd.NaT] - when move to min 3.8
         """Return first trading minute of pm subsession of a given session."""
-        nanos = self._first_pm_minute_nanos()
+        nanos = self.first_pm_minutes_nanos
         return self._get_session_minute_from_nanos(session, nanos, _parse)
 
     def session_first_and_last_minute(
@@ -1000,8 +1010,8 @@ class ExchangeCalendar(ABC):
     ) -> tuple(pd.Timestamp, pd.Timestamp):
         """Return first and last trading minutes of a given session."""
         idx = self._get_session_idx(session, _parse=_parse)
-        first = pd.Timestamp(self._first_minute_nanos()[idx], tz="UTC")
-        last = pd.Timestamp(self._last_minute_nanos()[idx], tz="UTC")
+        first = pd.Timestamp(self.first_minutes_nanos[idx], tz="UTC")
+        last = pd.Timestamp(self.last_minutes_nanos[idx], tz="UTC")
         return (first, last)
 
     def session_has_break(self, session: Session, _parse: bool = True) -> bool:
@@ -1288,9 +1298,9 @@ class ExchangeCalendar(ABC):
         """
         if _parse:
             minute = parse_timestamp(minute, "minute", self)
-        session_idx = np.searchsorted(self._first_minute_nanos(), minute.value) - 1
-        break_start = self._last_am_minute_nanos()[session_idx]
-        break_end = self._first_pm_minute_nanos()[session_idx]
+        session_idx = np.searchsorted(self.first_minutes_nanos, minute.value) - 1
+        break_start = self.last_am_minutes_nanos[session_idx]
+        break_end = self.first_pm_minutes_nanos[session_idx]
         # NaT comparisions evalute as False
         numpy_bool = break_start < minute.value < break_end
         return bool(numpy_bool)
@@ -1577,7 +1587,7 @@ class ExchangeCalendar(ABC):
                     )
                 )
 
-        idx = np.searchsorted(self._last_minute_nanos(), dt.value)
+        idx = np.searchsorted(self.last_minutes_nanos, dt.value)
         current_or_next_session = self.schedule.index[idx]
 
         if direction == "next":
@@ -1918,9 +1928,7 @@ class ExchangeCalendar(ABC):
         return self.all_minutes[min(start_idx, end_idx) : max(start_idx, end_idx) + 1]
 
     def minute_index_to_session_labels(
-        self,
-        index: pd.DatetimeIndex,
-        side: str | None = None,
+        self, index: pd.DatetimeIndex
     ) -> pd.DatetimeIndex:
         """Return session labels corresponding to multiple market minutes.
 
@@ -1933,10 +1941,6 @@ class ExchangeCalendar(ABC):
         index
             Sorted DatetimeIndex representing market minutes for which to get
             corresponding session labels.
-
-        side : default: as `self.side`
-            Override `self.side` to define which side of sessions should be
-            considered as market minutes for the purpose of this call.
 
         Returns
         -------
@@ -1955,8 +1959,8 @@ class ExchangeCalendar(ABC):
         # Find the indices of the previous first session minute and the next
         # last session minute for each minute.
         index_nanos = index.values.astype(np.int64)
-        first_min_nanos = self._first_minute_nanos(side)
-        last_min_nanos = self._last_minute_nanos(side)
+        first_min_nanos = self.first_minutes_nanos
+        last_min_nanos = self.last_minutes_nanos
         prev_first_mins_idxs = (
             first_min_nanos.searchsorted(index_nanos, side="right") - 1
         )
@@ -1970,12 +1974,10 @@ class ExchangeCalendar(ABC):
             example = index[bad_ix]
 
             prev_session_idx = prev_first_mins_idxs[bad_ix]
-            prev_first_min = pd.Timestamp(first_min_nanos[prev_session_idx], tz="UTC")
-            prev_last_min = pd.Timestamp(last_min_nanos[prev_session_idx], tz="UTC")
-            next_first_min = pd.Timestamp(
-                first_min_nanos[prev_session_idx + 1], tz="UTC"
-            )
-            next_last_min = pd.Timestamp(last_min_nanos[prev_session_idx + 1], tz="UTC")
+            prev_first_min = pd.Timestamp(first_min_nanos[prev_session_idx], tz=UTC)
+            prev_last_min = pd.Timestamp(last_min_nanos[prev_session_idx], tz=UTC)
+            next_first_min = pd.Timestamp(first_min_nanos[prev_session_idx + 1], tz=UTC)
+            next_last_min = pd.Timestamp(last_min_nanos[prev_session_idx + 1], tz=UTC)
 
             raise ValueError(
                 f"{mismatches.sum()} non-trading minutes in"
@@ -2232,11 +2234,9 @@ class ExchangeCalendar(ABC):
             `start_session` through `end_session` (inclusive of both).
         """
         slc = self._get_sessions_slice(start_session, end_session, _parse)
-        session_diff = self._last_minute_nanos()[slc] - self._first_minute_nanos()[slc]
+        session_diff = self.last_minutes_nanos[slc] - self.first_minutes_nanos[slc]
         session_diff += NANOSECONDS_PER_MINUTE
-        break_diff = (
-            self._first_pm_minute_nanos()[slc] - self._last_am_minute_nanos()[slc]
-        )
+        break_diff = self.first_pm_minutes_nanos[slc] - self.last_am_minutes_nanos[slc]
         break_diff[break_diff != 0] -= NANOSECONDS_PER_MINUTE
         nanos = session_diff - break_diff
         return (nanos // NANOSECONDS_PER_MINUTE).sum()
