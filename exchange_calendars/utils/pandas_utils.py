@@ -69,3 +69,46 @@ def vectorized_sunday_to_monday(dtix):
     values = dtix.values.copy()
     values[dtix.weekday == 6] += np.timedelta64(1, "D")
     return pd.DatetimeIndex(values)
+
+
+def longest_run(ser: pd.Series) -> pd.Index:
+    """Get the longest run of consecutive True values in a Series.
+
+    Function can be used to find the longest run of values that meet a
+    condition.
+
+    Parameters
+    ----------
+    ser
+        pd.Series of bool dtype.
+            Index should reflect values against which a condition was
+                assessed.
+            Values should reflect whether corresponding index value
+                met the condition.
+
+    Return
+    ------
+    pd.Index
+        Slice of `ser` index that corresponds with the longest run of
+            consecutive True values.
+
+    Examples
+    --------
+    >>> arr = np.arange(0, 88)
+    >>> ser = pd.Series(arr, index=arr)
+    >>> bv = (
+    ...     ((ser >= 10) & (ser < 16))
+    ...     | ((ser >= 30) & (ser <= 40))
+    ...     | ((ser >= 55) & (ser < 61))
+    ... )
+    >>> longest_run(bv)
+    Int64Index([30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40], dtype='int64')
+    >>> pd.testing.assert_index_equal(longest_run(bv), ser.index[30:41])
+    """
+    # group Trues by only adding to sum when value False.
+    trues_grouped = (~ser).cumsum()[ser]  # and only take True Values
+    group_sizes = trues_grouped.value_counts()  # count each run
+    max_run_size = group_sizes.max()
+    max_run_group_id = group_sizes[group_sizes == max_run_size].index[0]
+    run = trues_grouped[trues_grouped == max_run_group_id].index
+    return run

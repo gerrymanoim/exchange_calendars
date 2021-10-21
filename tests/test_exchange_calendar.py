@@ -21,6 +21,7 @@ from collections import abc
 import pytest
 import pandas as pd
 import pandas.testing as tm
+import numpy as np
 import pytz
 from pytz import UTC
 from toolz import concat
@@ -30,6 +31,7 @@ from exchange_calendars.calendar_utils import (
     _default_calendar_aliases,
     _default_calendar_factories,
 )
+from exchange_calendars.utils import pandas_utils
 from exchange_calendars import errors
 from exchange_calendars.exchange_calendar import ExchangeCalendar, days_at_time
 from .test_utils import T
@@ -266,11 +268,28 @@ class Answers:
 
     def get_next_session(self, session: pd.Timestamp) -> pd.Timestamp:
         """Get session that immediately follows `session`."""
-        assert (
-            session != self.last_session
-        ), "Cannot get session later than last answers' session."
+        if session == self.last_session:
+            raise IndexError("Cannot get session later than last answers' session.")
         idx = self.sessions.get_loc(session) + 1
         return self.sessions[idx]
+
+    def get_next_sessions(self, session: pd.Timestamp, count: int) -> pd.Timestamp:
+        """Get `count` consecutive sessions starting with `session`."""
+        assert count >= 0, "count can only take positive integers."
+        start = self.sessions.get_loc(session)
+        stop = start + count
+        if stop > len(self.sessions):
+            raise IndexError("Cannot get sessions later than last answers' session.")
+        return self.sessions[start:stop]
+
+    def get_prev_sessions(self, session: pd.Timestamp, count: int) -> pd.Timestamp:
+        """Get `count` consecutive sessions ending with `session`."""
+        assert count >= 0, "count can only take positive integers."
+        stop = self.sessions.get_loc(session) + 1
+        start = stop - count
+        if start < 0:
+            raise IndexError("Cannot get sessions earlier than first answers' session.")
+        return self.sessions[start:stop]
 
     def session_has_break(self, session: pd.Timestamp) -> bool:
         """Query if `session` has a break."""
@@ -363,6 +382,50 @@ class Answers:
                 pd.date_range(first, last_am, freq="T"),
                 pd.date_range(first_pm, last, freq="T"),
             )
+
+    def get_session_break_minutes(self, session: pd.Timestamp) -> pd.DatetimeIndex:
+        """Get break minutes for single `session`."""
+        if not self.session_has_break(session):
+            return pd.DatetimeIndex([], tz="UTC")
+        else:
+            am_minutes, pm_minutes = self.get_session_minutes(session)
+        first = am_minutes[-1] + self.ONE_MIN
+        last = pm_minutes[0] - self.ONE_MIN
+        return pd.date_range(first, last, freq="T")
+
+    def get_session_edge_minutes(
+        self, session: pd.Timestamp, delta: int = 0
+    ) -> pd.Timestamp:
+        """Get edge trading minutes for a `session`.
+
+        Return will include first and last trading minutes of session and,
+        if applicable, subsessions. Passing `delta` will double length
+        of return by including trading minutes at `delta` minutes 'inwards'
+        from the standard edge minutes. NB `delta` should be less than
+        the session/subsession duration - this condition is NOT
+        VERIFIED by this method.
+        """
+        delta = pd.Timedelta(delta, "T")
+        first_minute = self.first_minutes[session]
+        last_minute = self.last_minutes[session]
+        has_break = self.session_has_break(session)
+        if has_break:
+            last_am_minute = self.last_am_minutes[session]
+            first_pm_minute = self.first_pm_minutes[session]
+
+        minutes = [first_minute, last_minute]
+        if delta:
+            minutes.append(first_minute + delta)
+            minutes.append(last_minute - delta)
+        if has_break:
+            last_am_minute = self.last_am_minutes[session]
+            first_pm_minute = self.first_pm_minutes[session]
+            minutes.extend([last_am_minute, first_pm_minute])
+            if delta:
+                minutes.append(last_am_minute - delta)
+                minutes.append(first_pm_minute + delta)
+
+        return pd.DatetimeIndex(minutes)
 
     # --- Evaluated general calendar properties ---
 
@@ -576,12 +639,7 @@ class Answers:
         s = self.break_starts.isna()
         if s.empty:
             return pd.DatetimeIndex([], tz="UTC")
-        trues_grouped = (~s).cumsum()[s]
-        group_sizes = trues_grouped.value_counts()
-        max_run_size = group_sizes.max()
-        max_run_group_id = group_sizes[group_sizes == max_run_size].index[0]
-        run_without_break = trues_grouped[trues_grouped == max_run_group_id].index
-        return run_without_break
+        return pandas_utils.longest_run(s)
 
     @property
     def sessions_without_break_range(self) -> tuple[pd.Timestamp, pd.Timestamp] | None:
@@ -677,6 +735,13 @@ class Answers:
         return self._sessions_with_gap_before()
 
     # times are changing...
+
+    @property
+    def sessions_unchanging_times_run(self) -> pd.DatetimeIndex:
+        """Longest run of sessions that have unchanging times."""
+        bv = ~self.sessions.isin(self.sessions_next_time_different)
+        s = pd.Series(bv, index=self.sessions)
+        return pandas_utils.longest_run(s)
 
     @functools.lru_cache(maxsize=16)
     def _get_sessions_with_times_different_to_next_session(
@@ -1322,6 +1387,105 @@ class Answers:
         for mins, _, _ in self.non_trading_minutes:
             for minute in mins:
                 yield minute
+
+    # --- Evaluated minutes of a specific circumstance ---
+
+    def _trading_minute_to_break_minute(
+        self, sessions, break_sessions
+    ) -> list[pd.DatetimeIndex, pd.DatetimeIndex, pd.DatetimeIndex]:
+        times = (self.last_am_minutes[break_sessions] + pd.Timedelta(1, "T")).dt.time
+
+        mask = (self.first_minutes[sessions].dt.time.values < times.values) & (
+            times.values < self.last_minutes[sessions].dt.time.values
+        )
+
+        minutes = []
+        for session, break_session in zip(sessions[mask], break_sessions[mask]):
+            break_minutes = self.get_session_break_minutes(break_session)
+            trading_minutes = self.get_session_minutes(session)[0]
+            bv = np.in1d(trading_minutes.time, break_minutes.time)
+            minutes.append([trading_minutes[bv][-1], session, break_session])
+        return minutes
+
+    @property
+    def trading_minute_to_break_minute_next(
+        self,
+    ) -> list[pd.DatetimeIndex, pd.DatetimeIndex, pd.DatetimeIndex]:
+        """Trading minutes where same minute of next session is a break minute.
+
+        Returns
+        -------
+        tuple
+            [0] trading minute
+            [1] session of which [0] ia a trading minute
+            [2] next session, i.e. session of which a minute with same time as
+                [0] is a break minute.
+        """
+        sessions = self.sessions_without_break_next_session_with_break
+        idxr = self.sessions.get_indexer(sessions)
+        break_sessions = self.sessions[idxr + 1]
+        lst = self._trading_minute_to_break_minute(sessions, break_sessions)
+
+        sessions = self.sessions_next_break_end_later
+        idxr = self.sessions.get_indexer(sessions) + 1
+        target_sessions = self.sessions[idxr]
+        minutes = self.first_pm_minutes[sessions]
+        offset_minutes = minutes - sessions + target_sessions
+        # only include offset minute if verified as break minute of target
+        # (it wont be if the break has shifted by more than the break duration)
+        mask = offset_minutes.values > self.last_am_minutes[target_sessions].values
+        lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
+
+        sessions = self.sessions_next_break_start_earlier
+        idxr = self.sessions.get_indexer(sessions) + 1
+        target_sessions = self.sessions[idxr]
+        minutes = self.last_am_minutes[sessions]
+        offset_minutes = minutes - sessions + target_sessions
+        # only include offset minute if verified as break minute of target
+        mask = offset_minutes.values < self.first_pm_minutes[target_sessions].values
+        lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
+
+        return lst
+
+    @property
+    def trading_minute_to_break_minute_prev(
+        self,
+    ) -> list[pd.DatetimeIndex, pd.DatetimeIndex, pd.DatetimeIndex]:
+        """Trading minutes where same minute of previous session is a break minute.
+
+        Returns
+        -------
+        tuple
+            [0] trading minute
+            [1] session of which [0] ia a trading minute
+            [2] previous session, i.e. session of which a minute with same time as
+                [0] is a break minute.
+        """
+        break_sessions = self.sessions_with_break_next_session_without_break
+        idxr = self.sessions.get_indexer(break_sessions)
+        sessions = self.sessions[idxr + 1]
+        lst = self._trading_minute_to_break_minute(sessions, break_sessions)
+
+        target_sessions = self.sessions_next_break_end_earlier
+        idxr = self.sessions.get_indexer(target_sessions) + 1
+        sessions = self.sessions[idxr]  # previous break ends later
+        minutes = self.first_pm_minutes[sessions]
+        offset_minutes = minutes - sessions + target_sessions
+        # only include offset minute if verified as break minute of target
+        # (it wont be if the break has shifted by more than the break duration)
+        mask = offset_minutes.values > self.last_am_minutes[target_sessions].values
+        lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
+
+        target_sessions = self.sessions_next_break_start_later
+        idxr = self.sessions.get_indexer(target_sessions) + 1
+        sessions = self.sessions[idxr]  # previous break starts earlier
+        minutes = self.last_am_minutes[sessions]
+        offset_minutes = minutes - sessions + target_sessions
+        # only include offset minute if verified as break minute of target
+        mask = offset_minutes.values < self.first_pm_minutes[target_sessions].values
+        lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
+
+        return lst
 
     # --- method-specific inputs/outputs ---
 
@@ -2567,6 +2731,43 @@ class ExchangeCalendarTestBase:
             for session in block:
                 tm.assert_index_equal(f(session), ans.get_sessions_minutes(session))
 
+    def test_session_offset(self, default_calendar_with_answers):
+        cal, ans = default_calendar_with_answers
+        f = no_parsing(cal.session_offset)
+
+        for _, block_sessions in ans.session_block_generator():
+            num_sessions = max(len(block_sessions), 5)
+            session = block_sessions[0]
+            try:
+                sessions = ans.get_next_sessions(session, num_sessions)
+            except IndexError:
+                sessions = ans.get_next_sessions(session, len(block_sessions))
+            for i in range(len(sessions)):
+                offset_session = f(session, i)
+                assert offset_session == sessions[i]
+
+        for _, block_sessions in ans.session_block_generator():
+            num_sessions = max(len(block_sessions), 5)
+            session = block_sessions[-1]
+            try:
+                sessions = ans.get_prev_sessions(session, num_sessions)
+            except IndexError:
+                sessions = ans.get_prev_sessions(session, len(block_sessions))
+            for i in range(len(sessions)):
+                offset_session = f(session, -i)
+                assert offset_session == sessions[-(i + 1)]
+
+        # verify raises errors
+        offset_session = f(ans.first_session, 0)
+        assert offset_session == ans.first_session
+        with pytest.raises(errors.RequestedSessionOutOfBounds, match="before"):
+            offset_session = f(ans.first_session, -1)
+
+        offset_session = f(ans.last_session, 0)
+        assert offset_session == ans.last_session
+        with pytest.raises(errors.RequestedSessionOutOfBounds, match="after"):
+            f(ans.last_session, 1)
+
     # Tests for methods that interrogate a date.
 
     def test_is_session(self, default_calendar_with_answers):
@@ -2868,6 +3069,316 @@ class ExchangeCalendarTestBase:
         else:
             session = f(oob_minute, direction)
             assert session == ans.last_session
+
+    def test_minute_to_past_session(self, all_calendars_with_answers, one_minute):
+        """
+        Only lightly tested given method is little more than a wrapper over
+        comprehensively tested methods.
+        """
+        cal, ans = all_calendars_with_answers
+        f = no_parsing(cal.minute_to_past_session)
+
+        for _, block_sessions in ans.session_block_generator():
+            num_sessions = max(len(block_sessions), 5)
+            session = block_sessions[-1]
+            try:
+                sessions = ans.get_prev_sessions(session, num_sessions)
+            except IndexError:
+                sessions = ans.get_prev_sessions(session, len(block_sessions))
+
+            num_sessions = len(sessions)
+            prev_session = sessions[-2]
+            first_minute = ans.first_minutes[session]
+            # trading_minutes
+            minutes = [first_minute, ans.last_minutes[session]]
+            if ans.session_has_break(session):
+                # break minutes
+                minutes.append(ans.last_am_minutes[session] + one_minute)
+                minutes.append(ans.first_pm_minutes[session] - one_minute)
+            if session in ans.sessions_with_gap_before:
+                # non break minutes
+                minutes.append(first_minute - one_minute)
+                minutes.append(ans.last_minutes[prev_session] + one_minute)
+
+            for i in range(1, num_sessions - 1):
+                rtrn = sessions[-(i + 1)]  # all minutes should resolve to this session.
+                for minute in minutes:
+                    assert rtrn == f(minute, i)
+
+        # verify raises errors.
+        for count in [0, -1]:
+            with pytest.raises(ValueError):
+                f(minute, count)
+
+    def test_minute_to_future_session(self, all_calendars_with_answers, one_minute):
+        """
+        Only lightly tested given method is little more than a wrapper over
+        comprehensively tested methods.
+        """
+        cal, ans = all_calendars_with_answers
+        f = no_parsing(cal.minute_to_future_session)
+
+        for _, block_sessions in ans.session_block_generator():
+            num_sessions = max(len(block_sessions), 5)
+            session = block_sessions[0]
+            try:
+                sessions = ans.get_next_sessions(session, num_sessions)
+            except IndexError:
+                sessions = ans.get_next_sessions(session, len(block_sessions))
+
+            num_sessions = len(sessions)
+            next_session = sessions[1]
+            last_minute = ans.last_minutes[session]
+            # trading_minutes
+            minutes = [ans.first_minutes[session], last_minute]
+            if ans.session_has_break(session):
+                # break minutes
+                minutes.append(ans.last_am_minutes[session] + one_minute)
+                minutes.append(ans.first_pm_minutes[session] - one_minute)
+            if session in ans.sessions_with_gap_after:
+                # non break minutes
+                minutes.append(last_minute + one_minute)
+                minutes.append(ans.first_minutes[next_session] - one_minute)
+
+            for i in range(1, num_sessions - 1):
+                rtrn = sessions[i]  # all minutes should resolve to this session.
+                for minute in minutes:
+                    assert rtrn == f(minute, i)
+
+        # verify raises errors.
+        for count in [0, -1]:
+            with pytest.raises(ValueError):
+                f(minute, count)
+
+    def test_minute_to_trading_minute(self, all_calendars_with_answers, all_directions):
+        """
+        Limited testing as tested method is simply a filter for
+        comprehensively tested methods.
+        """
+        direction = all_directions
+        calendar, ans = all_calendars_with_answers
+        f = no_parsing(calendar.minute_to_trading_minute)
+
+        for minute in itertools.islice(ans.trading_minutes_only(), 6):
+            assert minute == f(minute, direction=direction)
+
+        for minutes, session in ans.break_minutes[:1]:
+            for minute in minutes:
+                if direction == "previous":
+                    f(minute, direction) == ans.last_am_minutes[session]
+                elif direction == "next":
+                    f(minute, direction) == ans.first_pm_minutes[session]
+                else:
+                    error_msg = (
+                        f"`minute` '{minute}' is not a trading minute. Consider passing"
+                        " `direction` as 'next' or 'previous'."
+                    )
+                    with pytest.raises(ValueError, match=re.escape(error_msg)):
+                        f(minute, direction)
+
+        for minutes, prev_session, next_session in ans.non_trading_minutes[:1]:
+            for minute in minutes:
+                if direction == "previous":
+                    assert f(minute, direction) == ans.last_minutes[prev_session]
+                elif direction == "next":
+                    assert f(minute, direction) == ans.first_minutes[next_session]
+                else:
+                    error_msg = f"`minute` '{minute}' is not a trading minute."
+                    with pytest.raises(ValueError, match=re.escape(error_msg)):
+                        f(minute, direction)
+
+    def test_minute_offset(self, all_calendars_with_answers, one_minute):
+        calendar, ans = all_calendars_with_answers
+        f = no_parsing(calendar.minute_offset)
+
+        for _, sessions in ans.session_block_generator():
+            for i, session in enumerate(sessions):
+
+                # intra session
+                first_minute = ans.first_minutes[session]
+                rtrn = f(first_minute + pd.Timedelta(20, "T"), 10)
+                assert rtrn == first_minute + pd.Timedelta(30, "T")
+
+                last_minute = ans.last_minutes[session]
+                rtrn = f(last_minute - pd.Timedelta(20, "T"), -10)
+                assert rtrn == last_minute - pd.Timedelta(30, "T")
+
+                # crossing break
+                if ans.session_has_break(session):
+                    last_am_minute = ans.last_am_minutes[session]
+                    first_pm_minute = ans.first_pm_minutes[session]
+
+                    rtrn = f(last_am_minute - one_minute, 3)
+                    assert rtrn == first_pm_minute + one_minute
+
+                    rtrn = f(first_pm_minute + one_minute, -3)
+                    assert rtrn == last_am_minute - one_minute
+
+                # crossing sessions
+                prev_session = False if i == 0 else sessions[i - 1]
+                next_session = False if i == len(sessions) - 1 else sessions[i + 1]
+                if prev_session:
+                    rtrn = f(first_minute + one_minute, -3)
+                    assert rtrn == ans.last_minutes[prev_session] - one_minute
+
+                if next_session:
+                    rtrn = f(last_minute - one_minute, 3)
+                    assert rtrn == ans.first_minutes[next_session] + one_minute
+
+        # Verify raising expected errors.
+
+        rtrn = f(ans.first_trading_minute, 0)
+        assert rtrn == ans.first_trading_minute
+        with pytest.raises(errors.RequestedMinuteOutOfBounds, match="before"):
+            f(ans.first_trading_minute, -1)
+
+        rtrn = f(ans.last_trading_minute, 0)
+        assert rtrn == ans.last_trading_minute
+        with pytest.raises(errors.RequestedMinuteOutOfBounds, match="after"):
+            f(ans.last_trading_minute, 1)
+
+    def test_minute_offset_by_sessions(self, all_calendars_with_answers):
+        cal, ans = all_calendars_with_answers
+        f = no_parsing(cal.minute_offset_by_sessions)
+        delta_int = 20
+        delta = pd.Timedelta(delta_int, "T")
+
+        # tests for rtrn with same time.
+
+        def assertions(
+            minute: pd.Timestamp,
+            target_session: pd.Timestamp,
+            rtrn: pd.Timestamp,
+        ):
+            assert (rtrn.hour == minute.hour) and (rtrn.minute == minute.minute)
+            assert rtrn >= ans.first_minutes[target_session]
+            assert rtrn <= ans.last_minutes[target_session]
+
+        sessions_unchanging_times_run = ans.sessions_unchanging_times_run
+
+        session = sessions_unchanging_times_run[0]
+        minutes = ans.get_session_edge_minutes(session, delta_int)
+        target_sessions = sessions_unchanging_times_run[1:6]
+        for i, target_session in enumerate(target_sessions):
+            for minute in minutes:
+                assertions(minute, target_session, f(minute, i + 1))
+
+        session = sessions_unchanging_times_run[-1]
+        minutes = ans.get_session_edge_minutes(session, delta_int)
+        target_sessions = sessions_unchanging_times_run[-6:-1]
+        for i, target_session in enumerate(reversed(target_sessions)):
+            for minute in minutes:
+                assertions(minute, target_session, f(minute, -(i + 1)))
+
+        sessions = ans.sessions_next_close_later[-5:]
+        for session in sessions:
+            target_session = ans.get_next_session(session)
+            minute_ = ans.last_minutes[session]
+            for minute in [minute_, minute_ - delta]:
+                assertions(minute, target_session, f(minute, 1))
+
+        target_sessions = ans.sessions_next_close_earlier[-5:]
+        for target_session in target_sessions:
+            session = ans.get_next_session(target_session)  # previous close later
+            minute_ = ans.last_minutes[session]
+            for minute in [minute_, minute_ - delta]:
+                assertions(minute, target_session, f(minute, -1))
+
+        sessions = ans.sessions_next_open_earlier[-5:]
+        for session in sessions:
+            target_session = ans.get_next_session(session)
+            minute_ = ans.first_minutes[session]
+            for minute in [minute_, minute_ + delta]:
+                assertions(minute, target_session, f(minute, 1))
+
+        target_sessions = ans.sessions_next_open_later[-5:]
+        for target_session in target_sessions:
+            session = ans.get_next_session(target_session)  # previous open earlier
+            minute_ = ans.first_minutes[session]
+            for minute in [minute_, minute_ + delta]:
+                assertions(minute, target_session, f(minute, -1))
+
+        if ans.has_a_session_with_break:
+
+            sessions = ans.sessions_next_break_start_later[-5:]
+            for session in sessions:
+                target_session = ans.get_next_session(session)
+                minute_ = ans.last_am_minutes[session]
+                for minute in [minute_, minute_ - delta]:
+                    assertions(minute, target_session, f(minute, 1))
+
+            target_sessions = ans.sessions_next_break_start_earlier[-5:]
+            for target_session in target_sessions:
+                session = ans.get_next_session(target_session)  # prev break start later
+                minute_ = ans.last_am_minutes[session]
+                for minute in [minute_, minute_ - delta]:
+                    assertions(minute, target_session, f(minute, -1))
+
+            sessions = ans.sessions_next_break_end_earlier[-5:]
+            for session in sessions:
+                target_session = ans.get_next_session(session)
+                minute_ = ans.first_pm_minutes[session]
+                for minute in [minute_, minute_ + delta]:
+                    assertions(minute, target_session, f(minute, 1))
+
+            target_sessions = ans.sessions_next_break_end_later[-5:]
+            for target_session in target_sessions:
+                session = ans.get_next_session(target_session)  # prev break end earlier
+                minute_ = ans.first_pm_minutes[session]
+                for minute in [minute_, minute_ + delta]:
+                    assertions(minute, target_session, f(minute, -1))
+
+        # tests for rtrn with different time.
+
+        sessions = ans.sessions_next_close_earlier[-5:]
+        if ans.sessions[-2] in sessions:  # guard against offset minute exceeding bound
+            sessions = sessions[sessions != ans.sessions[-2]]
+        for session in sessions:
+            target_session = ans.get_next_session(session)
+            minute = ans.last_minutes[session]
+            assert f(minute, 1) == ans.last_minutes[target_session]
+
+        target_sessions = ans.sessions_next_close_later[-5:]
+        for target_session in target_sessions:
+            session = ans.get_next_session(target_session)  # previous close earlier
+            minute = ans.last_minutes[session]
+            assert f(minute, -1) == ans.last_minutes[target_session]
+
+        sessions = ans.sessions_next_open_later[-5:]
+        for session in sessions:
+            target_session = ans.get_next_session(session)
+            minute = ans.first_minutes[session]
+            assert f(minute, 1) == ans.first_minutes[target_session]
+
+        target_sessions = ans.sessions_next_open_earlier[-5:]
+        if ans.sessions[1] in sessions:  # guard against offset minute exceeding bound
+            sessions = sessions[sessions != ans.sessions[1]]
+        for target_session in target_sessions:
+            session = ans.get_next_session(target_session)  # previous open later
+            minute = ans.first_minutes[session]
+            assert f(minute, -1) == ans.first_minutes[target_session]
+
+        # tests for trading minutes that would otherwise offset to a break minute.
+
+        for minute, _, target_session in ans.trading_minute_to_break_minute_next:
+            assert f(minute, 1) == ans.last_am_minutes[target_session]
+
+        for minute, _, target_session in ans.trading_minute_to_break_minute_prev:
+            assert f(minute, -1) == ans.last_am_minutes[target_session]
+
+        # Verify expected errors raised.
+
+        minutes = [ans.first_minutes[ans.last_session], ans.last_trading_minute]
+        for minute in minutes:
+            for i in range(1, 3):
+                with pytest.raises(errors.RequestedMinuteOutOfBounds, match="after"):
+                    f(minute, i)
+
+        minutes = [ans.first_trading_minute, ans.last_minutes[ans.first_session]]
+        for minute in minutes:
+            for i in range(-2, 0):
+                with pytest.raises(errors.RequestedMinuteOutOfBounds, match="before"):
+                    f(minute, i)
 
     # Tests for methods that evaluate or interrogate a range of minutes.
 

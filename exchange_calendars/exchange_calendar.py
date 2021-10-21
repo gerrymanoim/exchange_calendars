@@ -1097,6 +1097,38 @@ class ExchangeCalendar(ABC):
         first, last = self.session_first_and_last_minute(session_label, _parse=_parse)
         return self.minutes_in_range(start_minute=first, end_minute=last)
 
+    def session_offset(
+        self, session: Session, count: int, _parse: bool = False
+    ) -> pd.Timestamp:
+        """Offset a given session by a number of sessions.
+
+        Parameters
+        ----------
+        session
+            Session from which to offset.
+
+        count
+            Number of sessions to offset `session`. Positive to offset
+            forwards, negative to offset backwards.
+
+        Returns
+        -------
+        pd.Timestamp
+            Offset session.
+
+        Raises
+        ------
+        exchange_calendars.errors.RequestedSessionOutOfBounds
+            If offset session would be either before the calendar's first
+            session or after the calendar's last session.
+        """
+        idx = self._get_session_idx(session, _parse=_parse) + count
+        if idx >= len(self.all_sessions):
+            raise errors.RequestedSessionOutOfBounds(self, too_early=False)
+        elif idx < 0:
+            raise errors.RequestedSessionOutOfBounds(self, too_early=True)
+        return self.all_sessions[idx]
+
     # Methods that interrogate a date.
 
     def _get_date_idx(self, date: Date, _parse=True) -> int:
@@ -1478,6 +1510,7 @@ class ExchangeCalendar(ABC):
                 ) from None
         return self.all_minutes[idx]
 
+    # NOTE: when min to 3.8, direction annotation to Literal["next", "previous", "none"]
     def minute_to_session_label(
         self,
         dt: Minute,
@@ -1508,6 +1541,12 @@ class ExchangeCalendar(ABC):
         ------
         ValueError
             If `dt` is not a trading minute and `direction` is "none".
+
+        See Also
+        --------
+        minute_to_past_session
+        minute_to_future_session
+        session_offset
         """
         if _parse:
             dt = parse_timestamp(dt, "dt", self)
@@ -1550,15 +1589,263 @@ class ExchangeCalendar(ABC):
             if not self.is_open_on_minute(dt, ignore_breaks=True, _parse=False):
                 # if the exchange is closed, blow up
                 raise ValueError(
-                    "Received `minute` as '{0}' although this is not a trading"
-                    " minute. Consider passing `direction` as 'next' or"
-                    " 'previous'.".format(dt)
+                    f"`minute` '{dt}' is not a trading minute. Consider passing"
+                    " `direction` as 'next' or 'previous'."
                 )
         else:
             # invalid direction
             raise ValueError("Invalid direction parameter: " "{0}".format(direction))
 
         return current_or_next_session
+
+    def minute_to_past_session(
+        self, minute: Minute, count: int = 1, _parse: bool = True
+    ) -> pd.Timestamp:
+        """Get a session that closed before a given minute.
+
+        Parameters
+        ----------
+        minute
+            Minute for which to return a previous session. Can be a
+            trading minute or non-trading minute.
+            Note: if `minute` is a trading minute then returned session
+            will not be the session of which `minute` is a trading minute,
+            but rather a session that closed before `minute`.
+
+        count : default: 1
+            Number of sessions prior to `minute` for which require session.
+
+        Returns
+        -------
+        pd.Timstamp
+            Session that is `count` full sessions before `minute`.
+
+        See Also
+        --------
+        minute_to_session
+        minute_to_future_session
+        session_offset
+        """
+        if _parse:
+            minute = parse_timestamp(minute, "minute", self)
+        if count <= 0:
+            raise ValueError("`count` must be higher than 0.")
+        if self.is_open_on_minute(minute, ignore_breaks=True, _parse=False):
+            current_session = self.minute_to_session_label(minute, _parse=False)
+            if current_session == self.first_session:
+                raise errors.RequestedSessionOutOfBounds(self, too_early=True)
+            base_session = self.previous_session_label(current_session, _parse=False)
+        else:
+            base_session = self.minute_to_session_label(
+                minute, "previous", _parse=False
+            )
+        count -= 1
+        return self.session_offset(base_session, -count, _parse=False)
+
+    def minute_to_future_session(
+        self,
+        minute: Minute,
+        count: int = 1,
+        _parse: bool = True,
+    ) -> pd.Timestamp:
+        """Get a session that opens after a given minute.
+
+        Parameters
+        ----------
+        minute
+            Minute for which to return a future session. Can be a trading
+            minute or non-trading minute.
+            Note: if `minute` is a trading minute then returned session
+            will not be the session of which `minute` is a trading minute,
+            but rather a session that opens after `minute`.
+
+        count : default: 1
+            Number of sessions following `minute` for which require
+            session.
+
+        Returns
+        -------
+        pd.Timstamp
+            Session that is `count` full sessions after `minute`.
+
+        See Also
+        --------
+        minute_to_session
+        minute_to_past_session
+        session_offset
+        """
+        if _parse:
+            minute = parse_timestamp(minute, "minute", self)
+        if count <= 0:
+            raise ValueError("`count` must be higher than 0.")
+        if self.is_open_on_minute(minute, ignore_breaks=True, _parse=False):
+            current_session = self.minute_to_session_label(minute, _parse=False)
+            if current_session == self.last_session:
+                raise errors.RequestedSessionOutOfBounds(self, too_early=False)
+            base_session = self.next_session_label(current_session, _parse=False)
+        else:
+            base_session = self.minute_to_session_label(minute, "next", _parse=False)
+        count -= 1
+        return self.session_offset(base_session, count, _parse=False)
+
+    # NOTE: when min to 3.8, direction annotation to Literal["next", "previous", "none"]
+    def minute_to_trading_minute(
+        self, minute: Minute, direction: str = "none", _parse: bool = True
+    ) -> pd.Timestamp:
+        """Resolve a minute to a trading minute.
+
+        Differs from `previous_minute` and `next_minute` by returning
+        `minute` unchanged if `minute` is a trading minute.
+
+        Parameters
+        ----------
+        minute
+            Timestamp to be resolved to a trading minute.
+
+        direction:
+            How to resolve `minute` if does not represent a trading minute:
+                'next' - return trading minute that immediately follows
+                    `minute`.
+                'previous' - return trading minute that immediately
+                    preceeds `minute`.
+                'none' - raise KeyError
+
+        Returns
+        -------
+        pd.Timestamp
+            Returns `minute` if `minute` is a trading minute otherwise
+            first trading minute that, in accordance with `direction`,
+            either immediately follows or preceeds `minute`.
+
+        Raises
+        ------
+        ValueError
+            If `minute` is not a trading minute and `direction` is None.
+
+        See Also
+        --------
+        next_mintue
+        previous_minute
+        """
+        if _parse:
+            minute = parse_timestamp(minute, "minute", self)
+        if self.is_trading_minute(minute, _parse=False):
+            return minute
+        elif direction == "next":
+            return self.next_minute(minute, _parse=False)
+        elif direction == "previous":
+            return self.previous_minute(minute, _parse=False)
+        else:
+            raise ValueError(
+                f"`minute` '{minute}' is not a trading minute. Consider passing"
+                " `direction` as 'next' or 'previous'."
+            )
+
+    def minute_offset(
+        self, minute: TradingMinute, count: int, _parse: bool = True
+    ) -> pd.Timestamp:
+        """Offset a given trading minute by a number of trading minutes.
+
+        Parameters
+        ----------
+        minute
+            Trading minute from which to offset.
+
+        count
+            Number of trading minutes to offset `minute`. Positive to
+            offset forwards, negative to offset backwards.
+
+        Returns
+        -------
+        pd.Timstamp
+            Offset trading minute.
+
+        Raises
+        ------
+        ValueError
+            If offset minute would be either before the calendar's first
+            trading minute or after the calendar's last trading minute.
+        """
+        if _parse:
+            minute = parse_trading_minute(self, minute, "minute")
+        idx = self._get_minute_idx(minute) + count
+        if idx >= len(self.all_minutes_nanos):
+            raise errors.RequestedMinuteOutOfBounds(self, too_early=False)
+        elif idx < 0:
+            raise errors.RequestedMinuteOutOfBounds(self, too_early=True)
+        return self.all_minutes[idx]
+
+    def minute_offset_by_sessions(
+        self,
+        minute: TradingMinute,
+        count: int = 1,
+        _parse: bool = True,
+    ) -> pd.Timestamp:
+        """Offset trading minute by a given number of sessions.
+
+        If trading minute is not represented in target session (due to a late
+        open for example) then offset minute will be rolled (with respect to
+        the target session):
+            - forwards to first session minute, if offset minute otherwise
+                falls earlier than first session minute.
+            - back to last session minute, if offset minute otherwise falls
+                later than last session minute.
+            - back to last minute before break, if offset otherwise
+                falls in session break.
+
+        Parameters
+        ----------
+        minute
+            Trading minute to be offset.
+
+        count
+            Number of sessions by which to offset trading minute. Negative
+            to offset to an earlier session.
+        """
+        if _parse:
+            minute = parse_trading_minute(self, minute, "minute")
+        if not count:
+            return minute
+
+        if count > 0:
+            try:
+                target_session = self.minute_to_future_session(minute, abs(count))
+            except errors.RequestedSessionOutOfBounds:
+                raise errors.RequestedMinuteOutOfBounds(self, too_early=False)
+        else:
+            try:
+                target_session = self.minute_to_past_session(minute, abs(count))
+            except errors.RequestedSessionOutOfBounds:
+                raise errors.RequestedMinuteOutOfBounds(self, too_early=True)
+
+        base_session = self.minute_to_session_label(minute)
+
+        day_offset = (minute.normalize() - base_session.normalize()).days
+        minute = target_session.replace(hour=minute.hour, minute=minute.minute)
+        minute += pd.Timedelta(days=day_offset)
+
+        if self._minute_oob(minute):
+            if minute.value < self.all_minutes_nanos[0]:
+                errors.RequestedMinuteOutOfBounds(self, too_early=True)
+            if minute.value > self.all_minutes_nanos[-1]:
+                raise errors.RequestedMinuteOutOfBounds(self, too_early=False)
+
+        if self.is_trading_minute(minute, _parse=False):
+            # this guard is necessary as minute can be for a different session than the
+            # intended if the gap between sessions is less than any difference in the
+            # open or close times (i.e. only relevant if base and target sessions have
+            # different open/close times.
+            if self.minute_to_session_label(minute, _parse=False) == target_session:
+                return minute
+        first_minute = self.session_first_minute(target_session, _parse=False)
+        if minute < first_minute:
+            return first_minute
+        last_minute = self.session_last_minute(target_session, _parse=False)
+        if minute > last_minute:
+            return last_minute
+        elif self.is_break_minute(minute, _parse=False):
+            return self.session_last_am_minute(target_session, _parse=False)
+        assert False, "offset minute should have resolved!"
 
     # Methods that evaluate or interrogate a range of minutes.
 

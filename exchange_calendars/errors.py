@@ -278,6 +278,64 @@ class MinuteOutOfBounds(ValueError):
         return msg
 
 
+class RequestedSessionOutOfBounds(ValueError):
+    """The requested session would fall beyond calendar bounds.
+
+    Parameters
+    ----------
+    calendar
+        Calendar for which session would be out-of-bounds.
+
+    too_early
+        True if requested session would be earlier than the first calendar
+            session.
+        False if requested session would be later than the last calendar
+            session.
+    """
+
+    def __init__(self, calendar: ExchangeCalendar, too_early: bool):
+        self.calendar = calendar
+        self.adverb = "before" if too_early else "after"
+        self.position = "first" if too_early else "last"
+        self.bound = calendar.first_session if too_early else calendar.last_session
+
+    def __str__(self) -> str:
+        return (
+            f"Requested session would fall {self.adverb} the calendar's {self.position}"
+            f" session ('{self.bound}')."
+        )
+
+
+class RequestedMinuteOutOfBounds(ValueError):
+    """The requested trading minute would fall beyond calendar bounds.
+
+    Parameters
+    ----------
+    calendar
+        Calendar for which minute would be out-of-bounds.
+
+    too_early
+        True if requested minute would be earlier than the first calendar
+            minute.
+        False if requested minute would be later than the last calendar
+            minute.
+    """
+
+    def __init__(self, calendar: ExchangeCalendar, too_early: bool):
+        self.calendar = calendar
+        self.adverb = "before" if too_early else "after"
+        self.position = "first" if too_early else "last"
+        self.bound = (
+            calendar.first_trading_minute if too_early else calendar.last_trading_minute
+        )
+
+    def __str__(self) -> str:
+        return (
+            f"Requested minute would fall {self.adverb} the calendar's {self.position}"
+            f" trading minute ('{self.bound}')."
+        )
+
+
 class IndexOverlapError(ValueError):
     """Periods implied by indices overlap."""
 
