@@ -4,7 +4,27 @@
 
 A Python library for defining and querying calendars for security exchanges.
 
-Calendars for more than [50 exchanges](#Calendars) available out-the-box! If you can't find what you're looking for, [create a new calendar](#How-can-I-create-a-new-calendar).
+Calendars for more than [50 exchanges](#Calendars) available out-the-box! If you still can't find the calendar you're looking for, [create a new one](#How-can-I-create-a-new-calendar)!
+
+## **What's new in 3.4?** (October 2021)
+Quite a bit!
+
+* [Tutorials](#Tutorials). Five of them!
+* New calendar methods [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71) (see [calendar_methods.ipynb](docs/tutorials/calendar_methods.ipynb) for usage), including:
+  * trading_index (tutorial [trading_index.ipynb](docs/tutorials/trading_index.ipynb))
+  * is_trading_minute
+  * is_break_minute
+  * minute_offset
+  * session_offset
+  * minute_offset_by_sessions
+* Calendar's now have a `side` parameter to determine which of the open, close, break-start and break-end minutes are treated as trading minutes [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71).
+* 24 hour calendars are now truly 24 hours (open/close times are no longer one minute later/earlier than the actual open/close) [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71).
+* Some calendar methods have been renamed to improve consistency (table of changes [here](#Methods-renamed-in-version-34)) [#85](https://github.com/gerrymanoim/exchange_calendars/issues/85). The previous names will continue to be available until version 4.0. NOTE: Some newly named methods have also made changes to parameter names, for example from `session_label` to `session` and from `start_session_label` to `start`.
+* Under-the-bonnet work has sped up many methods.
+* A test suite overhaul ([#71](https://github.com/gerrymanoim/exchange_calendars/pull/71), [#92](https://github.com/gerrymanoim/exchange_calendars/pull/92), [#96](https://github.com/gerrymanoim/exchange_calendars/pull/96)) has made it simpler to define and test calendars.
+* As ever, specific calendars have been updated and improved. Thank you to those who have contributed since the last release:
+  * XKRX improvements by [@elbakramer](https://github.com/elbakramer) [#78](https://github.com/gerrymanoim/exchange_calendars/pull/78).
+  * XBOM corrections by [@rajeshyogeshwar](https://github.com/rajeshyogeshwar) [#97](https://github.com/gerrymanoim/exchange_calendars/pull/97).
 
 ## Installation
 
@@ -45,7 +65,6 @@ Query the schedule:
 <table border="1" class="dataframe">  <thead>    <tr style="text-align: right; font-size: 13px">      <th></th>      <th>market_open</th>      <th>break_start</th>      <th>break_end</th>      <th>market_close</th>    </tr>  </thead>  <tbody style="text-align: right; font-size: 11px">    <tr>      <th>2020-12-29 00:00:00+00:00</th>      <td>2020-12-29 01:30:00</td>      <td>2020-12-29 04:00:00</td>      <td>2020-12-29 05:00:00</td>      <td>2020-12-29 08:00:00</td>    </tr>    <tr>      <th>2020-12-30 00:00:00+00:00</th>      <td>2020-12-30 01:30:00</td>      <td>2020-12-30 04:00:00</td>      <td>2020-12-30 05:00:00</td>      <td>2020-12-30 08:00:00</td>    </tr>    <tr>      <th>2020-12-31 00:00:00+00:00</th>      <td>2020-12-31 01:30:00</td>      <td>NaT</td>      <td>NaT</td>      <td>2020-12-31 04:00:00</td>    </tr>    <tr>      <th>2021-01-04 00:00:00+00:00</th>      <td>2021-01-04 01:30:00</td>      <td>2021-01-04 04:00:00</td>      <td>2021-01-04 05:00:00</td>      <td>2021-01-04 08:00:00</td>    </tr>    <tr>      <th>2021-01-05 00:00:00+00:00</th>      <td>2021-01-05 01:30:00</td>      <td>2021-01-05 04:00:00</td>      <td>2021-01-05 05:00:00</td>      <td>2021-01-05 08:00:00</td>    </tr>  </tbody></table>
 
 ### Working with **sessions**
-<!--TODO revise section post any renaming -->
 ```python
 >>> xnys.is_session("2020-01-01")
 False
@@ -63,19 +82,28 @@ DatetimeIndex(['2021-01-04 00:00:00+00:00', '2021-01-05 00:00:00+00:00',
                '2021-01-12 00:00:00+00:00', '2021-01-13 00:00:00+00:00'],
               dtype='datetime64[ns, UTC]', freq='C')
 
->>> xnys.date_to_session_label("2021-01-01", direction="next")
+>>> xnys.date_to_session_("2021-01-01", direction="next")
 Timestamp('2021-01-04 00:00:00+0000', tz='UTC', freq='C')
 
->>> xnys.previous_session_label("2021-01-11")
+>>> xnys.previous_session("2021-01-11")
 Timestamp('2021-01-08 00:00:00+0000', tz='UTC', freq='C')
+
+>>> xhkg.trading_index(
+...     "2020-12-30",
+...     "2020-12-31",
+...     period="90T",
+...     force_close=True,
+...     force_break_close=True
+... )
+IntervalIndex([[2020-12-30 01:30:00, 2020-12-30 03:00:00), [2020-12-30 03:00:00, 2020-12-30 04:00:00), [2020-12-30 05:00:00, 2020-12-30 06:30:00), [2020-12-30 06:30:00, 2020-12-30 08:00:00), [2020-12-31 01:30:00, 2020-12-31 03:00:00), [2020-12-31 03:00:00, 2020-12-31 04:00:00)],
+              closed='left',
+              dtype='interval[datetime64[ns, UTC]]')
 ```
-See the [sessions tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/sessions.ipynb) for a deeper dive into sessions.
+See the [sessions tutorial](docs/tutorials/sessions.ipynb) for a deeper dive into sessions.
 
 ### Working with **minutes**  
-<!--TODO WRITE section...-->  
-
 ```python
->>> xhkg.minutes_for_session("2021-01-04")
+>>> xhkg.session_minutes("2021-01-04")
 DatetimeIndex(['2021-01-04 01:30:00+00:00', '2021-01-04 01:31:00+00:00',
                '2021-01-04 01:32:00+00:00', '2021-01-04 01:33:00+00:00',
                '2021-01-04 01:34:00+00:00', '2021-01-04 01:35:00+00:00',
@@ -102,16 +130,16 @@ Timestamp('2021-01-04 08:00:00+0000', tz='UTC')
 >>> xhkg.previous_minute("2021-01-04 21:10")
 Timestamp('2021-01-04 07:59:00+0000', tz='UTC')
 ```
-Check out the [minutes tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/minutes.ipynb) for a deeper dive that includes an explanation of the concept of 'minutes' and covers how the "side" option determines which minutes are treated as trading minutes.
+Check out the [minutes tutorial](docs/tutorials/minutes.ipynb) for a deeper dive that includes an explanation of the concept of 'minutes' and how the "side" option determines which minutes are treated as trading minutes.
 
 ## Tutorials
-<!--THESE NEED CHANGING ON ANY CHANGE TO A TUTORIAL! NB sessions.ipynb and minutes.ipynb are also linked to elsewhere in the README. Alternative is a link to the GitHub page and then hope users find their way to the nbviewer version via the link to the top left of the GitHub viewer -->
-[sessions.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/sessions.ipynb) - all things [sessions](#Working-with-sessions).  
-[minutes.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/minutes.ipynb) - all things [minutes](#Working-with-minutes). Don't miss this one!  
-[calendar_properties.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/calendar_properties.ipynb) - a walk through the schedule and all other calendar properties.  
-[calendar_methods.ipynb](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/calendar_methods.ipynb) - a walk through all the methods available to interrogate a calendar.
+[sessions.ipynb](docs/tutorials/sessions.ipynb) - all things [sessions](#Working-with-sessions).  
+[minutes.ipynb](docs/tutorials/minutes.ipynb) - all things [minutes](#Working-with-minutes). Don't miss this one!  
+[calendar_properties.ipynb](docs/tutorials/calendar_properties.ipynb) - a walk through the schedule and all other calendar properties.  
+[calendar_methods.ipynb](docs/tutorials/calendar_methods.ipynb) - a walk through all the methods available to interrogate a calendar.  
+[trading_index.ipynb](docs/tutorials/trading_index.ipynb) - a method that warrants a tutorial all of its own.
 
-Hopefully you'll find that exchange calendars has the method you need to get the information you want. If it doesn't, [raise an issue](https://github.com/gerrymanoim/exchange_calendars/issues) and let us know!
+Hopefully you'll find that `exchange_calendars` has the method you need to get the information you want. If it doesn't, either [PR](https://github.com/gerrymanoim/exchange_calendars/pulls) it or [raise an issue](https://github.com/gerrymanoim/exchange_calendars/issues) and let us know!
 
 ## Command Line Usage
 Print a unix-cal like calendar straight from the command line (holidays are indicated by brackets)...
@@ -168,31 +196,64 @@ ecal XNYS 1 2020
     [19][20] 21  22  23  24 [25]
     [26] 27  28  29  30  31
 
+## Methods renamed in version 3.4
+| Previous Name | New Name |
+| ------------- | -------- |
+| previous_session_label | previous_session |
+| next_session_label | next_session |
+| date_to_session_label | date_to_session |
+| minute_to_session_label | minute_to_session |
+| open_and_close_for_session | session_open_close |
+| break_start_and_end_for_session | session_break_start_end |
+| minutes_for_session | session_minutes |
+| minute_index_to_session_labels | minutes_to_sessions |
+| all_sessions | sessions |
+| all_minutes | minutes |
+| all_minutes_nanos | minutes_nanos |
+| first_trading_minute | first_minute |
+| last_trading_minute | last_minute |
+| first_trading_session | first_session |
+| last_trading_session | last_session |
+| has_breaks | sessions_has_break |
+| market_opens_nanos | opens_nanos |
+| market_closes_nanos | closes_nanos |
+| market_break_starts_nanos | break_starts_nanos |
+| market_break_ends_nanos | break_ends_nanos |
+
+## What to expect in 4.0? (January 2022)
+Major anticipated changes in 4.0 include the following (see the [path to 4.0](https://github.com/gerrymanoim/exchange_calendars/issues/61) for a fuller list):
+* Changes to the timezone of returned sessions and times (these changes are not yet set in stone - please have your say [here](https://github.com/gerrymanoim/exchange_calendars/issues/42)).
+  * Schedule times to change from tz-naive to "UTC".
+  * Sessions to change from "UTC" to tz-naive.
+* Renaming of some methods and method parameters to provide consistency across the package.
+* Minimum supported Python version to advance from 3.7 to 3.8.
+* For those [methods renamed in 3.4](#Methods-renamed-in-version-34), the previous method names will be removed.
+
 ## Frequently Asked Questions
 
 ### **How can I create a new calendar?**
 
 First off, make sure the calendar you're after hasn't already been defined; exchange calendars comes with over [50 pre-defined calendars](#Calendars), including major security exchanges.
 
-If you can't find what you're after, a custom calendar can be created as a subclass of [ExchangeCalendar]()<!--TODO ADD REFERENCE-->. The subclass should override those calendar-definition properties relevant to it. 
-
-We're working on improving the documentation for creating calendars (contributions welcome!). In the meantime it's a (not too complicated) matter of referring to the `ExchangeCalendar` abstract properties' documentation and reading the comments in the code to ascertain which properties are relevant to the subclass and how they should be defined.
+If you can't find what you're after, a custom calendar can be created as a subclass of [ExchangeCalendar](exchange_calendars/exchange_calendar.py). [This workflow](.github/pull_request_template.md) describes the process to add a new calendar to `exchange_calendars`. Just follow the relevant parts.
 
 To access the new calendar via `get_calendar` call either `xcals.register_calendar` or `xcals.register_calendar_type` to register, respectively, a specific calendar instance or a calendar factory (i.e. the subclass).
 
 ### **Can I contribute a new calendar to exchange calendars?**
 
-Yes please! The checklist [here](https://github.com/gerrymanoim/exchange_calendars/issues/59#issuecomment-883284979) pretty much covers the process. (anyone with time to offer a PR more fully documentating 'How to contribute a new calendar', please do!)
+Yes please! The workflow can be found [here](.github/pull_request_template.md).
 
 ### **`<calendar>` is missing a holiday, has a wrong time, should have a break etc...**
 
-**All** of the exchange calendars are maintained by user contributions. If a calendar you care about needs revising, please open a PR - that's how this thing works!
+**All** of the exchange calendars are maintained by user contributions. If a calendar you care about needs revising, please open a [PR](https://github.com/gerrymanoim/exchange_calendars/pulls) - that's how this thing works!
+
+You'll find the workflow to modify an existing calendar [here](.github/pull_request_template.md).
 
 ### **What times are considered open and closed?**
 
 `exchange_calendars` attempts to be broadly useful by considering an exchange to be open only during periods of regular trading. During any pre-trading, post-trading or auction period the exchange is treated as closed. An exchange is also treated as closed during any observed lunch break.
 
-See the [minutes tutorial](https://nbviewer.ipython.org/github/gerrymanoim/exchange_calendars/blob/1c4c8f95da73cfda3d1bfa34caa6ebda8ad37d59/docs/tutorials/minutes.ipynb) for a detailed explanation of which minutes an exchange is considered open over. If you previously used `trading_calendars`, or `exchange_calendars` prior to release 3.4, then this is the place to look for answers to questions of how the definition of trading minutes has changed over time (and is now stable and flexible!).
+See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanation of which minutes an exchange is considered open over. If you previously used `trading_calendars`, or `exchange_calendars` prior to release 3.4, then this is the place to look for answers to questions of how the definition of trading minutes has changed over time (and is now stable and flexible!).
 
 ## Calendars
 
