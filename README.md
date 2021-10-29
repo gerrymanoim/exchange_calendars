@@ -7,7 +7,7 @@ A Python library for defining and querying calendars for security exchanges.
 Calendars for more than [50 exchanges](#Calendars) available out-the-box! If you still can't find the calendar you're looking for, [create a new one](#How-can-I-create-a-new-calendar)!
 
 ## **What's new in 3.4?** (October 2021)
-Quite a bit!
+Quite a bit! (Please offer any feedback at the [3.4 discussion](https://github.com/gerrymanoim/exchange_calendars/discussions/107))
 
 * [Tutorials](#Tutorials). Five of them!
 * New calendar methods [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71) (see [calendar_methods.ipynb](docs/tutorials/calendar_methods.ipynb) for usage), including:

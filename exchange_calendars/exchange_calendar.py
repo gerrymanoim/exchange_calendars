@@ -2633,7 +2633,7 @@ class ExchangeCalendar(ABC):
         self, session_label: Session, _parse: bool = True
     ) -> tuple[pd.Timestamp, pd.Timestamp]:
         """Method renamed. Use `session_open_close`."""
-        self.session_open_close(session_label, _parse)
+        return self.session_open_close(session_label, _parse)
 
     @deprecate(alt="session_break_start_end")
     def break_start_and_end_for_session(
