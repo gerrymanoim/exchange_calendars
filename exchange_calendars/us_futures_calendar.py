@@ -42,14 +42,6 @@ class QuantopianUSFuturesCalendar(ExchangeCalendar):
     close_times = ((None, time(18)),)
     open_offset = -1
 
-    @property
-    def default_start(self) -> pd.Timestamp:
-        # XXX: Override the default start date. This is a stopgap for memory
-        # issues caused by upgrading to pandas 18. This calendar is the most
-        # severely affected since it has the most total minutes of any of the
-        # zipline calendars.
-        return pd.Timestamp("2000-01-01", tz=UTC)
-
     def execution_time_from_open(self, open_dates):
         return open_dates + pd.Timedelta(hours=FUTURES_OPEN_TIME_OFFSET)
 
