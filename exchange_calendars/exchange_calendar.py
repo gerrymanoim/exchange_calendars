@@ -2191,7 +2191,9 @@ class ExchangeCalendar(ABC):
         closed: str = "left",  # when move to min 3.8 Literal["left", "right", "both", "neither"]
         force_close: bool = False,
         force_break_close: bool = False,
+        force: bool | None = None,
         curtail_overlaps: bool = False,
+        ignore_breaks: bool = False,
         parse: bool = True,
     ) -> pd.DatetimeIndex | pd.IntervalIndex:
         """Create a trading index.
@@ -2266,6 +2268,7 @@ class ExchangeCalendar(ABC):
             `force_break_close`.
 
         force_close : default: False
+            (ignored if `force` is passed.)
             (ignored if `period` is '1d')
             (irrelevant if `intervals` is False and `closed` is "left" or
             "neither")
@@ -2280,6 +2283,7 @@ class ExchangeCalendar(ABC):
             non-trading period.
 
         force_break_close : default: False
+            (ignored if `force` is passed.)
             (ignored if `period` is '1d'.)
             (irrelevant if `intervals` is False and `closed` is "left" or
             "neither.)
@@ -2292,6 +2296,15 @@ class ExchangeCalendar(ABC):
             If False, defines right side of this period after the break
             start. In this case the represented period will include a
             non-trading period.
+
+        force : optional
+            (ignored if `period` is '1d'.)
+            (irrelevant if `intervals` is False and `closed` is "left" or
+            "neither.)
+
+            Convenience option to set both `force_close` and
+            `force_break_close`. If passed then values passsed to
+            `force_close` and `force_break_close` will be ignored.
 
         curtail_overlaps : default: False
             (ignored if `period` is '1d')
@@ -2309,6 +2322,18 @@ class ExchangeCalendar(ABC):
                 all periods.)
 
                 If False, will raise IntervalsOverlapError.
+
+        ignore_breaks : default: False
+            (ignored if `period` is '1d'.)
+            (irrelevant if no session has a break)
+
+            Defines whether trading index should respect session breaks.
+
+            If False, treat sessions with breaks as comprising independent
+            morning and afternoon subsessions.
+
+            If True, treat all sessions as continuous, ignoring any
+            breaks.
 
         parse : default: True
             Determines if `start` and `end` values are parsed. If these
@@ -2373,6 +2398,9 @@ class ExchangeCalendar(ABC):
                 f"If `intervals` is True then `closed` cannot be '{closed}'."
             )
 
+        if force is not None:
+            force_close = force_break_close = force
+
         # method exposes public methods of _TradingIndex.
         _trading_index = _TradingIndex(
             self,
@@ -2383,6 +2411,7 @@ class ExchangeCalendar(ABC):
             force_close,
             force_break_close,
             curtail_overlaps,
+            ignore_breaks,
         )
 
         if not intervals:

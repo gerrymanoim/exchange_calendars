@@ -385,9 +385,10 @@ class _TradingIndex:
         force_close: bool,
         force_break_close: bool,
         curtail_overlaps: bool,
+        ignore_breaks: bool,
     ):
         self.closed = closed
-        self.force_break_close = force_break_close
+        self.force_break_close = False if ignore_breaks else force_break_close
         self.force_close = force_close
         self.curtail_overlaps = curtail_overlaps
 
@@ -401,11 +402,15 @@ class _TradingIndex:
 
         self.opens = calendar.opens_nanos[slce]
         self.closes = calendar.closes_nanos[slce]
-        self.break_starts = calendar.break_starts_nanos[slce]
-        self.break_ends = calendar.break_ends_nanos[slce]
 
-        self.mask = self.break_starts != pd.NaT.value  # break mask
-        self.has_break = self.mask.any()
+        if ignore_breaks:
+            self.has_break = False
+        else:
+            self.break_starts = calendar.break_starts_nanos[slce]
+            self.break_ends = calendar.break_ends_nanos[slce]
+
+            self.mask = self.break_starts != pd.NaT.value  # break mask
+            self.has_break = self.mask.any()
 
         self.defaults = {
             "closed": self.closed,

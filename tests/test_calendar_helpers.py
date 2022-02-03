@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
-from collections import abc
-import re
 import itertools
 import operator
+import re
+from collections import abc
 
-import pytest
-import pandas as pd
 import numpy as np
-from hypothesis import given, settings, assume, strategies as st
+import pandas as pd
+import pytest
+from hypothesis import assume, given, settings
+from hypothesis import strategies as st
+from pandas.testing import assert_index_equal
 
-from exchange_calendars import calendar_utils, errors, ExchangeCalendar
+from exchange_calendars import ExchangeCalendar
 from exchange_calendars import calendar_helpers as m
+from exchange_calendars import calendar_utils, errors
+
 from .test_exchange_calendar import Answers
 
 # TODO tests for next_divider_idx, previous_divider_idx, compute_minutes (#15)
@@ -612,7 +616,15 @@ class TestTradingIndex:
             assume(not op(overrun, sessions_gap).any())
 
         ti = m._TradingIndex(
-            cal, start, end, period, closed, force_close, force_break_close, False
+            cal,
+            start,
+            end,
+            period,
+            closed,
+            force_close,
+            force_break_close,
+            curtail_overlaps=False,
+            ignore_breaks=False,
         )
         index = ti.trading_index()
 
@@ -693,7 +705,15 @@ class TestTradingIndex:
             assume(not (overrun > sessions_gap).any())
 
         ti = m._TradingIndex(
-            cal, start, end, period, closed, force_close, force_break_close, curtail
+            cal,
+            start,
+            end,
+            period,
+            closed,
+            force_close,
+            force_break_close,
+            curtail,
+            ignore_breaks=False,
         )
         index = ti.trading_index_intervals()
 
@@ -739,7 +759,7 @@ class TestTradingIndex:
         closed = "neither"
         forces = [False, False]
 
-        ti = m._TradingIndex(cal, start, end, period, closed, *forces, False)
+        ti = m._TradingIndex(cal, start, end, period, closed, *forces, False, False)
         index = ti.trading_index()
         assert index.empty
 
@@ -827,9 +847,17 @@ class TestTradingIndex:
             sessions_gap = ans.opens[slc].shift(-1) - ans.closes[slc]
             assume(op(overrun, sessions_gap).any())
 
-        forces_and_curtails = [False, False, False]
-
-        ti = m._TradingIndex(cal, start, end, period, closed, *forces_and_curtails)
+        ti = m._TradingIndex(
+            cal,
+            start,
+            end,
+            period,
+            closed,
+            force_close=False,
+            force_break_close=False,
+            curtail_overlaps=False,
+            ignore_breaks=False,
+        )
         with pytest.raises(errors.IndicesOverlapError):
             ti.trading_index()
 
@@ -846,7 +874,7 @@ class TestTradingIndex:
     def cal_start_end(
         self, calendars
     ) -> abc.Iterator[tuple[ExchangeCalendar], pd.Timestamp, pd.Timestamp]:
-        """(calendar, start, end) parameters for parsing and concrete overlap tests."""
+        """(calendar, start, end) parameters for specific tests."""
         yield (
             calendars["XHKG"],
             pd.Timestamp("2018-01-01", tz="UTC"),
@@ -866,8 +894,17 @@ class TestTradingIndex:
         cal, start, end = cal_start_end
         period, closed = request.param
         period = pd.Timedelta(period)
-        forces_and_curtails = [False, False, curtail_all]
-        yield m._TradingIndex(cal, start, end, period, closed, *forces_and_curtails)
+        yield m._TradingIndex(
+            cal,
+            start,
+            end,
+            period,
+            closed,
+            force_close=False,
+            force_break_close=False,
+            curtail_overlaps=curtail_all,
+            ignore_breaks=False,
+        )
 
     def test_overlaps(self, ti_for_overlap, answers):
         """Test 'curtail_overlaps' and for overlaps against concrete parameters."""
@@ -905,8 +942,17 @@ class TestTradingIndex:
         """
         cal, start, end = cal_start_end
         period, closed = pd.Timedelta("104T"), request.param
-        forces_and_curtails = [False, False, curtail_all]
-        yield m._TradingIndex(cal, start, end, period, closed, *forces_and_curtails)
+        yield m._TradingIndex(
+            cal,
+            start,
+            end,
+            period,
+            closed,
+            force_close=False,
+            force_break_close=False,
+            curtail_overlaps=curtail_all,
+            ignore_breaks=True,
+        )
 
     def test_overlaps_2(self, ti_for_overlap_error_negative_case):
         """Test for no overlaps against concrete edge case."""
@@ -917,6 +963,67 @@ class TestTradingIndex:
             index = ti.trading_index_intervals()
             assert isinstance(index, pd.IntervalIndex)
             assert index.is_non_overlapping_monotonic
+
+    # Tests for other options
+
+    def test_force(self, cal_start_end):
+        """Verify `force` option overrides `force_close` and `force_break_close`."""
+        cal, start, end = cal_start_end
+        kwargs = dict(start=start, end=end, period="1H", intervals=True)
+
+        expected_true = cal.trading_index(
+            **kwargs, force_close=True, force_break_close=True
+        )
+        expected_false = cal.trading_index(
+            **kwargs, force_close=False, force_break_close=False
+        )
+
+        force_combos = itertools.product([True, False], repeat=2)
+        for force_close, force_break_close in force_combos:
+            rtrn_true = cal.trading_index(
+                **kwargs,
+                force_close=force_close,
+                force_break_close=force_break_close,
+                force=True,
+            )
+
+            assert_index_equal(rtrn_true, expected_true)
+
+            rtrn_false = cal.trading_index(
+                **kwargs,
+                force_close=force_close,
+                force_break_close=force_break_close,
+                force=False,
+            )
+
+            assert_index_equal(rtrn_false, expected_false)
+
+    def test_ignore_breaks(self, cal_start_end):
+        """Verify effect of ignore_breaks option."""
+        cal, start, end = cal_start_end
+        assert cal.sessions_has_break(start, end)
+        kwargs = dict(start=start, end=end, period="1H", intervals=True)
+
+        # verify a difference
+        index_false = cal.trading_index(**kwargs, ignore_breaks=False)
+        index_true = cal.trading_index(**kwargs, ignore_breaks=True)
+        with pytest.raises(AssertionError):
+            assert_index_equal(index_false, index_true)
+
+        # create an equivalent calendar without breaks
+        delta = pd.Timedelta(10, "D")
+        start_ = start - delta
+        end_ = end + delta
+
+        cal_amended = calendar_utils._default_calendar_factories[cal.name](start_, end_)
+        cal_amended.break_starts_nanos[:] = pd.NaT.value
+        cal_amended.break_ends_nanos[:] = pd.NaT.value
+        cal_amended.break_starts[:] = pd.NaT
+        cal_amended.break_ends[:] = pd.NaT
+
+        # verify amended calendar returns as original with breaks ignored
+        rtrn = cal_amended.trading_index(**kwargs, ignore_breaks=False)
+        assert_index_equal(rtrn, index_true)
 
     # PARSING TESTS
 
