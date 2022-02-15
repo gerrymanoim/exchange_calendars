@@ -178,9 +178,12 @@ def get_csv(name: str) -> pd.DataFrame:
         parse_dates=[0, 1, 2, 3, 4],
         infer_datetime_format=True,
     )
-    df.index = df.index.tz_localize(UTC)
+    if df.index.tz is None:
+        df.index = df.index.tz_localize(UTC)
     for col in df:
-        df[col] = df[col].dt.tz_localize(UTC)
+        if df[col].dt.tz is None:
+            df[col] = df[col].dt.tz_localize(UTC)
+
     return df
 
 
@@ -947,15 +950,19 @@ class Answers:
         """Block of 3 sessions with unchanged timings."""
         start_idx = len(self.sessions) // 3
         end_idx = start_idx + 21
+
+        def times_equal(*s):
+            for elems in zip(*s):
+                if not set(elems) == {pd.NaT}:
+                    if not len({elem.time() for elem in elems}) == 1:
+                        return False
+            return True
+
         for i in range(start_idx, end_idx):
-            times_1 = self.answers.iloc[i].dt.time
-            times_2 = self.answers.iloc[i + 1].dt.time
-            times_3 = self.answers.iloc[i + 2].dt.time
-            one_and_two_equal = (times_1 == times_2) | (times_1.isna() & times_2.isna())
-            one_and_three_equal = (times_1 == times_3) | (
-                times_1.isna() & times_3.isna()
-            )
-            if (one_and_two_equal & one_and_three_equal).all():
+            times_1 = self.answers.iloc[i]
+            times_2 = self.answers.iloc[i + 1]
+            times_3 = self.answers.iloc[i + 2]
+            if times_equal(times_1, times_2, times_3):
                 break
             assert i < (end_idx - 1), "Unable to evaluate a normal session block!"
         return self.sessions[i : i + 3]
@@ -2342,7 +2349,10 @@ class ExchangeCalendarTestBase:
             "break_starts",
             "break_ends",
         ):
-            ans_series = getattr(ans, prop).dt.tz_convert(None)
+            try:
+                ans_series = getattr(ans, prop).dt.tz_convert(None)
+            except TypeError:
+                ans_series = getattr(ans, prop).dt.tz_localize(None)
             cal_series = getattr(cal, prop)
             tm.assert_series_equal(ans_series, cal_series, check_freq=False)
 

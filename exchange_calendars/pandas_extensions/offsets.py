@@ -142,7 +142,7 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
         )
 
     @apply_wraps
-    def apply(self, other):
+    def _apply(self, other):
         if isinstance(other, datetime):
             moved = 0
             remaining = self.n - moved
@@ -169,6 +169,9 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
             return result
         else:
             return super().apply(other)
+
+    # backwards compat
+    apply = _apply
 
     def is_on_offset(self, dt):
         if self.normalize and not _is_normalized(dt):
