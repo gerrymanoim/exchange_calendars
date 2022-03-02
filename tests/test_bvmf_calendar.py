@@ -11,7 +11,7 @@ class TestBVMFCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def max_session_hours(self):
-        yield 7
+        yield 8
 
     @pytest.fixture
     def regular_holidays_sample(self):
@@ -57,8 +57,7 @@ class TestBVMFCalendar(ExchangeCalendarTestBase):
             "2003-11-20",  # year prior to first Day of Black Awareness holiday
         ]
 
-    # FIXME: add back in later (NB late opens not included to calendar)
-    # @pytest.fixture(scope="class")
-    # def late_opens_sample(self):
-    #     # Ash Wednesday, 46 days before Easter Sunday
-    #     yield ["2016-02-10", "2017-03-01", "2018-02-14"]
+    @pytest.fixture(scope="class")
+    def late_opens_sample(self):
+        # Ash Wednesday, 46 days before Easter Sunday
+        yield ["2016-02-10", "2017-03-01", "2018-02-14", "2022-03-02"]

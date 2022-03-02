@@ -2521,15 +2521,12 @@ class ExchangeCalendarTestBase:
         for date in non_holidays_sample:
             assert T(date) in default_calendar.sessions
 
-    # NOTE: As of Oct 21 no calendar tests late opens (indeed, believe that no
-    # calendar defines late opens). Test commented out to prevent skip tests littering
-    # output. REINSTATE TEST IF any calendar defines and test late opens.
-    # def test_late_opens_sample(self, default_calendar, late_opens_sample):
-    #     """Test calendar-specific sample of sessions are included to late opens."""
-    #     if not late_opens_sample:
-    #         pytest.skip()
-    #     for date in late_opens_sample:
-    #         assert T(date) in default_calendar.late_opens
+    def test_late_opens_sample(self, default_calendar, late_opens_sample):
+        """Test calendar-specific sample of sessions are included to late opens."""
+        if not late_opens_sample:
+            pytest.skip()
+        for date in late_opens_sample:
+            assert T(date) in default_calendar.late_opens
 
     def test_early_closes_sample(self, default_calendar, early_closes_sample):
         """Test calendar-specific sample of sessions are included to early closes."""
