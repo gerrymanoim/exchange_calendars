@@ -217,7 +217,7 @@ ecal XNYS 1 2020
 | market_break_starts_nanos | break_starts_nanos |
 | market_break_ends_nanos | break_ends_nanos |
 
-## What to expect in 4.0? (February/March 2022)
+## What to expect in 4.0? (April 2022)
 Major anticipated changes in 4.0 include the following (see the [path to 4.0](https://github.com/gerrymanoim/exchange_calendars/issues/61) for a fuller list):
 * Changes to the timezone of returned sessions and times (these changes are not yet set in stone - please have your say [here](https://github.com/gerrymanoim/exchange_calendars/issues/42)).
   * Schedule times to change from tz-naive to "UTC".
