@@ -39,6 +39,8 @@ AniversarioSaoPaulo = Holiday(
     "Aniversario de Sao Paulo",
     month=1,
     day=25,
+    # in 2022, BVMF was opened on this day
+    end_date="2021-01-01",
 )
 # Carnival Monday
 CarnavalSegunda = Holiday(
