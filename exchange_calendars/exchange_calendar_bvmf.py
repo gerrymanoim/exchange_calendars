@@ -40,7 +40,7 @@ AniversarioSaoPaulo = Holiday(
     month=1,
     day=25,
     # in 2022, BVMF was opened on this day
-    end_date="2021-01-01",
+    end_date="2022-01-01",
 )
 # Carnival Monday
 CarnavalSegunda = Holiday(
@@ -81,7 +81,11 @@ Constitucionalista_prepandemic = Holiday(
     end_date="2020-01-01",
 )
 Constitucionalista_pospandemic = Holiday(
-    "Constitucionalista pos-pandemia", month=7, day=9, start_date="2021-01-01"
+    "Constitucionalista pos-pandemia",
+    month=7,
+    day=9,
+    start_date="2021-01-01",
+    end_date="2022-01-01",
 )
 # Independence Day
 Independencia = Holiday(
@@ -109,7 +113,11 @@ ProclamacaoRepublica = Holiday(
 )
 # Day of Black Awareness
 ConscienciaNegra = Holiday(
-    "Dia da Consciencia Negra", month=11, day=20, start_date="2004-01-01"
+    "Dia da Consciencia Negra",
+    month=11,
+    day=20,
+    start_date="2004-01-01",
+    end_date="2022-01-01",
 )
 # Christmas Eve
 VesperaNatal = Holiday(
