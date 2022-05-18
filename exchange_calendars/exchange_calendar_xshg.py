@@ -581,9 +581,8 @@ class XSHGExchangeCalendar(PrecomputedExchangeCalendar):
     Exchange calendar for the Shanghai Stock Exchange (XSHG, XSSC, SSE).
 
     Open time: 9:30 Asia/Shanghai
+    Lunch break: 11:30 - 13:00 Asia/Shanghai
     Close time: 15:00 Asia/Shanghai
-
-    NOTE: For now, we are skipping the intra-day break from 11:30 to 13:00.
 
     Due to the complexity around the Shanghai exchange holidays, we are
     hardcoding a list of holidays covering 1999-2025, inclusive. There are
@@ -593,6 +592,8 @@ class XSHGExchangeCalendar(PrecomputedExchangeCalendar):
     name = "XSHG"
     tz = timezone("Asia/Shanghai")
     open_times = ((None, time(9, 30)),)
+    break_start_times = ((None, time(11, 30)),)
+    break_end_times = ((None, time(13, 0)),)
     close_times = ((None, time(15, 0)),)
 
     @property
