@@ -52,11 +52,8 @@ class XTKSExchangeCalendar(ExchangeCalendar):
     Exchange calendar for the Tokyo Stock Exchange
 
     First session: 9:00am - 11:30am
-    Lunch
+    Lunch Break: 11:30am - 12:30pm
     Second session: 12:30pm - 3:00pm
-
-    NOTE: we are treating the two sessions per day as one session for now,
-    because we will not be handling minutely data in the immediate future.
 
     Regularly-Observed Holidays (see xtks_holidays.py for more info):
     - New Year's Holidays (Dec. 31 - Jan. 3)
@@ -86,7 +83,8 @@ class XTKSExchangeCalendar(ExchangeCalendar):
     tz = timezone("Asia/Tokyo")
 
     open_times = ((None, time(9)),)
-
+    break_start_times = ((None, time(11, 30)),)
+    break_end_times = ((None, time(12, 30)),)
     close_times = ((None, time(15)),)
 
     @property
