@@ -6,22 +6,25 @@ A Python library for defining and querying calendars for security exchanges.
 
 Calendars for more than [50 exchanges](#Calendars) available out-the-box! If you still can't find the calendar you're looking for, [create a new one](#How-can-I-create-a-new-calendar)!
 
-## **What's new in 3.4?** (October 2021)
-Quite a bit! (Please offer any feedback at the [3.4 discussion](https://github.com/gerrymanoim/exchange_calendars/discussions/107))
 
-* [Tutorials](#Tutorials). Five of them!
-* New calendar methods [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71) (see [calendar_methods.ipynb](docs/tutorials/calendar_methods.ipynb) for usage), including:
-  * trading_index (tutorial [trading_index.ipynb](docs/tutorials/trading_index.ipynb))
-  * is_trading_minute
-  * is_break_minute
-  * minute_offset
-  * session_offset
-  * minute_offset_by_sessions
-* Calendar's now have a `side` parameter to determine which of the open, close, break-start and break-end minutes are treated as trading minutes [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71).
-* 24 hour calendars are now truly 24 hours (open/close times are no longer one minute later/earlier than the actual open/close) [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71).
-* Some calendar methods have been renamed to improve consistency (table of changes [here](#Methods-renamed-in-version-34)) [#85](https://github.com/gerrymanoim/exchange_calendars/issues/85). The previous names will continue to be available until version 4.0. NOTE: Some newly named methods have also made changes to parameter names, for example from `session_label` to `session` and from `start_session_label` to `start`.
-* Under-the-bonnet work has sped up many methods.
-* A test suite overhaul ([#71](https://github.com/gerrymanoim/exchange_calendars/pull/71), [#92](https://github.com/gerrymanoim/exchange_calendars/pull/92), [#96](https://github.com/gerrymanoim/exchange_calendars/pull/96)) has made it simpler to define and test calendars.
+## **NOTICES: All change!**
+
+### **3.6.3 will be the last stop for version 3!**
+The final release for version 3 will be 3.6.3 (due before end May 22). See [#175](https://github.com/gerrymanoim/exchange_calendars/issues/175) for information on PRs received ahead of release 4.0.
+
+### What to expect in 4.0 (June 2022)
+Major changes to be introduced in 4.0 include:
+* Changes to the timezone of sessions and times ([#142](https://github.com/gerrymanoim/exchange_calendars/issues/42)). **THIS WILL** (probably) **BREAK DEPENDENT PACKAGES!**
+  * Schedule times to change from tz-naive to "UTC".
+  * Sessions to change from "UTC" to tz-naive.
+* Renaming of further methods and method parameters to improve consistency.
+* Minimum supported Python version to advance from 3.7 to 3.8.
+* For those [methods renamed in 3.4](#Methods-renamed-in-version-34), the old method names will be removed.
+
+See the [path to 4.0](https://github.com/gerrymanoim/exchange_calendars/issues/61) for a fuller list.
+
+### **New library for prices data!**
+If you like the idea of [using `exchange_calendars` to create meaningful OHLCV datasets](https://github.com/maread99/market_prices#exchange_calendars) then check out the new [`market_prices`](https://github.com/maread99/market_prices) library. Works out-the-box with freely available data!
 
 ## Installation
 
@@ -193,7 +196,27 @@ ecal XNYS 1 2020
     [19][20] 21  22  23  24 [25]
     [26] 27  28  29  30  31
 
-## Methods renamed in version 3.4
+## **Changes in 3.4** (released October 2021)
+The 3.4 release introduced notable new features and documentation, including:
+
+* [Tutorials](#Tutorials). Five of them!
+* New calendar methods [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71) (see [calendar_methods.ipynb](docs/tutorials/calendar_methods.ipynb) for usage), including:
+  * trading_index (tutorial [trading_index.ipynb](docs/tutorials/trading_index.ipynb))
+  * is_trading_minute
+  * is_break_minute
+  * minute_offset
+  * session_offset
+  
+  * minute_offset_by_sessions
+* Calendar's now have a `side` parameter to determine which of the open, close, break-start and break-end minutes are treated as trading minutes [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71).
+* 24 hour calendars are now truly 24 hours (open/close times are no longer one minute later/earlier than the actual open/close) [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71).
+* Some calendar methods have been renamed to improve consistency (table of changes [here](#Methods-renamed-in-version-34)) [#85](https://github.com/gerrymanoim/exchange_calendars/issues/85). The previous names will continue to be available until version 4.0. NOTE: Some newly named methods have also made changes to parameter names, for example from `session_label` to `session` and from `start_session_label` to `start`.
+* Under-the-bonnet work has sped up many methods.
+* A test suite overhaul ([#71](https://github.com/gerrymanoim/exchange_calendars/pull/71), [#92](https://github.com/gerrymanoim/exchange_calendars/pull/92), [#96](https://github.com/gerrymanoim/exchange_calendars/pull/96)) has made it simpler to define and test calendars.
+
+Please offer any feedback at the [3.4 discussion](https://github.com/gerrymanoim/exchange_calendars/discussions/107).
+
+### Methods renamed in version 3.4
 | Previous Name | New Name |
 | ------------- | -------- |
 | previous_session_label | previous_session |
@@ -216,15 +239,6 @@ ecal XNYS 1 2020
 | market_closes_nanos | closes_nanos |
 | market_break_starts_nanos | break_starts_nanos |
 | market_break_ends_nanos | break_ends_nanos |
-
-## What to expect in 4.0? (April 2022)
-Major anticipated changes in 4.0 include the following (see the [path to 4.0](https://github.com/gerrymanoim/exchange_calendars/issues/61) for a fuller list):
-* Changes to the timezone of returned sessions and times (these changes are not yet set in stone - please have your say [here](https://github.com/gerrymanoim/exchange_calendars/issues/42)).
-  * Schedule times to change from tz-naive to "UTC".
-  * Sessions to change from "UTC" to tz-naive.
-* Renaming of some methods and method parameters to provide consistency across the package.
-* Minimum supported Python version to advance from 3.7 to 3.8.
-* For those [methods renamed in 3.4](#Methods-renamed-in-version-34), the previous method names will be removed.
 
 ## Frequently Asked Questions
 
