@@ -9,12 +9,12 @@ Calendars for more than [50 exchanges](#Calendars) available out-the-box! If you
 
 ## **NOTICES: All change!**
 
-### **3.6.3 will be the last stop for version 3!**
-The final release for version 3 will be 3.6.3 (due before end May 22). See [#175](https://github.com/gerrymanoim/exchange_calendars/issues/175) for information on PRs received ahead of release 4.0.
+### **Release 3.6.3 will be the last stop for version 3!**
+The final release for version 3 will be v3.6.3 (due before end May 22). See [#175](https://github.com/gerrymanoim/exchange_calendars/issues/175) for information on PRs received ahead of release v4.0.
 
 ### What to expect in 4.0 (June 2022)
 Major changes to be introduced in 4.0 include:
-* Changes to the timezone of sessions and times ([#142](https://github.com/gerrymanoim/exchange_calendars/issues/42)). **THIS WILL** (probably) **BREAK DEPENDENT PACKAGES!**
+* Changes to the timezone of sessions and times ([#142](https://github.com/gerrymanoim/exchange_calendars/issues/42)). **This will** (probably) **break dependent packages!**
   * Schedule times to change from tz-naive to "UTC".
   * Sessions to change from "UTC" to tz-naive.
 * Renaming of further methods and method parameters to improve consistency.
@@ -206,7 +206,6 @@ The 3.4 release introduced notable new features and documentation, including:
   * is_break_minute
   * minute_offset
   * session_offset
-  
   * minute_offset_by_sessions
 * Calendar's now have a `side` parameter to determine which of the open, close, break-start and break-end minutes are treated as trading minutes [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71).
 * 24 hour calendars are now truly 24 hours (open/close times are no longer one minute later/earlier than the actual open/close) [#71](https://github.com/gerrymanoim/exchange_calendars/pull/71).
