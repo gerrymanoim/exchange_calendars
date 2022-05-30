@@ -50,7 +50,6 @@ from .calendar_helpers import (
     parse_trading_minute,
     previous_divider_idx,
 )
-from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 from .utils.memoize import lazyval
 from .utils.pandas_utils import days_at_time
 
@@ -286,8 +285,8 @@ class ExchangeCalendar(ABC):
             self.close_offset,
         )
 
-        # Apply special offsets first
-        self._calculate_and_overwrite_special_offsets(_all_days, start, end)
+        # Apply any special offsets first
+        self.apply_special_offsets(_all_days, start, end)
 
         # Series mapping sessions with nonstandard opens/closes.
         _special_opens = self._calculate_special_opens(start, end)
@@ -599,37 +598,16 @@ class ExchangeCalendar(ABC):
         """
         return []
 
-    @property
-    def special_weekmasks(self):
-        """
-        Returns
-        -------
-        list: List of (date, date, str) tuples that represent special
-         weekmasks that applies between dates.
-        """
-        return []
+    def apply_special_offsets(self, _all_days, start, end) -> None:
+        """Hook for subclass to apply changes.
 
-    @property
-    def special_offsets(self):
-        """
-        Returns
-        -------
-        list: List of (timedelta, timedelta, timedelta, timedelta, AbstractHolidayCalendar) tuples
-         that represent special open, break_start, break_end, close offsets
-         and corresponding HolidayCalendars.
-        """
-        return []
+        Method executed by constructor prior to overwritting special dates.
 
-    @property
-    def special_offsets_adhoc(self):
+        Notes
+        -----
+        Incorporated to provide hook to `exchange_calendar_xkrx`.
         """
-        Returns
-        -------
-        list: List of (timedelta, timedelta, timedelta, timedelta, DatetimeIndex) tuples
-         that represent special open, break_start, break_end, close offsets
-         and corresponding DatetimeIndexes.
-        """
-        return []
+        return None
 
     # ------------------------------------------------------------------
     # -- NO method below this line should be overriden on a subclass! --
@@ -639,19 +617,11 @@ class ExchangeCalendar(ABC):
 
     @lazyval
     def day(self):
-        if self.special_weekmasks:
-            return MultipleWeekmaskCustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-                weekmasks=self.special_weekmasks,
-            )
-        else:
-            return CustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-            )
+        return CustomBusinessDay(
+            holidays=self.adhoc_holidays,
+            calendar=self.regular_holidays,
+            weekmask=self.weekmask,
+        )
 
     @classmethod
     def valid_sides(cls) -> list[str]:
@@ -2570,137 +2540,6 @@ class ExchangeCalendar(ABC):
         return self._special_dates(
             self.special_closes,
             self.special_closes_adhoc,
-            start,
-            end,
-        )
-
-    def _overwrite_special_offsets(
-        self,
-        session_labels,
-        opens_or_closes,
-        calendars,
-        ad_hoc_dates,
-        start_date,
-        end_date,
-        strict=False,
-    ):
-        # Short circuit when nothing to apply.
-        if opens_or_closes is None or not len(opens_or_closes):
-            return
-
-        len_m, len_oc = len(session_labels), len(opens_or_closes)
-        if len_m != len_oc:
-            raise ValueError(
-                "Found misaligned dates while building calendar.\n"
-                "Expected session_labels to be the same length as "
-                "open_or_closes but,\n"
-                "len(session_labels)=%d, len(open_or_closes)=%d" % (len_m, len_oc)
-            )
-
-        regular = []
-        for offset, calendar in calendars:
-            days = calendar.holidays(start_date, end_date)
-            series = pd.Series(
-                index=pd.DatetimeIndex(days, tz=UTC),
-                data=offset,
-            )
-            regular.append(series)
-
-        ad_hoc = []
-        for offset, datetimes in ad_hoc_dates:
-            series = pd.Series(
-                index=pd.to_datetime(datetimes, utc=True),
-                data=offset,
-            )
-            ad_hoc.append(series)
-
-        merged = regular + ad_hoc
-        if not merged:
-            return pd.Series([], dtype="timedelta64[ns]")
-
-        result = pd.concat(merged).sort_index()
-        offsets = result.loc[(result.index >= start_date) & (result.index <= end_date)]
-
-        # Find the array indices corresponding to each special date.
-        indexer = session_labels.get_indexer(offsets.index)
-
-        # -1 indicates that no corresponding entry was found.  If any -1s are
-        # present, then we have special dates that doesn't correspond to any
-        # trading day.
-        if -1 in indexer and strict:
-            bad_dates = list(offsets.index[indexer == -1])
-            raise ValueError("Special dates %s are not trading days." % bad_dates)
-
-        special_opens_or_closes = opens_or_closes[indexer] + offsets
-
-        # Short circuit when nothing to apply.
-        if not len(special_opens_or_closes):
-            return
-
-        # NOTE: This is a slightly dirty hack.  We're in-place overwriting the
-        # internal data of an Index, which is conceptually immutable.  Since we're
-        # maintaining sorting, this should be ok, but this is a good place to
-        # sanity check if things start going haywire with calendar computations.
-        opens_or_closes.values[indexer] = special_opens_or_closes.values
-
-    def _calculate_and_overwrite_special_offsets(self, session_labels, start, end):
-        _special_offsets = self.special_offsets
-        _special_offsets_adhoc = self.special_offsets_adhoc
-
-        _special_open_offsets = [
-            (t[0], t[-1]) for t in _special_offsets if t[0] is not None
-        ]
-        _special_open_offsets_adhoc = [
-            (t[0], t[-1]) for t in _special_offsets_adhoc if t[0] is not None
-        ]
-        _special_break_start_offsets = [
-            (t[1], t[-1]) for t in _special_offsets if t[1] is not None
-        ]
-        _special_break_start_offsets_adhoc = [
-            (t[1], t[-1]) for t in _special_offsets_adhoc if t[1] is not None
-        ]
-        _special_break_end_offsets = [
-            (t[2], t[-1]) for t in _special_offsets if t[2] is not None
-        ]
-        _special_break_end_offsets_adhoc = [
-            (t[2], t[-1]) for t in _special_offsets_adhoc if t[2] is not None
-        ]
-        _special_close_offsets = [
-            (t[3], t[-1]) for t in _special_offsets if t[3] is not None
-        ]
-        _special_close_offsets_adhoc = [
-            (t[3], t[-1]) for t in _special_offsets_adhoc if t[3] is not None
-        ]
-
-        self._overwrite_special_offsets(
-            session_labels,
-            self._opens,
-            _special_open_offsets,
-            _special_open_offsets_adhoc,
-            start,
-            end,
-        )
-        self._overwrite_special_offsets(
-            session_labels,
-            self._break_starts,
-            _special_break_start_offsets,
-            _special_break_start_offsets_adhoc,
-            start,
-            end,
-        )
-        self._overwrite_special_offsets(
-            session_labels,
-            self._break_ends,
-            _special_break_end_offsets,
-            _special_break_end_offsets_adhoc,
-            start,
-            end,
-        )
-        self._overwrite_special_offsets(
-            session_labels,
-            self._closes,
-            _special_close_offsets,
-            _special_close_offsets_adhoc,
             start,
             end,
         )

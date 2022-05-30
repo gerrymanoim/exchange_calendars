@@ -2072,9 +2072,7 @@ class ExchangeCalendarTestBase:
             "special_opens_adhoc",
             "special_closes",
             "special_closes_adhoc",
-            "special_weekmasks",
-            "special_offsets",
-            "special_offsets_adhoc",
+            "apply_special_offsets",
         ]
 
     @pytest.fixture(scope="class")
@@ -2208,7 +2206,12 @@ class ExchangeCalendarTestBase:
         for name in non_valid_overrides:
             on_cls, on_base = getattr(cls, name), getattr(ExchangeCalendar, name)
             # covers properties, instance methods and class mathods...
-            assert on_cls == on_base or on_cls.__qualname__ == on_base.__qualname__
+            try:
+                assert on_cls == on_base or on_cls.__qualname__ == on_base.__qualname__
+            except AttributeError:
+                if not (cls.name == "XKRX" and name == "day"):
+                    # allow exchange_calendar_xkrx to overwrite 'day'.
+                    raise
 
     def test_calculated_against_csv(self, default_calendar_with_answers):
         calendar, ans = default_calendar_with_answers
