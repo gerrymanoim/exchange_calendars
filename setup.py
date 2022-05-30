@@ -77,6 +77,7 @@ if __name__ == "__main__":
         install_requires=reqs,
         extras_require={
             "dev": [
+                "black",
                 "flake8",
                 "pytest",
                 "pytest-benchmark",
