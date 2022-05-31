@@ -561,40 +561,95 @@ class ExchangeCalendar(ABC):
 
     @property
     def adhoc_holidays(self) -> list[pd.Timestamp]:
-        """Non-regular holidays.
+        """List of non-regular holidays.
 
         Returns
         -------
         list[pd.Timestamp]
-            List of tz-naive timestamps representing non-regular closes.
+            List of tz-naive timestamps representing non-regular holidays.
         """
         return []
 
     @property
-    def special_opens(self) -> list[tuple[pd.Timestamp, HolidayCalendar]]:
-        """Non-regular open times and corresponding HolidayCalendars."""
-        return []
+    def special_opens(self) -> list[tuple[datetime.time, HolidayCalendar]]:
+        """Regular non-standard open times.
 
-    @property
-    def special_opens_adhoc(self) -> list[tuple[datetime.time, pd.DatetimeIndex]]:
-        """Adhoc non-regular open times and corresponding sessions.
+        Example of what would be defined as a special open:
+            "EVERY YEAR on national lie-in day the exchange opens
+            at 13:00 rather than the standard 09:00".
 
-        Defines non-regular opens that cannot be otherwise codified within
-        within `special_opens`.
+        Returns
+        -------
+        list[tuple[datetime.time, HolidayCalendar]]:
+            list of tuples each describing a regular non-standard open
+            time:
+                [0] datetime.time: regular non-standard open time.
+                [1] HolidayCalendar: holiday calendar describing occurence.
         """
         return []
 
     @property
-    def special_closes(self) -> list[tuple[pd.Timestamp, HolidayCalendar]]:
-        """Non-regular close times and corresponding HolidayCalendars."""
+    def special_opens_adhoc(
+        self,
+    ) -> list[tuple[datetime.time, pd.Timestamp | list[pd.Timestamp]]]:
+        """Adhoc non-standard open times.
+
+        Defines non-standard open times that cannot be otherwise codified
+        within within `special_opens`.
+
+        Example of an event to define as an adhoc special open:
+            "On 2022-02-14 due to a typhoon the exchange opened at 13:00,
+            rather than the standard 09:00".
+
+        Returns
+        -------
+        list[tuple[datetime.time, pd.Timestamp | list[pd.Timestamp]]]:
+            List of tuples each describing an adhoc non-standard open time:
+                [0] datetime.time: non-standard open time.
+                [1] pd.Timestamp | list[pd.Timestamp]: date or dates
+                    corresponding with the non-standard open time.
+        """
         return []
 
     @property
-    def special_closes_adhoc(self) -> list[tuple[datetime.time, pd.DatetimeIndex]]:
-        """Adhoc non-regular close times and corresponding sessions.
+    def special_closes(self) -> list[tuple[datetime.time, HolidayCalendar]]:
+        """Regular non-standard close times.
 
-        Defines non-regular closes that cannot be otherwise codified within
-        `special_closes`.
+        Example of what would be defined as a special close:
+            "On christmas eve the exchange closes at 14:00 rather than
+            the standard 17:00".
+
+        Returns
+        -------
+        list[tuple[datetime.time, HolidayCalendar]]:
+            list of tuples each describing a regular non-standard close
+            time:
+                [0] datetime.time: regular non-standard close time.
+                [1] HolidayCalendar: holiday calendar describing occurence.
+        """
+        return []
+
+    @property
+    def special_closes_adhoc(
+        self,
+    ) -> list[tuple[datetime.time, pd.Timestamp | list[pd.Timestamp]]]:
+        """Adhoc non-standard close times.
+
+        Defines non-standard close times that cannot be otherwise codified
+        within within `special_closes`.
+
+        Example of an event to define as an adhoc special close:
+            "On 2022-02-19 due to a typhoon the exchange closed at 12:00,
+            rather than the standard 16:00".
+
+        Returns
+        -------
+        list[tuple[datetime.time, pd.Timestamp | list[pd.Timestamp]]]:
+            List of tuples each describing an adhoc non-standard close
+            time:
+                [0] datetime.time: non-standard close time.
+                [1] pd.Timestamp | list[pd.Timestamp]: date or dates
+                    corresponding with the non-standard close time.
         """
         return []
 
