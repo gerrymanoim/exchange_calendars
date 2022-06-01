@@ -74,26 +74,17 @@ def minute_mult(request) -> abc.Iterator[str | pd.Timestamp]:
 def date(calendar) -> abc.Iterator[str]:
     """Date that does not represent a session of `calendar`."""
     date_ = "2021-06-05"
-    assert pd.Timestamp(date_, tz="UTC") not in calendar.schedule.index
+    assert pd.Timestamp(date_) not in calendar.schedule.index
     yield date_
 
 
-@pytest.fixture(
-    params=[
-        "2021-06-05",
-        pd.Timestamp("2021-06-05"),
-        pd.Timestamp("2021-06-05", tz="UTC"),
-    ]
-)
+@pytest.fixture(params=["2021-06-05", pd.Timestamp("2021-06-05")])
 def date_mult(request, calendar) -> abc.Iterator[str | pd.Timestamp]:
     """Date that does not represent a session of `calendar`."""
-    date_ = request.param
-    try:
-        ts_utc = pd.Timestamp(date_, tz="UTC")
-    except ValueError:
-        ts_utc = date_
-    assert ts_utc not in calendar.schedule.index
-    yield date_
+    date = request.param
+    ts = pd.Timestamp(date)
+    assert ts not in calendar.schedule.index
+    yield date
 
 
 @pytest.fixture
@@ -217,14 +208,12 @@ def test_parse_timestamp_error_oob(
 def test_parse_date(date_mult, param_name):
     date = date_mult
     dt = m.parse_date(date, param_name, raise_oob=False)
-    assert dt == pd.Timestamp("2021-06-05", tz="UTC")
+    assert dt == pd.Timestamp("2021-06-05")
 
 
 def test_parse_date_errors(calendar, param_name, date_too_early, date_too_late):
     dt = pd.Timestamp("2021-06-02", tz="US/Central")
-    with pytest.raises(
-        ValueError, match="a Date must be timezone naive or have timezone as 'UTC'"
-    ):
+    with pytest.raises(ValueError, match="a Date must be timezone naive"):
         m.parse_date(dt, param_name, raise_oob=False)
 
     dt = pd.Timestamp("2021-06-02 13:33")
@@ -258,7 +247,7 @@ def test_parse_session(
     calendar, session, date, date_too_early, date_too_late, param_name
 ):
     ts = m.parse_session(calendar, session, param_name)
-    assert ts == pd.Timestamp(session, tz="UTC")
+    assert ts == pd.Timestamp(session)
 
     with pytest.raises(errors.NotSessionError, match="not a session of calendar"):
         m.parse_session(calendar, date, param_name)
@@ -368,8 +357,8 @@ class TestTradingIndex:
     ) -> st.SearchStrategy[tuple[pd.Timestamp, pd.Timestamp]]:
         """SearchStrategy for start and end dates in calendar range and
         a calendar specific maximum distance."""
-        first = ans.first_session.tz_convert(None)
-        last = ans.last_session.tz_convert(None)
+        first = ans.first_session
+        last = ans.last_session
 
         one_day = pd.Timedelta(1, "D")
         # reasonable to quicken test by limiting 24/7 as rules for 24/7 are unchanging.
@@ -381,7 +370,7 @@ class TestTradingIndex:
         end = pd.Timestamp(end).floor("D")
         start = draw(st.datetimes(max(end - distance, first), end - one_day))
         start = pd.Timestamp(start).floor("D")
-        start, end = start.tz_localize("UTC"), end.tz_localize("UTC")
+        start, end = start, end
         assume(not ans.answers[start:end].empty)
         return start, end
 
@@ -877,8 +866,8 @@ class TestTradingIndex:
         """(calendar, start, end) parameters for specific tests."""
         yield (
             calendars["XHKG"],
-            pd.Timestamp("2018-01-01", tz="UTC"),
-            pd.Timestamp("2018-12-31", tz="UTC"),
+            pd.Timestamp("2018-01-01"),
+            pd.Timestamp("2018-12-31"),
         )
 
     @pytest.fixture(params=itertools.product(("105T", "106T"), ("right", "both")))

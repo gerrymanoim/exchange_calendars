@@ -161,7 +161,7 @@ def test_default_calendars():
     ],
 )
 def test_days_at_time(day, day_offset, time_offset, tz, expected):
-    days = pd.DatetimeIndex([pd.Timestamp(day, tz=tz)])
+    days = pd.DatetimeIndex([pd.Timestamp(day)])
     result = days_at_time(days, time_offset, tz, day_offset)[0]
     expected = pd.Timestamp(expected, tz=tz).tz_convert(UTC)
     assert result == expected
@@ -178,12 +178,11 @@ def get_csv(name: str) -> pd.DataFrame:
         parse_dates=[0, 1, 2, 3, 4],
         infer_datetime_format=True,
     )
-    if df.index.tz is None:
-        df.index = df.index.tz_localize(UTC)
+    if df.index.tz is not None:
+        df.index = df.index.tz_convert(None)
     for col in df:
         if df[col].dt.tz is None:
             df[col] = df[col].dt.tz_localize(UTC)
-
     return df
 
 
@@ -776,7 +775,7 @@ class Answers:
 
         if is_break_col:
             if column_.isna().all():
-                return [pd.DatetimeIndex([], tz=UTC)] * 2
+                return [pd.DatetimeIndex([])] * 2
             column_ = column_.fillna(method="ffill").fillna(method="bfill")
 
         diff = (column_.shift(-1) - column_)[:-1]
@@ -1022,7 +1021,7 @@ class Answers:
 
         for name, index in sessions_indexes:
             if index.empty:
-                blocks[name] = pd.DatetimeIndex([], tz=UTC)
+                blocks[name] = pd.DatetimeIndex([])
             else:
                 session = index[0]
                 blocks[name] = self._create_changing_times_session_block(session)
@@ -1038,16 +1037,16 @@ class Answers:
                 self.sessions_with_gap_after, self.sessions_without_gap_after
             )
         else:
-            without_gap_to_with_gap = pd.DatetimeIndex([], tz=UTC)
-            with_gap_to_without_gap = pd.DatetimeIndex([], tz=UTC)
+            without_gap_to_with_gap = pd.DatetimeIndex([])
+            with_gap_to_without_gap = pd.DatetimeIndex([])
 
         blocks["without_gap_to_with_gap"] = without_gap_to_with_gap
         blocks["with_gap_to_without_gap"] = with_gap_to_without_gap
 
         # blocks that adjoin or contain a non_session date
-        follows_non_session = pd.DatetimeIndex([], tz=UTC)
-        preceeds_non_session = pd.DatetimeIndex([], tz=UTC)
-        contains_non_session = pd.DatetimeIndex([], tz=UTC)
+        follows_non_session = pd.DatetimeIndex([])
+        preceeds_non_session = pd.DatetimeIndex([])
+        contains_non_session = pd.DatetimeIndex([])
         if len(self.non_sessions) > 1:
             diff = self.non_sessions[1:] - self.non_sessions[:-1]
             mask = diff != pd.Timedelta(
@@ -1439,7 +1438,7 @@ class Answers:
         idxr = self.sessions.get_indexer(sessions) + 1
         target_sessions = self.sessions[idxr]
         minutes = self.first_pm_minutes[sessions]
-        offset_minutes = minutes - sessions + target_sessions
+        offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
         # (it wont be if the break has shifted by more than the break duration)
         mask = offset_minutes.values > self.last_am_minutes[target_sessions].values
@@ -1449,11 +1448,10 @@ class Answers:
         idxr = self.sessions.get_indexer(sessions) + 1
         target_sessions = self.sessions[idxr]
         minutes = self.last_am_minutes[sessions]
-        offset_minutes = minutes - sessions + target_sessions
+        offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
         mask = offset_minutes.values < self.first_pm_minutes[target_sessions].values
         lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
-
         return lst
 
     @property
@@ -1479,7 +1477,7 @@ class Answers:
         idxr = self.sessions.get_indexer(target_sessions) + 1
         sessions = self.sessions[idxr]  # previous break ends later
         minutes = self.first_pm_minutes[sessions]
-        offset_minutes = minutes - sessions + target_sessions
+        offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
         # (it wont be if the break has shifted by more than the break duration)
         mask = offset_minutes.values > self.last_am_minutes[target_sessions].values
@@ -1489,7 +1487,7 @@ class Answers:
         idxr = self.sessions.get_indexer(target_sessions) + 1
         sessions = self.sessions[idxr]  # previous break starts earlier
         minutes = self.last_am_minutes[sessions]
-        offset_minutes = minutes - sessions + target_sessions
+        offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
         mask = offset_minutes.values < self.first_pm_minutes[target_sessions].values
         lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
@@ -2040,7 +2038,7 @@ class ExchangeCalendarTestBase:
 
     @pytest.fixture(scope="class")
     def today(self) -> abc.Iterator[pd.Timedelta]:
-        yield pd.Timestamp.now(tz=UTC).floor("D")
+        yield pd.Timestamp.now().floor("D")
 
     @pytest.fixture(scope="class", params=["next", "previous", "none"])
     def all_directions(self, request) -> abc.Iterator[str]:
@@ -2145,7 +2143,7 @@ class ExchangeCalendarTestBase:
         dtis: list[pd.DatetimeIndex] = []
         # For each period over which a distinct open time prevails...
         for date_from, time_ in s.iteritems():
-            opens = ans.opens.tz_convert(None)[date_from:date_to]  # index to tz-naive
+            opens = ans.opens[date_from:date_to]
             sessions = opens.index
             td = pd.Timedelta(hours=time_.hour, minutes=time_.minute)
             # Evaluate session opens as if were all normal open time.
@@ -2157,7 +2155,7 @@ class ExchangeCalendarTestBase:
             if date_from != pd.Timestamp.min:
                 date_to = date_from - pd.Timedelta(1, "D")
 
-        late_opens = dtis[0].union_many(dtis[1:]).tz_localize(UTC)
+        late_opens = dtis[0].union_many(dtis[1:])
         yield late_opens
 
     @pytest.fixture(scope="class")
@@ -2185,7 +2183,7 @@ class ExchangeCalendarTestBase:
         date_to = pd.Timestamp.max
         dtis: list[pd.DatetimeIndex] = []
         for date_from, time_ in s.iteritems():
-            closes = ans.closes.tz_convert(None)[date_from:date_to]  # index to tz-naive
+            closes = ans.closes[date_from:date_to]  # index to tz-naive
             sessions = closes.index
             td = pd.Timedelta(hours=time_.hour, minutes=time_.minute)
             normal_closes = sessions + pd.Timedelta(cal.close_offset, "D") + td
@@ -2194,7 +2192,7 @@ class ExchangeCalendarTestBase:
             if date_from != pd.Timestamp.min:
                 date_to = date_from - pd.Timedelta(1, "D")
 
-        early_closes = dtis[0].union_many(dtis[1:]).tz_localize(UTC)
+        early_closes = dtis[0].union_many(dtis[1:])
         yield early_closes
 
     # --- TESTS ---
@@ -2277,7 +2275,7 @@ class ExchangeCalendarTestBase:
                 calendar_cls(start, today)
         else:
             # verify no bound imposed
-            cal = calendar_cls(pd.Timestamp("1902-01-01", tz=UTC), today)
+            cal = calendar_cls(pd.Timestamp("1902-01-01"), today)
             assert isinstance(cal, ExchangeCalendar)
 
     def test_bound_end(self, calendar_cls, end_bound, today):
@@ -2290,7 +2288,7 @@ class ExchangeCalendarTestBase:
                 calendar_cls(today, end)
         else:
             # verify no bound imposed
-            cal = calendar_cls(today, pd.Timestamp("2050-01-01", tz=UTC))
+            cal = calendar_cls(today, pd.Timestamp("2050-01-01"))
             assert isinstance(cal, ExchangeCalendar)
 
     def test_sanity_check_session_lengths(self, default_calendar, max_session_hours):
@@ -2321,7 +2319,7 @@ class ExchangeCalendarTestBase:
 
             the_open = cal.schedule.loc[next_day].market_open
 
-            localized_open = the_open.tz_localize(UTC).tz_convert(cal.tz)
+            localized_open = the_open.tz_convert(cal.tz)
 
             assert open_date.year == localized_open.year
             assert open_date.month == localized_open.month
@@ -2352,10 +2350,7 @@ class ExchangeCalendarTestBase:
             "break_starts",
             "break_ends",
         ):
-            try:
-                ans_series = getattr(ans, prop).dt.tz_convert(None)
-            except TypeError:
-                ans_series = getattr(ans, prop).dt.tz_localize(None)
+            ans_series = getattr(ans, prop)
             cal_series = getattr(cal, prop)
             tm.assert_series_equal(ans_series, cal_series, check_freq=False)
 
@@ -2494,8 +2489,8 @@ class ExchangeCalendarTestBase:
         cal, ans = all_calendars_with_answers
         assert ans.first_session == cal.first_session
         assert ans.last_session == cal.last_session
-        assert ans.first_session_open.tz_convert(None) == cal.first_session_open
-        assert ans.last_session_close.tz_convert(None) == cal.last_session_close
+        assert ans.first_session_open == cal.first_session_open
+        assert ans.last_session_close == cal.last_session_close
         assert ans.first_minute == cal.first_minute
         assert ans.last_minute == cal.last_minute
 
@@ -2553,7 +2548,7 @@ class ExchangeCalendarTestBase:
         cal, tz = default_calendar, default_calendar.tz
         offset = pd.Timedelta(cal.close_offset, "D") + early_closes_sample_time
         for date in early_closes_sample:
-            early_close = cal.closes[date].tz_localize(UTC).tz_convert(tz)
+            early_close = cal.closes[date].tz_convert(tz)
             expected = pd.Timestamp(date, tz=tz) + offset
             assert early_close == expected
 
@@ -2579,7 +2574,7 @@ class ExchangeCalendarTestBase:
         cal, tz = default_calendar, default_calendar.tz
         offset = pd.Timedelta(cal.close_offset, "D") + non_early_closes_sample_time
         for date in non_early_closes_sample:
-            close = cal.closes[date].tz_localize(UTC).tz_convert(tz)
+            close = cal.closes[date].tz_convert(tz)
             expected_close = pd.Timestamp(date, tz=tz) + offset
             assert close == expected_close
 

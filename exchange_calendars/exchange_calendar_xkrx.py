@@ -12,13 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from __future__ import annotations
 
 from datetime import time
 
 import pandas as pd
-from pytz import timezone, UTC
 from pandas.tseries.holiday import Holiday
 from pandas.tseries.offsets import CustomBusinessDay
+import pytz
 
 from .exchange_calendar import HolidayCalendar
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
@@ -64,7 +65,7 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
 
     name = "XKRX"
 
-    tz = timezone("Asia/Seoul")
+    tz = pytz.timezone("Asia/Seoul")
 
     # KRX schedule change history
     # https://blog.naver.com/daishin_blog/220724111002
@@ -183,7 +184,11 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
     #  after  1998-11-18: 1 hour
 
     @property
-    def special_offsets_adhoc(self):
+    def special_offsets_adhoc(
+        self,
+    ) -> list[
+        tuple[pd.Timedelta, pd.Timedelta, pd.Timedelta, pd.Timedelta, pd.DatetimeIndex]
+    ]:
         """
         Returns
         -------
@@ -214,42 +219,35 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
 
     def _overwrite_special_offsets(
         self,
-        session_labels,
-        opens_or_closes,
-        calendars,
-        ad_hoc_dates,
-        start_date,
-        end_date,
-        strict=False,
+        session_labels: pd.DatetimeIndex,
+        standard_times: pd.DatetimeIndex | None,
+        offsets: tuple[pd.Timedelta, HolidayCalendar],
+        ad_hoc_offsets: tuple[pd.Timedelta, pd.DatetimeIndex],
+        start_date: pd.Timestamp,
+        end_date: pd.Timestamp,
+        strict: bool = False,
     ):
         # Short circuit when nothing to apply.
-        if opens_or_closes is None or not len(opens_or_closes):
+        if standard_times is None or not len(standard_times):
             return
 
-        len_m, len_oc = len(session_labels), len(opens_or_closes)
+        len_m, len_oc = len(session_labels), len(standard_times)
         if len_m != len_oc:
             raise ValueError(
-                "Found misaligned dates while building calendar.\n"
-                "Expected session_labels to be the same length as "
-                "open_or_closes but,\n"
-                "len(session_labels)=%d, len(open_or_closes)=%d" % (len_m, len_oc)
+                "Found misaligned dates while building calendar.\nExpected"
+                " session_labels to be the same length as open_or_closes but,\n"
+                f"len(session_labels)={len_m}, len(open_or_closes)={len_oc}"
             )
 
         regular = []
-        for offset, calendar in calendars:
+        for offset, calendar in offsets:
             days = calendar.holidays(start_date, end_date)
-            series = pd.Series(
-                index=pd.DatetimeIndex(days, tz=UTC),
-                data=offset,
-            )
+            series = pd.Series(index=days, data=offset)
             regular.append(series)
 
         ad_hoc = []
-        for offset, datetimes in ad_hoc_dates:
-            series = pd.Series(
-                index=pd.to_datetime(datetimes, utc=True),
-                data=offset,
-            )
+        for offset, datetimes in ad_hoc_offsets:
+            series = pd.Series(index=datetimes, data=offset)
             ad_hoc.append(series)
 
         merged = regular + ad_hoc
@@ -267,9 +265,9 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
         # trading day.
         if -1 in indexer and strict:
             bad_dates = list(offsets.index[indexer == -1])
-            raise ValueError("Special dates %s are not trading days." % bad_dates)
+            raise ValueError(f"Special dates {bad_dates} are not trading days.")
 
-        special_opens_or_closes = opens_or_closes[indexer] + offsets
+        special_opens_or_closes = standard_times[indexer] + offsets
 
         # Short circuit when nothing to apply.
         if not len(special_opens_or_closes):
@@ -279,9 +277,14 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
         # internal data of an Index, which is conceptually immutable.  Since we're
         # maintaining sorting, this should be ok, but this is a good place to
         # sanity check if things start going haywire with calendar computations.
-        opens_or_closes.values[indexer] = special_opens_or_closes.values
+        standard_times.values[indexer] = special_opens_or_closes.values
 
-    def apply_special_offsets(self, session_labels, start, end):
+    def apply_special_offsets(
+        self,
+        session_labels: pd.DatetimeIndex,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+    ):
         """Evaluate and overwrite special offsets."""
         _special_offsets = self.special_offsets
         _special_offsets_adhoc = self.special_offsets_adhoc
@@ -393,7 +396,7 @@ class PrecomputedXKRXExchangeCalendar(PrecomputedExchangeCalendar):
 
     name = "XKRX"
 
-    tz = timezone("Asia/Seoul")
+    tz = pytz.timezone("Asia/Seoul")
 
     open_times = ((None, time(9)),)
     close_times = ((None, time(15, 30)),)

@@ -24,7 +24,7 @@ class TestWeekdayCalendar(ExchangeCalendarTestBase):
 
     def test_open_every_weekday(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
-        dates = pd.date_range(*ans.sessions_range, freq="B", tz=UTC)
+        dates = pd.date_range(*ans.sessions_range, freq="B")
         tm.assert_index_equal(cal.sessions, dates)
 
     def test_open_every_weekday_minute(self, calendars, answers, one_minute):

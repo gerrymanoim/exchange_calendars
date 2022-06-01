@@ -18,7 +18,7 @@ from itertools import chain
 
 from pandas import DatetimeIndex
 from pandas.tseries.holiday import GoodFriday, USLaborDay
-from pytz import UTC, timezone
+import pytz
 
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 from .us_holidays import (
@@ -157,7 +157,7 @@ class XNYSExchangeCalendar(ExchangeCalendar):
 
     name = "XNYS"
 
-    tz = timezone("America/New_York")
+    tz = pytz.timezone("America/New_York")
 
     open_times = ((None, time(9, 30)),)
 
@@ -252,8 +252,7 @@ class XNYSExchangeCalendar(ExchangeCalendar):
                         "1997-12-26",
                         "1999-12-31",
                         "2003-12-26",
-                    ],
-                    tz=UTC,
+                    ]
                 ),
             )
         ]

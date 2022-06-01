@@ -141,8 +141,8 @@ def parse_timestamp(
     raise_oob : default: True
         True to raise MinuteOutOfBounds if `timestamp` is earlier than the
         first trading minute or later than the last trading minute of
-        `calendar`. Pass as False if `timestamp` represents a Minute (as
-        opposed to a Date). If True then `calendar` must be passed.
+        `calendar`. Pass as False if `timestamp` represents a Date (as
+        opposed to a Minute). If True then `calendar` must be passed.
 
     side : optional, {None, 'left', 'right', 'both', 'neither'}
         The side that determines which minutes at a session's bounds are
@@ -280,7 +280,7 @@ def parse_date(
     Returns
      -------
      pd.Timestamp
-         pd.Timestamp (UTC with time component of 00:00).
+         pd.Timestamp (timezone naive with time component of 00:00).
 
      Raises
      ------
@@ -288,8 +288,7 @@ def parse_date(
 
      ValueError
          If `date` time component is not 00:00.
-
-         If `date` is timezone aware and timezone is not UTC.
+         If `date` is timezone aware.
 
     exchange_calendars.errors.DateOutOfBounds
         If `raise_oob` True and `date` parses to a valid timestamp although
@@ -301,10 +300,10 @@ def parse_date(
     # if it falls within the minute that follows midnight.
     ts = parse_timestamp(date, param_name, raise_oob=False, side="left", utc=False)
 
-    if not (ts.tz is None or ts.tz.zone == "UTC"):
+    if ts.tz is not None:
         raise ValueError(
             f"Parameter `{param_name}` received with timezone defined as '{ts.tz.zone}'"
-            f" although a Date must be timezone naive or have timezone as 'UTC'."
+            f" although a Date must be timezone naive."
         )
 
     if not ts == ts.normalize():
@@ -312,9 +311,6 @@ def parse_date(
             f"Parameter `{param_name}` parsed as '{ts}' although a Date must have"
             f" a time component of 00:00."
         )
-
-    if ts.tz is None:
-        ts = ts.tz_localize("UTC")
 
     if raise_oob:
         if calendar is None:
@@ -346,8 +342,8 @@ def parse_session(
     Returns
     -------
     pd.Timestamp
-        pd.Timestamp (UTC with time component of 00:00) that represents a
-        real session of `calendar`.
+        pd.Timestamp (timezone naive and with time component of 00:00) that
+        represents a real session of `calendar`.
 
     Raises
     ------

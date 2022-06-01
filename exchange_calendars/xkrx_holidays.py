@@ -14,7 +14,7 @@ from .pandas_extensions.korean_holiday import (
 
 # Original precomputed KRX holidays
 # that had been maintained formerly in exchange_calendar_xkrx.py.
-original_precomputed_krx_holidays = pd.to_datetime(
+original_precomputed_krx_holidays = pd.DatetimeIndex(
     [
         "1986-01-01",
         "1986-01-02",
@@ -540,7 +540,7 @@ original_precomputed_krx_holidays = pd.to_datetime(
 
 # Automatically generated holidays using /etc/update_xkrx_holidays.py script.
 # Note that there are some missing holidays compared to the original holidays.
-dumped_precomputed_krx_holidays = pd.to_datetime(
+dumped_precomputed_krx_holidays = pd.DatetimeIndex(
     [
         "1975-02-12",
         "1975-03-10",
@@ -1292,7 +1292,7 @@ krx_regular_holiday_rules = (
 # Theses are used for special offsets (30 minutes or 1 hour delay in schedule)
 # https://ko.wikipedia.org/wiki/%EC%97%B0%EB%8F%84%EB%B3%84_%EB%8C%80%ED%95%99%EC%88%98%ED%95%99%EB%8A%A5%EB%A0%A5%EC%8B%9C%ED%97%98
 
-precomputed_csat_days = pd.to_datetime(
+precomputed_csat_days = pd.DatetimeIndex(
     [
         "1993-08-20",  # https://www.hankyung.com/news/article/1993081702291                      0940~1140, 1320~1520 => 1010~1210, 1350~1550
         "1993-11-16",  # https://www.hankyung.com/news/article/1993111501631                      0940~1140, 1320~1520 => 1010~1210, 1350~1550

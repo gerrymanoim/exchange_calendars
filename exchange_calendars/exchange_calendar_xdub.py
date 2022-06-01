@@ -15,7 +15,7 @@
 
 from datetime import time
 
-from pandas import Timestamp
+import pandas as pd
 from pandas.tseries.holiday import (
     MO,
     DateOffset,
@@ -25,7 +25,7 @@ from pandas.tseries.holiday import (
     previous_friday,
     weekend_to_monday,
 )
-from pytz import UTC, timezone
+import pytz
 
 from .common_holidays import (
     boxing_day,
@@ -97,9 +97,9 @@ LastTradingDayOfCalendarYear = Holiday(
 )
 
 # Ad hoc closes.
-March1BadWeather = Timestamp("2018-03-01", tz=UTC)
+March1BadWeather = pd.Timestamp("2018-03-01")
 # Ad hoc holidays.
-March2BadWeather = Timestamp("2018-03-02")
+March2BadWeather = pd.Timestamp("2018-03-02")
 
 
 class XDUBExchangeCalendar(ExchangeCalendar):
@@ -128,7 +128,7 @@ class XDUBExchangeCalendar(ExchangeCalendar):
     """
 
     name = "XDUB"
-    tz = timezone("Europe/Dublin")
+    tz = pytz.timezone("Europe/Dublin")
     open_times = ((None, time(8)),)
     close_times = ((None, time(16, 28)),)
     regular_early_close = time(12, 28)
@@ -173,4 +173,4 @@ class XDUBExchangeCalendar(ExchangeCalendar):
 
     @property
     def special_closes_adhoc(self):
-        return [(self.regular_early_close, [March1BadWeather])]
+        return [(self.regular_early_close, pd.DatetimeIndex([March1BadWeather]))]

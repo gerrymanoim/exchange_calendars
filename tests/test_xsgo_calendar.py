@@ -1,6 +1,5 @@
 import pytest
 import pandas as pd
-from pytz import UTC
 
 from exchange_calendars.exchange_calendar_xsgo import XSGOExchangeCalendar
 from .test_exchange_calendar import ExchangeCalendarTestBase
@@ -171,7 +170,7 @@ class TestXSGOCalendar(ExchangeCalendarTestBase):
         early_closes_time = pd.Timedelta(hours=12, minutes=30)
         offset = pd.Timedelta(cal.close_offset, "D") + early_closes_time
         for date in early_closes:
-            early_close = cal.closes[date].tz_localize(UTC).tz_convert(tz)
+            early_close = cal.closes[date].tz_convert(tz)
             expected = pd.Timestamp(date, tz=tz) + offset
             assert early_close == expected
 
@@ -187,4 +186,4 @@ class TestXSGOCalendar(ExchangeCalendarTestBase):
         )
         cal = default_calendar
         for date, close in dates_closes:
-            cal.closes[date].tz_localize(UTC) == pd.Timestamp(close, tz=cal.tz)
+            cal.closes[date] == pd.Timestamp(close, tz=cal.tz)

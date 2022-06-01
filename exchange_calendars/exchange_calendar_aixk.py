@@ -8,7 +8,7 @@ from pandas.tseries.holiday import (
     nearest_workday,
     next_workday,
 )
-from pytz import timezone
+import pytz
 
 from .common_holidays import new_years_day, eid_al_adha_first_day
 from .exchange_calendar import (
@@ -148,7 +148,7 @@ class AIXKExchangeCalendar(ExchangeCalendar):
 
     name = "AIXK"
 
-    tz = timezone("Asia/Almaty")
+    tz = pytz.timezone("Asia/Almaty")
 
     open_times = ((None, time(11)),)
 
@@ -156,7 +156,7 @@ class AIXKExchangeCalendar(ExchangeCalendar):
 
     @property
     def bound_start(self) -> pd.Timestamp:
-        return pd.Timestamp("2017-01-01", tz="UTC")
+        return pd.Timestamp("2017-01-01")
 
     def _bound_start_error_msg(self, start: pd.Timestamp) -> str:
         msg = super()._bound_start_error_msg(start)
