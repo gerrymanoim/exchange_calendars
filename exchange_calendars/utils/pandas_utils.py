@@ -127,3 +127,28 @@ def longest_run(ser: pd.Series) -> pd.Index:
     max_run_group_id = group_sizes[group_sizes == max_run_size].index[0]
     run = trues_grouped[trues_grouped == max_run_group_id].index
     return run
+
+
+def indexes_union(indexes: list[pd.Index]) -> pd.Index:
+    """Return union of multiple pd.Index objects.
+
+    Parameters
+    ----------
+    indexes
+        Index objects to be joined. All indexes must be of same dtype.
+
+    Examples
+    --------
+    >>> index1 = pd.date_range('2021-05-01 12:20', periods=2, freq='1H')
+    >>> index2 = pd.date_range('2021-05-02 17:10', periods=2, freq='22T')
+    >>> index3 = pd.date_range('2021-05-03', periods=2, freq='1D')
+    >>> indexes_union([index1, index2, index3])
+    DatetimeIndex(['2021-05-01 12:20:00', '2021-05-01 13:20:00',
+                   '2021-05-02 17:10:00', '2021-05-02 17:32:00',
+                   '2021-05-03 00:00:00', '2021-05-04 00:00:00'],
+                  dtype='datetime64[ns]', freq=None)
+    """
+    index = indexes[0]
+    for indx in indexes[1:]:
+        index = index.union(indx)
+    return index

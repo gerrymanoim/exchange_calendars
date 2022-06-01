@@ -1007,8 +1007,8 @@ class TestTradingIndex:
         cal_amended = calendar_utils._default_calendar_factories[cal.name](start_, end_)
         cal_amended.break_starts_nanos[:] = pd.NaT.value
         cal_amended.break_ends_nanos[:] = pd.NaT.value
-        cal_amended.break_starts[:] = pd.NaT
-        cal_amended.break_ends[:] = pd.NaT
+        cal_amended.schedule.loc[:, "break_start"] = pd.NaT
+        cal_amended.schedule.loc[:, "break_end"] = pd.NaT
 
         # verify amended calendar returns as original with breaks ignored
         rtrn = cal_amended.trading_index(**kwargs, ignore_breaks=False)
