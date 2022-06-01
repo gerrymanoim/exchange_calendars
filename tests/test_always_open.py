@@ -24,7 +24,7 @@ class TestAlwaysOpenCalendar(ExchangeCalendarTestBase):
 
     def test_open_every_day(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
-        dates = pd.date_range(*ans.sessions_range, tz=UTC)
+        dates = pd.date_range(*ans.sessions_range)
         tm.assert_index_equal(cal.sessions, dates)
 
     def test_open_every_minute(self, calendars, answers, one_minute):

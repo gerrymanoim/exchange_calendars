@@ -128,14 +128,14 @@ class TestASEXCalendar(ExchangeCalendarTestBase):
         from 5:00PM to 5:20PM to close the time gap with Wall Street.
         """
         cal = default_calendar
-        close_time = cal.closes["2006-09-29"].tz_localize("UTC")
+        close_time = cal.closes["2006-09-29"]
         assert close_time == pd.Timestamp("2006-09-29 17:00", tz="Europe/Athens")
 
-        close_time = cal.closes["2008-09-26"].tz_localize("UTC")
+        close_time = cal.closes["2008-09-26"]
         assert close_time == pd.Timestamp("2008-09-26 17:00", tz="Europe/Athens")
 
-        close_time = cal.closes["2008-09-29"].tz_localize("UTC")
+        close_time = cal.closes["2008-09-29"]
         assert close_time == pd.Timestamp("2008-09-29 17:20", tz="Europe/Athens")
 
-        close_time = cal.closes["2008-09-30"].tz_localize("UTC")
+        close_time = cal.closes["2008-09-30"]
         assert close_time == pd.Timestamp("2008-09-30 17:20", tz="Europe/Athens")

@@ -11,7 +11,7 @@ import pandas as pd
 # See Also
 # --------
 # exchange_calendars/etc/lunisolar chinese-new-year
-chinese_lunar_new_year_dates = pd.to_datetime(
+chinese_lunar_new_year_dates = pd.DatetimeIndex(
     [
         "1960-01-28",
         "1961-02-15",
@@ -112,7 +112,7 @@ chinese_lunar_new_year_dates = pd.to_datetime(
 # See Also
 # --------
 # exchange_calendars/etc/lunisolar qingming-festival
-qingming_festival_dates = pd.to_datetime(
+qingming_festival_dates = pd.DatetimeIndex(
     [
         "1960-04-05",
         "1961-04-05",
@@ -219,7 +219,7 @@ qingming_festival_dates = pd.to_datetime(
 # The holiday "Buddha's Birthday" is celebrated in many countries, though
 # different calendars are used. This function is for Buddha's Birthday on
 # the Chinese Lunisolar Calendar, where it is the 8th day of the 4th month.
-chinese_buddhas_birthday_dates = pd.to_datetime(
+chinese_buddhas_birthday_dates = pd.DatetimeIndex(
     [
         "1959-05-15",
         "1960-05-03",
@@ -321,7 +321,7 @@ chinese_buddhas_birthday_dates = pd.to_datetime(
 # See Also
 # --------
 # exchange_calendars/etc/lunisolar dragon-boat-festival
-dragon_boat_festival_dates = pd.to_datetime(
+dragon_boat_festival_dates = pd.DatetimeIndex(
     [
         "1960-05-29",
         "1961-06-17",
@@ -423,7 +423,7 @@ dragon_boat_festival_dates = pd.to_datetime(
 # See Also
 # --------
 # exchange_calendars/etc/lunisolar mid-autumn-festival
-mid_autumn_festival_dates = pd.to_datetime(
+mid_autumn_festival_dates = pd.DatetimeIndex(
     [
         "1960-10-05",
         "1961-09-24",
@@ -523,7 +523,7 @@ mid_autumn_festival_dates = pd.to_datetime(
 # See Also
 # --------
 # exchange_calendars/etc/lunisolar double-ninth-festival
-double_ninth_festival_dates = pd.to_datetime(
+double_ninth_festival_dates = pd.DatetimeIndex(
     [
         "1959-10-10",
         "1960-10-28",

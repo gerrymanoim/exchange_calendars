@@ -224,7 +224,7 @@ class NotTradingMinuteError(ValueError):
                 " is earlier than the first trading minute of calendar"
                 f" '{self.calendar.name}' ('{self.calendar.first_session}')."
             )
-        elif self.minute > self.calendar.last_session:
+        elif self.minute > self.calendar.last_minute:
             msg += (
                 " is later than the last trading minute of calendar"
                 f" '{self.calendar.name}' ('{self.calendar.last_session}')."

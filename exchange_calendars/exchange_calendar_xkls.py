@@ -16,7 +16,8 @@
 from datetime import time
 from itertools import chain
 
-from pytz import timezone
+import pandas as pd
+import pytz
 
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 from .xkls_holidays import (
@@ -77,7 +78,7 @@ class XKLSExchangeCalendar(ExchangeCalendar):
 
     name = "XKLS"
 
-    tz = timezone("Asia/Kuala_Lumpur")
+    tz = pytz.timezone("Asia/Kuala_Lumpur")
 
     open_times = ((None, time(9)),)
 
@@ -121,5 +122,7 @@ class XKLSExchangeCalendar(ExchangeCalendar):
     @property
     def special_closes_adhoc(self):
         # Regular early closes on Chinese New Years Eve, Eid al-Fitr Eve
-        early_close_days = list(set(ChineseNewYearsHalfDay + EidAlFitrHalfDay))
+        early_close_days = pd.DatetimeIndex(
+            set(ChineseNewYearsHalfDay + EidAlFitrHalfDay)
+        )
         return [(self.regular_early_close, early_close_days)]

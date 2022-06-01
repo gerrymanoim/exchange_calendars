@@ -2,7 +2,7 @@ from datetime import time
 from itertools import chain
 
 import pandas as pd
-from pytz import UTC, timezone
+import pytz
 
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 from .xtks_holidays import (
@@ -80,7 +80,7 @@ class XTKSExchangeCalendar(ExchangeCalendar):
 
     name = "XTKS"
 
-    tz = timezone("Asia/Tokyo")
+    tz = pytz.timezone("Asia/Tokyo")
 
     open_times = ((None, time(9)),)
     break_start_times = ((None, time(11, 30)),)
@@ -90,7 +90,7 @@ class XTKSExchangeCalendar(ExchangeCalendar):
     @property
     def bound_start(self) -> pd.Timestamp:
         # not tracking holiday info farther back than 1997
-        return pd.Timestamp("1997-01-01", tz=UTC)
+        return pd.Timestamp("1997-01-01")
 
     @property
     def regular_holidays(self):

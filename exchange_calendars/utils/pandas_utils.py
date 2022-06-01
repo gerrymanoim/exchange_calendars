@@ -1,55 +1,70 @@
+from __future__ import annotations
+
+import datetime
+
 import numpy as np
 import pandas as pd
+import pytz
 from pytz import UTC
 
 
-def days_at_time(days, t, tz, day_offset=0):
-    """
-    Create an index of days at time ``t``, interpreted in timezone ``tz``.
-
-    The returned index is localized to UTC.
+def days_at_time(
+    dates: pd.DatetimeIndex,
+    time: datetime.time | None,
+    tz: pytz.tzinfo.BaseTzInfo,
+    day_offset: int,
+) -> pd.DatetimeIndex:
+    """Return UTC DatetimeIndex of given dates at a given time.
 
     Parameters
     ----------
-    days : DatetimeIndex
-        An index of dates (represented as midnight).
-    t : datetime.time
-        The time to apply as an offset to each day in ``days``.
-    tz : pytz.timezone
-        The timezone to use to interpret ``t``.
-    day_offset : int
-        The number of days we want to offset @days by
+    dates
+        Dates or date (timezone naive with no time component).
+
+    time
+        The time to apply as an offset to each day in `dates`.
+
+    tz
+        The timezone in which to interpret `time`.
+
+    day_offset
+        Number of days by which to offset each date in `dates`.
+
+    Returns
+    -------
+    pd.DatetimeIndex
+        DatetimeIndex comprising Timestamp evaluted from `dates` and `time`
+        with `dates` offset by `day_offset` and `time` interpreted as having
+        timezone `tz`. DatetimeIndex has UTC timezone.
 
     Examples
     --------
     In the example below, the times switch from 13:45 to 12:45 UTC because
-    March 13th is the daylight savings transition for UAmerica/New_York. All
+    March 13th is the daylight savings transition for America/New_York. All
     the times are still 8:45 when interpreted in America/New_York.
 
     >>> import pandas as pd; import datetime; import pprint
     >>> dts = pd.date_range('2016-03-12', '2016-03-14')
-    >>> dts_845 = days_at_time(dts, datetime.time(8, 45), 'America/New_York')
+    >>> dts_845 = days_at_time(dts, datetime.time(8, 45), 'America/New_York', 0)
     >>> pprint.pprint([str(dt) for dt in dts_845])
     ['2016-03-12 13:45:00+00:00',
      '2016-03-13 12:45:00+00:00',
      '2016-03-14 12:45:00+00:00']
     """
-    if t is None:
-        return pd.DatetimeIndex([None for _ in days]).tz_localize(UTC)
+    if time is None:
+        return pd.DatetimeIndex([None for _ in dates]).tz_localize(UTC)
 
-    days = pd.DatetimeIndex(days).tz_localize(None)
-
-    if len(days) == 0:
-        return days.tz_localize(UTC)
+    if len(dates) == 0:
+        return dates.tz_localize(UTC)
 
     # Offset days without tz to avoid timezone issues.
     delta = pd.Timedelta(
         days=day_offset,
-        hours=t.hour,
-        minutes=t.minute,
-        seconds=t.second,
+        hours=time.hour,
+        minutes=time.minute,
+        seconds=time.second,
     )
-    return (days + delta).tz_localize(tz).tz_convert(UTC)
+    return (dates + delta).tz_localize(tz).tz_convert(UTC)
 
 
 def vectorized_sunday_to_monday(dtix):

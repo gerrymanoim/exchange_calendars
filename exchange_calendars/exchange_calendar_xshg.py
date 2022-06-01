@@ -1,7 +1,7 @@
 from datetime import time
 
 import pandas as pd
-from pytz import timezone
+import pytz
 
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
 
@@ -590,7 +590,7 @@ class XSHGExchangeCalendar(PrecomputedExchangeCalendar):
     """
 
     name = "XSHG"
-    tz = timezone("Asia/Shanghai")
+    tz = pytz.timezone("Asia/Shanghai")
     open_times = ((None, time(9, 30)),)
     break_start_times = ((None, time(11, 30)),)
     break_end_times = ((None, time(13, 0)),)
@@ -602,4 +602,4 @@ class XSHGExchangeCalendar(PrecomputedExchangeCalendar):
 
     @property
     def bound_start(self) -> pd.Timestamp:
-        return pd.Timestamp("1990-12-03", tz="Asia/Shanghai")
+        return pd.Timestamp("1990-12-03")

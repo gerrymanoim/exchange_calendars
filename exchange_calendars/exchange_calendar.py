@@ -25,9 +25,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 import toolz
-from pandas import DataFrame, date_range
 from pandas.tseries.holiday import AbstractHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
+import pytz
 from pytz import UTC
 
 from exchange_calendars import errors
@@ -53,10 +53,12 @@ from .calendar_helpers import (
 from .utils.memoize import lazyval
 from .utils.pandas_utils import days_at_time
 
-GLOBAL_DEFAULT_START = pd.Timestamp.now(tz=UTC).floor("D") - pd.DateOffset(years=20)
+NaTType = type(pd.NaT)
+
+GLOBAL_DEFAULT_START = pd.Timestamp.now().floor("D") - pd.DateOffset(years=20)
 # Give an aggressive buffer for logic that needs to use the next trading
 # day or minute.
-GLOBAL_DEFAULT_END = pd.Timestamp.now(tz=UTC).floor("D") + pd.DateOffset(years=1)
+GLOBAL_DEFAULT_END = pd.Timestamp.now().floor("D") + pd.DateOffset(years=1)
 
 NANOS_IN_MINUTE = 60000000000
 MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
@@ -64,12 +66,14 @@ WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
 WEEKENDS = (SATURDAY, SUNDAY)
 
 
-def selection(arr, start, end):
+def selection(
+    arr: pd.DatetimeIndex, start: pd.Timestamp, end: pd.Timestamp
+) -> pd.DatetimeIndex:
     predicates = []
     if start is not None:
-        predicates.append(start.tz_localize(UTC) <= arr)
+        predicates.append(start <= arr)
     if end is not None:
-        predicates.append(arr < end.tz_localize(UTC))
+        predicates.append(arr < end)
 
     if not predicates:
         return arr
@@ -77,11 +81,22 @@ def selection(arr, start, end):
     return arr[np.all(predicates, axis=0)]
 
 
-def _group_times(all_days, times, tz, offset=0):
+def _group_times(
+    sessions: pd.DatetimeIndex,
+    times: None | Sequence[tuple[pd.Timestamp | None, datetime.time]],
+    tz: pytz.tzinfo.BaseTzInfo,
+    offset: int = 0,
+) -> pd.DatetimeIndex | None:
+    """Evaluate standard times for a specific session bound.
+
+    For example, if `times` passed as standard times for session opens then
+    will return a DatetimeIndex describing standard open times for each
+    session.
+    """
     if times is None:
         return None
     elements = [
-        days_at_time(selection(all_days, start, end), time, tz, offset)
+        days_at_time(selection(sessions, start, end), time, tz, offset)
         for (start, time), (end, _) in toolz.sliding_window(
             2, toolz.concatv(times, [(None, None)])
         )
@@ -151,13 +166,15 @@ class ExchangeCalendar(ABC):
     an intraday break a session represents two contiguous sets of minutes
     separated by the intraday break.
 
-    Each session has a label that is midnight UTC. It is important to note
-    that a session label should not be considered a specific point in time,
-    and that midnight UTC is just being used for convenience.
+    Each session is labeled as the date that the session represents.
 
     For each session, we store the open and close time together with, for
     those exchanges with breaks, the break start and break end. All times
     are defined as UTC.
+
+    Note that a session may start on the day prior to the session label or
+    end on the day following the session label. Such behaviour is common
+    for calendars that represent futures exchanges.
 
     Parameters
     ----------
@@ -211,13 +228,13 @@ class ExchangeCalendar(ABC):
     calendar.
 
 
-    Internal method parameters:
+    -- Internal method parameters --
 
-        _parse: bool
-            Determines if a `minute` or `session` parameter should be
-            parsed (default True). Passed as False:
-                - internally to prevent double parsing.
-                - by tests for efficiency.
+    _parse: bool
+        Determines if a `minute` or `session` parameter should be
+        parsed (default True). Passed as False:
+            - internally to prevent double parsing.
+            - by tests for efficiency.
     """
 
     _LEFT_SIDES = ["left", "both"]
@@ -256,12 +273,11 @@ class ExchangeCalendar(ABC):
                 f" '{start}' and `end` as '{end}'."
             )
 
-        # Midnight in UTC for each trading day.
-        _all_days = date_range(start, end, freq=self.day, tz=UTC)
+        _all_days = pd.date_range(start, end, freq=self.day)  # session labels
         if _all_days.empty:
             raise errors.NoSessionsError(calendar_name=self.name, start=start, end=end)
 
-        # `DatetimeIndex`s of standard opens/closes for each day.
+        # DatetimeIndex of standard times for each day.
         self._opens = _group_times(
             _all_days,
             self.open_times,
@@ -288,43 +304,29 @@ class ExchangeCalendar(ABC):
         # Apply any special offsets first
         self.apply_special_offsets(_all_days, start, end)
 
-        # Series mapping sessions with nonstandard opens/closes.
+        # Series mapping sessions with non-standard opens/closes.
         _special_opens = self._calculate_special_opens(start, end)
         _special_closes = self._calculate_special_closes(start, end)
 
         # Overwrite the special opens and closes on top of the standard ones.
         _overwrite_special_dates(_all_days, self._opens, _special_opens)
         _overwrite_special_dates(_all_days, self._closes, _special_closes)
-        _remove_breaks_for_special_dates(
-            _all_days,
-            self._break_starts,
-            _special_closes,
-        )
-        _remove_breaks_for_special_dates(
-            _all_days,
-            self._break_ends,
-            _special_closes,
-        )
+        _remove_breaks_for_special_dates(_all_days, self._break_starts, _special_closes)
+        _remove_breaks_for_special_dates(_all_days, self._break_ends, _special_closes)
 
-        if self._break_starts is None:
-            break_starts = None
-        else:
-            break_starts = self._break_starts.tz_localize(None)
-        if self._break_ends is None:
-            break_ends = None
-        else:
-            break_ends = self._break_ends.tz_localize(None)
-        self.schedule = DataFrame(
+        break_starts = None if self._break_starts is None else self._break_starts
+        break_ends = None if self._break_ends is None else self._break_ends
+        self.schedule = pd.DataFrame(
             index=_all_days,
             data=collections.OrderedDict(
                 [
-                    ("market_open", self._opens.tz_localize(None)),
+                    ("market_open", self._opens),
                     ("break_start", break_starts),
                     ("break_end", break_ends),
-                    ("market_close", self._closes.tz_localize(None)),
+                    ("market_close", self._closes),
                 ]
             ),
-            dtype="datetime64[ns]",
+            dtype="datetime64[ns, UTC]",
         )
 
         self.opens_nanos = self.schedule.market_open.values.astype(np.int64)
@@ -337,8 +339,9 @@ class ExchangeCalendar(ABC):
         self._late_opens = _special_opens.index
         self._early_closes = _special_closes.index
 
-    # Methods and properties that define calendar and which should be
-    # overriden or extended, if and as required, by subclass.
+    # --------------- Calendar definition methods/properties --------------
+    # Methods and properties in this section should be overriden or
+    # extended by subclass if and as required.
 
     @property
     @abstractmethod
@@ -352,8 +355,8 @@ class ExchangeCalendar(ABC):
         Returns
         -------
         pd.Timestamp or None
-            Earliest date from which calendar can be constructed. Must have
-            tz as "UTC". None if no limit.
+            Earliest date from which calendar can be constructed. Must be
+            timezone naive. None if no limit.
 
         Notes
         -----
@@ -370,8 +373,8 @@ class ExchangeCalendar(ABC):
         Returns
         -------
         pd.Timestamp or None
-            Latest date to which calendar can be constructed. Must have tz
-            as "UTC". None if no limit.
+            Latest date to which calendar can be constructed. Must be
+            timezone naive. None if no limit.
 
         Notes
         -----
@@ -422,7 +425,7 @@ class ExchangeCalendar(ABC):
 
     @property
     @abstractmethod
-    def tz(self):
+    def tz(self) -> pytz.tzinfo.BaseTzInfo:
         raise NotImplementedError()
 
     @property
@@ -434,8 +437,8 @@ class ExchangeCalendar(ABC):
         -------
         Sequence[tuple[pd.Timestamp | None, datetime.time]]:
             Sequence of tuples representing (start_date, open_time) where:
-                start_date: date from which `open_time` applies. None for
-                    first item.
+                start_date: date from which `open_time` applies. Must be
+                    timezone-naive. None for first item.
                 open_time: exchange's local open time.
 
         Notes
@@ -489,8 +492,8 @@ class ExchangeCalendar(ABC):
         -------
         Sequence[tuple[pd.Timestamp | None, datetime.time]]:
             Sequence of tuples representing (start_date, close_time) where:
-                start_date: date from which `close_time` applies. None for
-                    first item.
+                start_date: date from which `close_time` applies. Must be
+                    timezone naive. None for first item.
                 close_time: exchange's local close time.
 
         Notes
@@ -591,7 +594,7 @@ class ExchangeCalendar(ABC):
     @property
     def special_opens_adhoc(
         self,
-    ) -> list[tuple[datetime.time, pd.Timestamp | list[pd.Timestamp]]]:
+    ) -> list[tuple[datetime.time, pd.DatetimeIndex]]:
         """Adhoc non-standard open times.
 
         Defines non-standard open times that cannot be otherwise codified
@@ -603,11 +606,12 @@ class ExchangeCalendar(ABC):
 
         Returns
         -------
-        list[tuple[datetime.time, pd.Timestamp | list[pd.Timestamp]]]:
+        list[tuple[datetime.time, pd.DatetimeIndex]]:
             List of tuples each describing an adhoc non-standard open time:
                 [0] datetime.time: non-standard open time.
-                [1] pd.Timestamp | list[pd.Timestamp]: date or dates
-                    corresponding with the non-standard open time.
+
+                [1] pd.DatetimeIndex: date or dates corresponding with the
+                non-standard open time. (Must be timezone-naive.)
         """
         return []
 
@@ -632,7 +636,7 @@ class ExchangeCalendar(ABC):
     @property
     def special_closes_adhoc(
         self,
-    ) -> list[tuple[datetime.time, pd.Timestamp | list[pd.Timestamp]]]:
+    ) -> list[tuple[datetime.time, pd.DatetimeIndex]]:
         """Adhoc non-standard close times.
 
         Defines non-standard close times that cannot be otherwise codified
@@ -644,12 +648,13 @@ class ExchangeCalendar(ABC):
 
         Returns
         -------
-        list[tuple[datetime.time, pd.Timestamp | list[pd.Timestamp]]]:
+        list[tuple[datetime.time, pd.DatetimeIndex]]:
             List of tuples each describing an adhoc non-standard close
             time:
                 [0] datetime.time: non-standard close time.
-                [1] pd.Timestamp | list[pd.Timestamp]: date or dates
-                    corresponding with the non-standard close time.
+
+                [1] pd.DatetimeIndex: date or dates corresponding with the
+                non-standard close time. (Must be timezone-naive.)
         """
         return []
 
@@ -671,7 +676,7 @@ class ExchangeCalendar(ABC):
     # Methods and properties that define calendar (continued...).
 
     @lazyval
-    def day(self):
+    def day(self) -> CustomBusinessDay:
         return CustomBusinessDay(
             holidays=self.adhoc_holidays,
             calendar=self.regular_holidays,
@@ -741,9 +746,8 @@ class ExchangeCalendar(ABC):
         pd.Series
             index : pd.DatetimeIndex
                 All sessions.
-            dtype : datetime64[ns]
-                Open time of corresponding session. NB Times are UTC
-                although dtype is timezone-naive.
+            dtype : datetime64[ns, UTC]
+                UTC open time of corresponding session.
         """
         return self.schedule.market_open
 
@@ -756,9 +760,8 @@ class ExchangeCalendar(ABC):
         pd.Series
             index : pd.DatetimeIndex
                 All sessions.
-            dtype : datetime64[ns]
-                Close time of corresponding session. NB Times are UTC
-                although dtype is timezone-naive.
+            dtype : datetime64[ns, UTC]
+                UTC close time of corresponding session.
         """
         return self.schedule.market_close
 
@@ -771,10 +774,10 @@ class ExchangeCalendar(ABC):
         pd.Series
             index : pd.DatetimeIndex
                 All sessions.
-            dtype : datetime64[ns]
-                Break-start time of corresponding session. NB Times are UTC
-                although dtype is timezone-naive. Value is missing
-                (pd.NaT) for any session that does not have a break.
+            dtype : datetime64[ns, UTC]
+                UTC break-start time of corresponding session. Value is
+                missing (pd.NaT) for any session that does not have a
+                break.
         """
         return self.schedule.break_start
 
@@ -787,10 +790,10 @@ class ExchangeCalendar(ABC):
         pd.Series
             index : pd.DatetimeIndex
                 All sessions.
-            dtype : datetime64[ns]
-                Break-end time of corresponding session.  NB Times are UTC
-                although dtype is timezone-naive. Value is missing
-                (pd.NaT) for any session that does not have a break.
+            dtype : datetime64[ns, UTC]
+                UTC break-end time of corresponding session.Value is
+                missing (pd.NaT) for any session that does not have a
+                break.
         """
         return self.schedule.break_end
 
@@ -956,7 +959,7 @@ class ExchangeCalendar(ABC):
         """Return open time for a given session."""
         if _parse:
             session_label = parse_session(self, session_label, "session_label")
-        return self.schedule.at[session_label, "market_open"].tz_localize(UTC)
+        return self.schedule.at[session_label, "market_open"]
 
     def session_close(
         self, session_label: Session, _parse: bool = True
@@ -964,11 +967,11 @@ class ExchangeCalendar(ABC):
         """Return close time for a given session."""
         if _parse:
             session_label = parse_session(self, session_label, "session_label")
-        return self.schedule.at[session_label, "market_close"].tz_localize(UTC)
+        return self.schedule.at[session_label, "market_close"]
 
     def session_break_start(
         self, session_label: Session, _parse: bool = True
-    ) -> pd.Timestamp | pd.NaT:
+    ) -> pd.Timestamp | NaTType:
         """Return break-start time for a given session.
 
         Returns pd.NaT if no break.
@@ -976,13 +979,11 @@ class ExchangeCalendar(ABC):
         if _parse:
             session_label = parse_session(self, session_label, "session_label")
         break_start = self.schedule.at[session_label, "break_start"]
-        if not pd.isnull(break_start):
-            break_start = break_start.tz_localize(UTC)
         return break_start
 
     def session_break_end(
         self, session_label: Session, _parse: bool = True
-    ) -> pd.Timestamp | pd.NaT:
+    ) -> pd.Timestamp | NaTType:
         """Return break-end time for a given session.
 
         Returns pd.NaT if no break.
@@ -990,8 +991,6 @@ class ExchangeCalendar(ABC):
         if _parse:
             session_label = parse_session(self, session_label, "session_label")
         break_end = self.schedule.at[session_label, "break_end"]
-        if not pd.isnull(break_end):
-            break_end = break_end.tz_localize(UTC)
         return break_end
 
     def session_open_close(
@@ -1016,7 +1015,7 @@ class ExchangeCalendar(ABC):
 
     def session_break_start_end(
         self, session: Session, _parse: bool = True
-    ) -> tuple[pd.Timestamp | pd.NaT, pd.Timestamp | pd.NaT]:
+    ) -> tuple[pd.Timestamp | NaTType, pd.Timestamp | NaTType]:
         """Return break-start and break-end times for a given session.
 
         Parameters
@@ -1026,7 +1025,7 @@ class ExchangeCalendar(ABC):
 
         Returns
         -------
-        tuple[pd.Timestamp | pd.NaT, pd.Timestamp | pd.NaT]
+        tuple[pd.Timestamp | NaTType, pd.Timestamp | NaTType]
             [0] Break-start time of `session`, or pd.NaT if no break.
             [1] Close time of `session`, or pd.NaT if no break.
         """
@@ -1056,14 +1055,14 @@ class ExchangeCalendar(ABC):
 
     def session_last_am_minute(
         self, session: Session, _parse: bool = True
-    ) -> pd.Timestamp | pd.NaT:  # Literal[pd.NaT] - when move to min 3.8
+    ) -> pd.Timestamp | pd.NaT:
         """Return last trading minute of am subsession of a given session."""
         nanos = self.last_am_minutes_nanos
         return self._get_session_minute_from_nanos(session, nanos, _parse)
 
     def session_first_pm_minute(
         self, session: Session, _parse: bool = True
-    ) -> pd.Timestamp | pd.NaT:  # Literal[pd.NaT] - when move to min 3.8
+    ) -> pd.Timestamp | pd.NaT:
         """Return first trading minute of pm subsession of a given session."""
         nanos = self.first_pm_minutes_nanos
         return self._get_session_minute_from_nanos(session, nanos, _parse)
@@ -1420,7 +1419,7 @@ class ExchangeCalendar(ABC):
         try:
             idx = next_divider_idx(self.opens_nanos, dt.value)
         except IndexError:
-            if dt.tz_convert(None) >= self.opens[-1]:
+            if dt >= self.opens[-1]:
                 raise ValueError(
                     "Minute cannot be the last open or later (received `dt`"
                     f" parsed as '{dt}'.)"
@@ -1451,7 +1450,7 @@ class ExchangeCalendar(ABC):
         try:
             idx = next_divider_idx(self.closes_nanos, dt.value)
         except IndexError:
-            if dt.tz_convert(None) == self.closes[-1]:
+            if dt == self.closes[-1]:
                 raise ValueError(
                     "Minute cannot be the last close (received `dt` parsed as"
                     f" '{dt}'.)"
@@ -1481,7 +1480,7 @@ class ExchangeCalendar(ABC):
         try:
             idx = previous_divider_idx(self.opens_nanos, dt.value)
         except ValueError:
-            if dt.tz_convert(None) == self.opens[0]:
+            if dt == self.opens[0]:
                 raise ValueError(
                     "Minute cannot be the first open (received `dt` parsed as"
                     f" '{dt}'.)"
@@ -1512,7 +1511,7 @@ class ExchangeCalendar(ABC):
         try:
             idx = previous_divider_idx(self.closes_nanos, dt.value)
         except ValueError:
-            if dt.tz_convert(None) <= self.closes[0]:
+            if dt <= self.closes[0]:
                 raise ValueError(
                     "Minute cannot be the first close or earlier (received"
                     f" `dt` parsed as '{dt}'.)"
@@ -1883,9 +1882,10 @@ class ExchangeCalendar(ABC):
                 raise errors.RequestedMinuteOutOfBounds(self, too_early=True)
 
         base_session = self.minute_to_session(minute)
+        day_offset = (minute.normalize() - base_session.tz_localize(UTC)).days
 
-        day_offset = (minute.normalize() - base_session.normalize()).days
         minute = target_session.replace(hour=minute.hour, minute=minute.minute)
+        minute = minute.tz_localize(UTC)
         minute += pd.Timedelta(days=day_offset)
 
         if self._minute_oob(minute):
@@ -2226,7 +2226,7 @@ class ExchangeCalendar(ABC):
                 UTC open times for corresponding sessions.
         """
         start, end = self._parse_start_end_dates(start, end, _parse)
-        return self.schedule.loc[start:end, "market_open"].dt.tz_localize(UTC)
+        return self.schedule.loc[start:end, "market_open"]
 
     def sessions_closes(self, start: Date, end: Date, _parse: bool = True) -> pd.Series:
         """Return UTC close time by session for sessions in given range.
@@ -2248,7 +2248,7 @@ class ExchangeCalendar(ABC):
                 UTC close times for corresponding sessions.
         """
         start, end = self._parse_start_end_dates(start, end, _parse)
-        return self.schedule.loc[start:end, "market_close"].dt.tz_localize(UTC)
+        return self.schedule.loc[start:end, "market_close"]
 
     def sessions_minutes_count(
         self, start: Date, end: Date, _parse: bool = True
@@ -2309,10 +2309,12 @@ class ExchangeCalendar(ABC):
         Parameters
         ----------
         start
-            Start of session range over which to create index.
+            Start of session range over which to create index. Must be
+            timezone naive.
 
         end
-            End of session range over which to create index.
+            End of session range over which to create index.  Must be
+            timezone naive.
 
         period
             If `intervals` is True, the length of each interval. If
@@ -2431,8 +2433,8 @@ class ExchangeCalendar(ABC):
 
         parse : default: True
             Determines if `start` and `end` values are parsed. If these
-            arguments are passed as pd.Timestamp with no time component
-            and tz as UTC then can pass `parse` as False to save around
+            arguments are passed as tz-naive pd.Timestamp with no time
+            component then can pass `parse` as False to save around
             500µs on the execution.
 
         Returns
@@ -2515,48 +2517,56 @@ class ExchangeCalendar(ABC):
 
     # Internal methods called by constructor.
 
-    def _special_dates(self, calendars, ad_hoc_dates, start_date, end_date):
-        """
-        Compute a Series of times associated with special dates.
+    def _special_dates(
+        self,
+        regular_dates: list[tuple[datetime.time, HolidayCalendar]],
+        ad_hoc_dates: list[tuple[datetime.time, pd.DatetimeIndex]],
+        start_date: pd.Timestamp,
+        end_date: pd.Timestamp,
+    ) -> pd.Series:
+        """Evaluate times associated with special dates.
 
         Parameters
         ----------
-        holiday_calendars : list[(datetime.time, HolidayCalendar)]
-            Pairs of time and calendar describing when that time occurs. These
-            are used to describe regularly-scheduled late opens or early
-            closes.
-        ad_hoc_dates : list[(datetime.time, list[pd.Timestamp])]
-            Pairs of time and list of dates associated with the given times.
-            These are used to describe late opens or early closes that occurred
-            for unscheduled or otherwise irregular reasons.
-        start_date : pd.Timestamp
-            Start of the range for which we should calculate special dates.
-        end_date : pd.Timestamp
-            End of the range for which we should calculate special dates.
+        regular_dates
+            Regular non-standard times and corresponding HolidayCalendars.
+
+        ad_hoc_dates
+            Adhoc non-standard times and corresponding sessions.
+
+        start_date
+            Start of the range over which to evaluate special dates. Must
+            be timezone naive.
+
+        end_date
+            End of the range over which to evaluate special dates. Must be
+            timezone naive.
 
         Returns
         -------
-        special_dates : pd.Series
-            Series mapping trading sessions with special opens/closes to the
-            special open/close for that session.
+        special_dates: pd.Series
+            Series mapping trading sessions with special times.
+
+            Index is timezone naive.
+            dtype is datetime64[ns, UTC].
         """
         # List of Series for regularly-scheduled times.
         regular = [
             scheduled_special_times(
-                calendar,
+                holiday_calendar,
                 start_date,
                 end_date,
                 time_,
                 self.tz,
             )
-            for time_, calendar in calendars
+            for time_, holiday_calendar in regular_dates
         ]
 
         # List of Series for ad-hoc times.
         ad_hoc = [
             pd.Series(
-                index=pd.to_datetime(datetimes, utc=True),
-                data=days_at_time(datetimes, time_, self.tz),
+                index=datetimes,
+                data=days_at_time(datetimes, time_, self.tz, 0),
             )
             for time_, datetimes in ad_hoc_dates
         ]
@@ -2565,25 +2575,22 @@ class ExchangeCalendar(ABC):
         if not merged:
             # Concat barfs if the input has length 0.
             return pd.Series(
-                [], index=pd.DatetimeIndex([], tz=UTC), dtype="datetime64[ns, UTC]"
+                [], index=pd.DatetimeIndex([]), dtype="datetime64[ns, UTC]"
             )
 
         result = pd.concat(merged).sort_index()
-        # end_date + one day to include all times of last day, otherwise if
-        # end_date */12/31 00:00 then */12/31 12:30 would be excluded.
-        end_rng = end_date + pd.Timedelta(1, "D")
-        result = result.loc[(result >= start_date) & (result < end_rng)]
-        # exclude any special date that conincides with a holiday
-        adhoc_holidays = pd.DatetimeIndex(self.adhoc_holidays, tz="UTC")
+        result = result.loc[(result.index >= start_date) & (result.index <= end_date)]
+        # exclude any special date that coincides with a holiday
+        adhoc_holidays = pd.DatetimeIndex(self.adhoc_holidays)
         result = result[~result.index.isin(adhoc_holidays)]
-        reg_holidays = self.regular_holidays.holidays(
-            start_date.tz_convert(None), end_date.tz_convert(None)
-        )
+        reg_holidays = self.regular_holidays.holidays(start_date, end_date)
         if not reg_holidays.empty:
-            result = result[~result.index.isin(reg_holidays.tz_localize(UTC))]
+            result = result[~result.index.isin(reg_holidays)]
         return result
 
-    def _calculate_special_opens(self, start, end):
+    def _calculate_special_opens(
+        self, start: pd.Timestamp, end: pd.Timestamp
+    ) -> pd.Series:
         return self._special_dates(
             self.special_opens,
             self.special_opens_adhoc,
@@ -2591,7 +2598,9 @@ class ExchangeCalendar(ABC):
             end,
         )
 
-    def _calculate_special_closes(self, start, end):
+    def _calculate_special_closes(
+        self, start: pd.Timestamp, end: pd.Timestamp
+    ) -> pd.Series:
         return self._special_dates(
             self.special_closes,
             self.special_closes_adhoc,
@@ -2833,89 +2842,113 @@ def _check_breaks_match(break_starts_nanos: np.ndarray, break_ends_nanos: np.nda
         )
 
 
-def scheduled_special_times(calendar, start, end, time, tz):
-    """
-    Returns a Series mapping each holiday (as a UTC midnight Timestamp)
-    in ``calendar`` between ``start`` and ``end`` to that session at
-    ``time`` (as a UTC Timestamp).
+def scheduled_special_times(
+    calendar: HolidayCalendar,
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+    time: datetime.time,
+    tz: pytz.tzinfo.BaseTzInfo,
+) -> pd.Series:
+    """Return map of calendar 'holidays' to special times.
+
+    Returns
+    -------
+    pd.Series
+        Series mapping each 'holiday' of `calendar` from `start` through
+        `end` with corresponding special time.
+
+        Index is timezone naive.
+        dtype is datetime64[ns, UTC].
     """
     days = calendar.holidays(start, end)
+    if not isinstance(days, pd.DatetimeIndex):
+        # days will be pd.Index if empty
+        days = pd.DatetimeIndex(days)
     return pd.Series(
-        index=pd.DatetimeIndex(days, tz=UTC),
-        data=days_at_time(days, time, tz=tz),
+        index=days,
+        data=days_at_time(days, time, tz=tz, day_offset=0),
     )
 
 
-def _overwrite_special_dates(session_labels, opens_or_closes, special_opens_or_closes):
-    """
-    Overwrite dates in open_or_closes with corresponding dates in
-    special_opens_or_closes, using session_labels for alignment.
+def _overwrite_special_dates(
+    session_labels: pd.DatetimeIndex,
+    standard_times: pd.DatetimeIndex,
+    special_times: pd.Series,
+) -> None:
+    """Overwrite standard times of a session bound with special times.
+
+    `session_labels` required for alignment.
     """
     # Short circuit when nothing to apply.
-    if not len(special_opens_or_closes):
+    if not len(special_times):
         return
 
-    len_m, len_oc = len(session_labels), len(opens_or_closes)
+    len_m, len_oc = len(session_labels), len(standard_times)
     if len_m != len_oc:
         raise ValueError(
-            "Found misaligned dates while building calendar.\n"
-            "Expected session_labels to be the same length as "
-            "open_or_closes but,\n"
-            "len(session_labels)=%d, len(open_or_closes)=%d" % (len_m, len_oc)
+            "Found misaligned dates while building calendar.\nExpected"
+            " session_labels to be the same length as open_or_closes but,\n"
+            f"len(session_labels)={len_m}, len(open_or_closes)={len_oc}"
         )
 
     # Find the array indices corresponding to each special date.
-    indexer = session_labels.get_indexer(special_opens_or_closes.index)
+    indexer = session_labels.get_indexer(special_times.index)
 
     # -1 indicates that no corresponding entry was found.  If any -1s are
     # present, then we have special dates that doesn't correspond to any
     # trading day.
     if -1 in indexer:
-        bad_dates = list(special_opens_or_closes[indexer == -1])
-        raise ValueError("Special dates %s are not trading days." % bad_dates)
+        bad_dates = list(special_times[indexer == -1])
+        raise ValueError(f"Special dates {bad_dates} are not sessions.")
 
     # NOTE: This is a slightly dirty hack.  We're in-place overwriting the
     # internal data of an Index, which is conceptually immutable.  Since we're
     # maintaining sorting, this should be ok, but this is a good place to
     # sanity check if things start going haywire with calendar computations.
-    opens_or_closes.values[indexer] = special_opens_or_closes.values
+    standard_times.values[indexer] = special_times.values
 
 
 def _remove_breaks_for_special_dates(
-    session_labels, break_start_or_end, special_opens_or_closes
-):
-    """
-    Overwrite breaks in break_start_or_end with corresponding dates in
-    special_opens_or_closes, using session_labels for alignment.
+    session_labels: pd.DatetimeIndex,
+    standard_break_times: pd.DatetimeIndex | None,
+    special_times: pd.Series,
+) -> None:
+    """Remove standard break times for sessions with special times."
+
+    Overwrites standard break times with NaT for sessions with speical
+    times. Anticipated that `special_times` will be special times for
+    'opens' or 'closes'.
+
+    `session_labels` required for alignment.
     """
     # Short circuit when we have no breaks
-    if break_start_or_end is None:
+    if standard_break_times is None:
         return
 
     # Short circuit when nothing to apply.
-    if not len(special_opens_or_closes):
+    if not len(special_times):
         return
 
-    len_m, len_oc = len(session_labels), len(break_start_or_end)
+    len_m, len_oc = len(session_labels), len(standard_break_times)
     if len_m != len_oc:
         raise ValueError(
             "Found misaligned dates while building calendar.\n"
             "Expected session_labels to be the same length as break_starts,\n"
-            "but len(session_labels)=%d, len(break_start_or_end)=%d" % (len_m, len_oc)
+            f"but len(session_labels)={len_m}, len(break_start_or_end)={len_oc}"
         )
 
     # Find the array indices corresponding to each special date.
-    indexer = session_labels.get_indexer(special_opens_or_closes.index)
+    indexer = session_labels.get_indexer(special_times.index)
 
     # -1 indicates that no corresponding entry was found.  If any -1s are
     # present, then we have special dates that doesn't correspond to any
     # trading day.
     if -1 in indexer:
-        bad_dates = list(special_opens_or_closes[indexer == -1])
-        raise ValueError("Special dates %s are not trading days." % bad_dates)
+        bad_dates = list(special_times[indexer == -1])
+        raise ValueError(f"Special dates {bad_dates} are not trading days.")
 
     # NOTE: This is a slightly dirty hack.  We're in-place overwriting the
     # internal data of an Index, which is conceptually immutable.  Since we're
     # maintaining sorting, this should be ok, but this is a good place to
     # sanity check if things start going haywire with calendar computations.
-    break_start_or_end.values[indexer] = NP_NAT
+    standard_break_times.values[indexer] = NP_NAT

@@ -3,7 +3,6 @@ from abc import abstractproperty
 
 import numpy as np
 import pandas as pd
-from pytz import UTC
 
 from .exchange_calendar import ExchangeCalendar
 
@@ -32,11 +31,11 @@ class PrecomputedExchangeCalendar(ExchangeCalendar):
 
     @property
     def bound_start(self) -> pd.Timestamp:
-        return pd.Timestamp(f"{self._earliest_precomputed_year}-01-01", tz=UTC)
+        return pd.Timestamp(f"{self._earliest_precomputed_year}-01-01")
 
     @property
     def bound_end(self) -> pd.Timestamp:
-        return pd.Timestamp(f"{self._latest_precomputed_year}-12-31", tz=UTC)
+        return pd.Timestamp(f"{self._latest_precomputed_year}-12-31")
 
     def _bound_start_error_msg(self, start: pd.Timestamp) -> str:
         return (

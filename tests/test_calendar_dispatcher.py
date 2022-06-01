@@ -131,8 +131,8 @@ class CalendarDispatcherTestCase(TestCase):
         self.assertIsInstance(cal, ExchangeCalendar)
 
     def test_get_calendar_kwargs(self):
-        start = pd.Timestamp("2020-01-02", tz="UTC")
-        end = pd.Timestamp("2020-01-31", tz="UTC")
+        start = pd.Timestamp("2020-01-02")
+        end = pd.Timestamp("2020-01-31")
         cal = self.dispatcher.get_calendar("IEPA", start=start, end=end)
         self.assertEqual(cal.first_session, start)
         self.assertEqual(cal.last_session, end)
@@ -152,8 +152,8 @@ class CalendarDispatcherTestCase(TestCase):
             self.dispatcher.get_calendar("iepa_instance", side="right")
 
     def test_get_calendar_cache(self):
-        start = pd.Timestamp("2020-01-02", tz="UTC")
-        end = pd.Timestamp("2020-01-31", tz="UTC")
+        start = pd.Timestamp("2020-01-02")
+        end = pd.Timestamp("2020-01-31")
         cal = self.dispatcher.get_calendar("IEPA", start=start, end=end, side="right")
         cal2 = self.dispatcher.get_calendar("IEPA", start=start, end=end, side="right")
         self.assertIs(cal, cal2)

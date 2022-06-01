@@ -18,7 +18,7 @@ from itertools import chain
 
 import pandas as pd
 from pandas.tseries.holiday import Holiday
-from pytz import timezone
+import pytz
 
 from .common_holidays import (
     eid_al_adha_first_day,
@@ -117,7 +117,7 @@ class XISTExchangeCalendar(ExchangeCalendar):
 
     name = "XIST"
 
-    tz = timezone("Europe/Istanbul")
+    tz = pytz.timezone("Europe/Istanbul")
 
     open_times = ((None, time(10)),)
 
@@ -177,5 +177,5 @@ class XISTExchangeCalendar(ExchangeCalendar):
 
     @property
     def special_closes_adhoc(self):
-        early_close_days = EidAlFitrHalfDay + EidAlAdhaHalfDay
+        early_close_days = pd.DatetimeIndex(EidAlFitrHalfDay + EidAlAdhaHalfDay)
         return [(self.regular_early_close, early_close_days)]

@@ -22,7 +22,7 @@ import pandas as pd
 import toolz
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday, sunday_to_monday
 from pandas.tseries.offsets import LastWeekOfMonth, WeekOfMonth
-from pytz import timezone
+import pytz
 
 from .common_holidays import (
     boxing_day,
@@ -224,7 +224,9 @@ HKAdhocClosures = [
     # pd.Timestamp(2017-06-12'),  # 台风苗柏1702,期货夜盘17:35休市
     pd.Timestamp("2017-08-23"),  # 台风天鸽1713
     pd.Timestamp("2020-10-13"),  # 台风浪卡2016
-    pd.Timestamp("2021-10-13"),  # https://www.hkex.com.hk/News/Market-Communications/2021/2110132news?sc_lang=en
+    pd.Timestamp(
+        "2021-10-13"
+    ),  # https://www.hkex.com.hk/News/Market-Communications/2021/2110132news?sc_lang=en
 ]
 
 
@@ -270,7 +272,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
     """
 
     name = "XHKG"
-    tz = timezone("Asia/Hong_Kong")
+    tz = pytz.timezone("Asia/Hong_Kong")
 
     open_times = (
         (None, time(10)),
@@ -447,7 +449,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
             return arr[np.all(predicates, axis=0)]
 
         return [
-            (time, selection(lunar_new_years_eve, start, end))
+            (time, pd.DatetimeIndex(selection(lunar_new_years_eve, start, end)))
             for (start, time), (end, _) in toolz.sliding_window(
                 2,
                 toolz.concatv(self.regular_early_close_times, [(None, None)]),
