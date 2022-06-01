@@ -358,7 +358,7 @@ class Answers:
                 dtis.append(pd.date_range(first, last_am, freq="T"))
                 dtis.append(pd.date_range(first_pm, last, freq="T"))
 
-        return dtis[0].union_many(dtis[1:])
+        return pandas_utils.indexes_union(dtis)
 
     def get_session_minutes(
         self, session: pd.Timestamp
@@ -905,8 +905,9 @@ class Answers:
 
     @functools.lru_cache(maxsize=4)
     def _sessions_next_time_different(self) -> pd.DatetimeIndex:
-        return self.sessions_next_open_different.union_many(
+        return pandas_utils.indexes_union(
             [
+                self.sessions_next_open_different,
                 self.sessions_next_close_different,
                 self.sessions_next_break_start_different,
                 self.sessions_next_break_end_different,
@@ -1155,7 +1156,7 @@ class Answers:
         sample of every indentified unique circumstance.
         """
         dtis = list(self.session_blocks.values())
-        return dtis[0].union_many(dtis[1:])
+        return pandas_utils.indexes_union(dtis)
 
     # non-sessions...
 
@@ -1566,9 +1567,12 @@ class Answers:
         next_closes = self.closes[2:]
         opens_after_next = self.opens[3:]
         # add dummy row to equal lengths (won't be used)
-        _ = pd.Series(pd.Timestamp("2200-01-01", tz=UTC))
-        opens_after_next = opens_after_next.append(_)
-
+        opens_after_next = pd.concat(
+            [
+                opens_after_next,
+                pd.Series(pd.Timestamp("2200-01-01", tz=UTC)),
+            ]
+        )
         stop = closes[-1]
 
         for (
@@ -2155,7 +2159,7 @@ class ExchangeCalendarTestBase:
             if date_from != pd.Timestamp.min:
                 date_to = date_from - pd.Timedelta(1, "D")
 
-        late_opens = dtis[0].union_many(dtis[1:])
+        late_opens = pandas_utils.indexes_union(dtis)
         yield late_opens
 
     @pytest.fixture(scope="class")
@@ -2192,7 +2196,7 @@ class ExchangeCalendarTestBase:
             if date_from != pd.Timestamp.min:
                 date_to = date_from - pd.Timedelta(1, "D")
 
-        early_closes = dtis[0].union_many(dtis[1:])
+        early_closes = pandas_utils.indexes_union(dtis)
         yield early_closes
 
     # --- TESTS ---
