@@ -2696,7 +2696,8 @@ class ExchangeCalendarTestBase:
         # NB non-sessions handled by methods via parse_session
 
         # first session
-        with pytest.raises(ValueError):
+        match = "Requested session would fall before the calendar's first session"
+        with pytest.raises(errors.RequestedSessionOutOfBounds, match=match):
             f_prev(ans.first_session)
 
         # middle sessions (and m_prev for last session)
@@ -2705,7 +2706,8 @@ class ExchangeCalendarTestBase:
             assert f_prev(next_session) == session
 
         # last session
-        with pytest.raises(ValueError):
+        match = "Requested session would fall after the calendar's last session"
+        with pytest.raises(errors.RequestedSessionOutOfBounds, match=match):
             f_next(ans.last_session)
 
     def test_session_minutes(self, all_calendars_with_answers):
@@ -2924,7 +2926,8 @@ class ExchangeCalendarTestBase:
         last_min_plus_one = ans.last_minutes_plus_one[0]
         last_min_less_one = ans.last_minutes_less_one[0]
 
-        with pytest.raises(ValueError):
+        match = "Requested minute would fall before the calendar's first trading minute"
+        with pytest.raises(errors.RequestedMinuteOutOfBounds, match=match):
             f_prev(first_min)
         # minutes earlier than first_minute assumed handled via parse_timestamp
         assert f_next(first_min) == first_min_plus_one
@@ -2971,7 +2974,8 @@ class ExchangeCalendarTestBase:
 
             prev_last_min = last_min
 
-        with pytest.raises(ValueError):
+        match = "Requested minute would fall after the calendar's last trading minute"
+        with pytest.raises(errors.RequestedMinuteOutOfBounds, match=match):
             f_next(last_min)
         # minutes later than last_minute assumed handled via parse_timestamp
 
