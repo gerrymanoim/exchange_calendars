@@ -3678,7 +3678,7 @@ class ExchangeCalendarTestBase:
         Assumes default value (False) for each of `force_close`,
         `force_break_close` and `curtail_overlaps`. See test class
         `test_calendar_helpers.TestTradingIndex` for more comprehensive
-        fuzz testing of select calendars (and parsing testing).
+        testing (including fuzz tests and parsing tests).
         """
         cal, ans = calendars["left"], answers["left"]
 

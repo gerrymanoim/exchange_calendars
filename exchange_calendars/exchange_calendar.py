@@ -2278,11 +2278,12 @@ class ExchangeCalendar(ABC):
 
     def trading_index(
         self,
-        start: Date,
-        end: Date,
+        start: Date | Minute,
+        end: Date | Minute,
         period: pd.Timedelta | str,
         intervals: bool = True,
-        closed: str = "left",  # when move to min 3.8 Literal["left", "right", "both", "neither"]
+        # TODO Literal["left", "right", "both", "neither"] when min python 3.8...
+        closed: str = "left",
         force_close: bool = False,
         force_break_close: bool = False,
         force: bool | None = None,
@@ -2309,12 +2310,55 @@ class ExchangeCalendar(ABC):
         Parameters
         ----------
         start
-            Start of session range over which to create index. Must be
-            timezone naive.
+            Timestamp representing start of index.
+
+            If `start` is passed as a date then the first indice will be:
+                if `start` is a session, then the first indice of that
+                    session (i.e. the left side of the first indice will be
+                    the session open).
+                otherwise, the first indice of the nearest session
+                    following `start`.
+
+            If `start` is passed as a minute then the first indice will be:
+                if `start` coincides with (the left side of*) an indice,
+                    then that indice.
+                otherwise the nearest indice to `start` (with a left side*)
+                    that is later than `start`.
+                * if `intervals` is True (default)
+
+            `start` will be interpreted as a date if it is timezone-naive
+            and does not have a time component (or any time component is
+            00:00). Otherwise `start` will be interpreted as a time.
+
+            If `period` is one day ("1d") then `start` must be passed as
+            a date. The first indice will be either `start`, if `start` is
+            a session, or otherwise the nearest session following `start`.
 
         end
-            End of session range over which to create index.  Must be
-            timezone naive.
+            Timestamp representing end of index.
+
+            If `end` is passed as a date then the last indice will be:
+                if `end` is a session, then the last indice of that
+                    session (i.e. either the right side of the final indice
+                    will be the session close or the final indice will
+                    contain the session close).
+                otherwise, the last indice of the nearest session
+                    preceeding `end`.
+
+            If `end` is passed as a minute then the last indice will be:
+                if `end` coincides with (the right side of*) an indice,
+                    then that indice.
+                otherwise the nearest indice to `end` (with a right side*)
+                    that is earlier than `end`.
+                * if `intervals` is True (default)
+
+            `end` will be interpreted as a date if it is timezone-naive
+            and does not have a time component (or any time component is
+            00:00). Otherwise `start` will be interpreted as a time.
+
+            If `period` is one day ("1d") then `end` must be passed as
+            a date. The last indice will be either `end`, if `end` is
+            a session, or otherwise the nearest session prceeding `end`.
 
         period
             If `intervals` is True, the length of each interval. If
@@ -2465,8 +2509,6 @@ class ExchangeCalendar(ABC):
         variation of which is employed within the underlying _TradingIndex
         class).
         """
-        start, end = self._parse_start_end_dates(start, end, parse)
-
         if not isinstance(period, pd.Timedelta):
             try:
                 period = pd.Timedelta(period)
@@ -2487,6 +2529,7 @@ class ExchangeCalendar(ABC):
             raise ValueError(msg)
 
         if period == pd.Timedelta(1, "D"):
+            start, end = self._parse_start_end_dates(start, end, parse)
             return self.sessions_in_range(start, end)
 
         if intervals and closed in ["both", "neither"]:
