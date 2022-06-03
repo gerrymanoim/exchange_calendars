@@ -1105,7 +1105,7 @@ class ExchangeCalendar(ABC):
 
         Raises
         ------
-        ValueError
+        errors.RequestedSessionOutOfBounds
             If `session` is the last calendar session.
 
         See Also
@@ -1115,12 +1115,9 @@ class ExchangeCalendar(ABC):
         idx = self._get_session_idx(session, _parse=_parse)
         try:
             return self.schedule.index[idx + 1]
-        except IndexError as err:
+        except IndexError:
             if idx == len(self.schedule.index) - 1:
-                raise ValueError(
-                    "There is no next session as this is the end"
-                    " of the exchange calendar."
-                ) from err
+                raise errors.RequestedSessionOutOfBounds(self, False) from None
             else:
                 raise
 
@@ -1134,7 +1131,7 @@ class ExchangeCalendar(ABC):
 
         Raises
         ------
-        ValueError
+        errors.RequestedSessionOutOfBounds
             If `session` is the first calendar session.
 
         See Also
@@ -1142,11 +1139,8 @@ class ExchangeCalendar(ABC):
         date_to_session
         """
         idx = self._get_session_idx(session, _parse=_parse)
-        if idx == 0:
-            raise ValueError(
-                "There is no previous session as this is the"
-                " beginning of the exchange calendar."
-            )
+        if not idx:
+            raise errors.RequestedSessionOutOfBounds(self, True)
         return self.schedule.index[idx - 1]
 
     def session_minutes(
@@ -1534,6 +1528,11 @@ class ExchangeCalendar(ABC):
         -------
         pd.Timestamp
             UTC timestamp of the next minute.
+
+        Raises
+        ------
+        errors.RequestedSessionOutOfBounds
+            If `minute` is the last calendar minute.
         """
         if _parse:
             dt = parse_timestamp(dt, "dt", self)
@@ -1542,10 +1541,7 @@ class ExchangeCalendar(ABC):
         except IndexError:
             # dt > last_minute handled via parsing
             if dt == self.last_minute:
-                raise ValueError(
-                    "Minute cannot be the last trading minute or later"
-                    f" (received `dt` parsed as '{dt}'.)"
-                ) from None
+                raise errors.RequestedMinuteOutOfBounds(self, False) from None
         return self.minutes[idx]
 
     def previous_minute(self, dt: Minute, _parse: bool = True) -> pd.Timestamp:
@@ -1561,6 +1557,11 @@ class ExchangeCalendar(ABC):
         -------
         pd.Timestamp
             UTC timestamp of the previous minute.
+
+        Raises
+        ------
+        errors.RequestedSessionOutOfBounds
+            If `minute` is the first calendar minute.
         """
         if _parse:
             dt = parse_timestamp(dt, "dt", self)
@@ -1569,10 +1570,7 @@ class ExchangeCalendar(ABC):
         except ValueError:
             # dt < first_minute handled via parsing
             if dt == self.first_minute:
-                raise ValueError(
-                    "Minute cannot be the first trading minute or earlier"
-                    f" (received `dt` parsed as '{dt}'.)"
-                ) from None
+                raise errors.RequestedMinuteOutOfBounds(self, True) from None
         return self.minutes[idx]
 
     # NOTE: when min to 3.8, direction annotation to Literal["next", "previous", "none"]
@@ -1697,8 +1695,6 @@ class ExchangeCalendar(ABC):
             raise ValueError("`count` must be higher than 0.")
         if self.is_open_on_minute(minute, ignore_breaks=True, _parse=False):
             current_session = self.minute_to_session(minute, _parse=False)
-            if current_session == self.first_session:
-                raise errors.RequestedSessionOutOfBounds(self, too_early=True)
             base_session = self.previous_session(current_session, _parse=False)
         else:
             base_session = self.minute_to_session(minute, "previous", _parse=False)
@@ -1743,8 +1739,6 @@ class ExchangeCalendar(ABC):
             raise ValueError("`count` must be higher than 0.")
         if self.is_open_on_minute(minute, ignore_breaks=True, _parse=False):
             current_session = self.minute_to_session(minute, _parse=False)
-            if current_session == self.last_session:
-                raise errors.RequestedSessionOutOfBounds(self, too_early=False)
             base_session = self.next_session(current_session, _parse=False)
         else:
             base_session = self.minute_to_session(minute, "next", _parse=False)
