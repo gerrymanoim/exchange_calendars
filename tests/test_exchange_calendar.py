@@ -3413,7 +3413,7 @@ class ExchangeCalendarTestBase:
         for name, block in ans.session_block_generator():
             start = ans.first_minutes[block[0]]
             ans_dti = block_minutes[name]
-            count = len(ans_dti) - 1
+            count = len(ans_dti)
             cal_dti = f(start, count)
             tm.assert_index_equal(ans_dti, cal_dti)
 
@@ -3423,8 +3423,8 @@ class ExchangeCalendarTestBase:
 
         # intra-session
         from_ = ans.first_minutes[ans.first_session] + pd.Timedelta(15, "T")
-        count = 29  # to give return of length 30 (method does not 'count' start)
-        expected = pd.date_range(from_, periods=count + 1, freq="T")
+        count = 30
+        expected = pd.date_range(from_, periods=count, freq="T")
         rtrn = f(from_, count)
         tm.assert_index_equal(expected, rtrn)
 
@@ -3433,13 +3433,43 @@ class ExchangeCalendarTestBase:
             session = ans.sessions_with_gap_after[0]
             next_session = ans.get_next_session(session)
             from_ = ans.last_minutes[session] - pd.Timedelta(4, "T")
-            count = 9
+            count = 10
             expected_1 = pd.date_range(from_, periods=5, freq="T")
             from_2 = ans.first_minutes[next_session]
             expected_2 = pd.date_range(from_2, periods=5, freq="T")
             expected = expected_1.union(expected_2)
             rtrn = f(from_, count)
             tm.assert_index_equal(expected, rtrn)
+
+        # verify raises ValueError when window extends beyond calendar's minute bounds
+        # at limit, window starts on first calendar minute
+        delta = pd.Timedelta(2, "T")
+        minute = ans.first_minute + delta
+        assert f(minute, count=-3)[0] == ans.first_minute
+        # window would start before first calendar minute
+        match = re.escape(
+            "Minutes window cannot begin before the calendar's first minute"
+            f" ({ans.first_minute}). `count` cannot be lower than -3 for `minute`"
+            f" '{minute}'."
+        )
+        with pytest.raises(ValueError, match=match):
+            f(minute, count=-4)
+
+        # at limit, window ends on last calendar minute
+        minute = ans.last_minute - delta
+        assert f(minute, count=3)[-1] == ans.last_minute
+        # window would end after last calendar minute
+        match = re.escape(
+            "Minutes window cannot end after the calendar's last minute"
+            f" ({ans.last_minute}). `count` cannot be higher than 3 for `minute`"
+            f" '{minute}'."
+        )
+        with pytest.raises(ValueError):
+            f(minute, count=4)
+
+        # verify raises ValueError if `count` passed as 0
+        with pytest.raises(ValueError, match="`count` cannot be 0."):
+            f(ans.first_minute, count=0)
 
     def test_minutes_distance(self, all_calendars_with_answers, one_minute):
         cal, ans = all_calendars_with_answers
@@ -3546,21 +3576,36 @@ class ExchangeCalendarTestBase:
         f = no_parsing(cal.sessions_window)
 
         for _, block in ans.session_block_generator():
-            count = len(block) - 1
+            count = len(block)
             tm.assert_index_equal(f(block[0], count), block)
             tm.assert_index_equal(f(block[-1], -count), block)
 
-        # window starts on first calendar session
-        assert f(ans.sessions[2], count=-2)[0] == ans.first_session
+        # verify raises ValueError if window extends beyond calendar's session bounds.
+        # at limit, window starts on first calendar session
+        assert f(ans.sessions[2], count=-3)[0] == ans.first_session
         # window would start before first calendar session
-        with pytest.raises(ValueError):
-            f(ans.sessions[2], count=-3)
+        match = re.escape(
+            "Sessions window cannot begin before the first calendar session"
+            f" ({ans.first_session}). `count` cannot be lower than -3 for `session`"
+            f" '{ans.sessions[2]}'."
+        )
+        with pytest.raises(ValueError, match=match):
+            f(ans.sessions[2], count=-4)
 
-        # window ends on last calendar session
-        assert f(ans.sessions[-3], count=2)[-1] == ans.last_session
+        # at limit, window ends on last calendar session
+        assert f(ans.sessions[-3], count=3)[-1] == ans.last_session
         # window would end after last calendar session
+        match = re.escape(
+            "Sessions window cannot end after the last calendar session"
+            f" ({ans.last_session}). `count` cannot be higher than 3 for `session`"
+            f" '{ans.sessions[-3]}'."
+        )
         with pytest.raises(ValueError):
-            f(ans.sessions[-3], count=3)
+            f(ans.sessions[-3], count=4)
+
+        # verify raises ValueError if `count` passed as 0
+        with pytest.raises(ValueError, match="`count` cannot be 0."):
+            f(ans.sessions[0], count=0)
 
     def test_sessions_distance(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers

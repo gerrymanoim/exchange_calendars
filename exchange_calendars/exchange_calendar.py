@@ -1941,43 +1941,41 @@ class ExchangeCalendar(ABC):
         return self.minutes[slc]
 
     def minutes_window(
-        self, start_dt: TradingMinute, count: int, _parse: bool = True
+        self, minute: TradingMinute, count: int, _parse: bool = True
     ) -> pd.DatetimeIndex:
         """Return block of given size of consecutive trading minutes.
 
         Parameters
         ----------
-        start_dt
+        minute
             Minute representing the first (if `count` positive) or last
             (if `count` negative) minute of minutes window.
 
         count
-            Number of mintues to include in window in addition to
-                `start_dt` (i.e. 0 will return block of length 1 with
-                `start_dt` as only value).
-            Positive to return block of minutes from `start_dt`
-            Negative to return block of minutes to `start_dt`.
+            Number of mintues to include in window.
+            Positive to return a block of minutes from `minute`
+            Negative to return a block of minutes to `minute`.
         """
+        if not count:
+            raise ValueError("`count` cannot be 0.")
         if _parse:
-            start_dt = parse_trading_minute(self, start_dt, "start_dt")
+            minute = parse_trading_minute(self, minute, "minute")
 
-        start_idx = self._get_minute_idx(start_dt, _parse=False)
-        end_idx = start_idx + count
+        start_idx = self._get_minute_idx(minute, _parse=False)
+        end_idx = start_idx + count + (-1 if count > 0 else 1)
 
         if end_idx < 0:
             raise ValueError(
-                f"Minutes window cannot begin before the calendar's first"
-                f" trading minute ({self.first_minute}). `count`"
-                f" cannot be lower than {count - end_idx} for `start`"
-                f" '{start_dt}'."
+                f"Minutes window cannot begin before the calendar's first minute"
+                f" ({self.first_minute}). `count` cannot be lower than"
+                f" {count - end_idx} for `minute` '{minute}'."
             )
         elif end_idx >= len(self.minutes_nanos):
             raise ValueError(
-                f"Minutes window cannot end after the calendar's last"
-                f" trading minute ({self.last_minute}). `count`"
-                f" cannot be higher than"
-                f" {count - (end_idx - len(self.minutes_nanos) + 1)} for"
-                f" `start` '{start_dt}'."
+                f"Minutes window cannot end after the calendar's last minute"
+                f" ({self.last_minute}). `count` cannot be higher than"
+                f" {count - (end_idx - len(self.minutes_nanos) + 1)} for `minute`"
+                f" '{minute}'."
             )
         return self.minutes[min(start_idx, end_idx) : max(start_idx, end_idx) + 1]
 
@@ -2121,39 +2119,39 @@ class ExchangeCalendar(ABC):
         return self.break_starts[slc].notna().any()
 
     def sessions_window(
-        self, session_label: Session, count: int, _parse: bool = True
+        self, session: Session, count: int, _parse: bool = True
     ) -> pd.DatetimeIndex:
         """Return block of given size of consecutive sessions.
 
         Parameters
         ----------
-        session_label
+        session
             Session representing the first (if `count` positive) or last
             (if `count` negative) session of session window.
 
         count
-            Number of sessions to include in window in addition to
-                `session_label` (i.e. 0 will return window of length 1 with
-                `session_label` as only value).
-            Positive to return window of sessions from `session_label`
-            Negative to return window of sessions to `session_label`.
+            Number of sessions to include in window.
+            Positive to return window of sessions from `session`
+            Negative to return window of sessions to `session`.
         """
+        if not count:
+            raise ValueError("`count` cannot be 0.")
         if _parse:
-            session_label = parse_session(self, session_label, "session_label")
-        start_idx = self._get_session_idx(session_label, _parse=False)
-        end_idx = start_idx + count
+            session = parse_session(self, session, "session")
+        start_idx = self._get_session_idx(session, _parse=False)
+        end_idx = start_idx + count + (-1 if count > 0 else 1)
         if end_idx < 0:
             raise ValueError(
                 f"Sessions window cannot begin before the first calendar session"
                 f" ({self.first_session}). `count` cannot be lower than"
-                f" {count - end_idx} for `session` '{session_label}'."
+                f" {count - end_idx} for `session` '{session}'."
             )
         elif end_idx >= len(self.sessions):
             raise ValueError(
                 f"Sessions window cannot end after the last calendar session"
                 f" ({self.last_session}). `count` cannot be higher than"
                 f" {count - (end_idx - len(self.sessions) + 1)} for"
-                f" `session` '{session_label}'."
+                f" `session` '{session}'."
             )
         return self.sessions[min(start_idx, end_idx) : max(start_idx, end_idx) + 1]
 
