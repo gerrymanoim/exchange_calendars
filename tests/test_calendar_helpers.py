@@ -10,6 +10,7 @@ from collections import abc
 import numpy as np
 import pandas as pd
 import pytest
+import pytz
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 from pandas.testing import assert_index_equal
@@ -24,8 +25,42 @@ from .test_exchange_calendar import Answers
 
 
 @pytest.fixture(scope="class")
-def one_minute() -> abc.Iterator[pd.Timedelta]:
+def one_min() -> abc.Iterator[pd.Timedelta]:
     yield pd.Timedelta(1, "T")
+
+
+def test_is_date(one_min):
+    f = m.is_date
+    T = pd.Timestamp
+
+    assert f(T("2021-11-02"))
+    assert f(T("2021-11-02 00:00"))
+    assert f(T("2021-11-02 00:00:00.0000000"))
+    assert not f(T("2021-11-02 00:00:00.000001"))
+    assert not f(T("2021-11-01 23:59:00.999999"))
+    assert not f(T("2021-11-02 12:00"))
+
+    minutes = [
+        T("2021-11-02", tz=pytz.UTC),
+        T("2021-11-02", tz="US/Eastern"),
+        T("2021-11-02", tz=pytz.UTC).tz_convert("US/Eastern"),
+    ]
+    for minute in minutes:
+        assert not f(minute)
+        assert not f(minute + one_min)
+
+
+def test_is_utc():
+    f = m.to_utc
+    T = pd.Timestamp
+
+    expected = T("2021-11-02", tz="UTC")
+    assert f(T("2021-11-02", tz="UTC")) == expected
+    assert f(T("2021-11-02")) == expected
+
+    expected = T("2021-11-02 13:33", tz="UTC")
+    assert f(T("2021-11-02 13:33")) == expected
+    assert f(T("2021-11-02 09:33", tz="US/Eastern")) == expected
 
 
 @pytest.fixture
@@ -108,13 +143,13 @@ def trading_minute() -> abc.Iterator[str]:
 
 
 @pytest.fixture
-def minute_too_early(calendar, one_minute) -> abc.Iterator[pd.Timestamp]:
-    yield calendar.first_minute - one_minute
+def minute_too_early(calendar, one_min) -> abc.Iterator[pd.Timestamp]:
+    yield calendar.first_minute - one_min
 
 
 @pytest.fixture
-def minute_too_late(calendar, one_minute) -> abc.Iterator[pd.Timestamp]:
-    yield calendar.last_minute + one_minute
+def minute_too_late(calendar, one_min) -> abc.Iterator[pd.Timestamp]:
+    yield calendar.last_minute + one_min
 
 
 @pytest.fixture
@@ -203,6 +238,65 @@ def test_parse_timestamp_error_oob(
     # verify parses if oob and raise_oob False
     rtrn = m.parse_timestamp(minute_too_late, param_name, raise_oob=False, side="left")
     assert rtrn == minute_too_late
+
+
+def test_parse_date_or_minute_for_minute(
+    calendar, param_name, minute, minute_mult, date
+):
+    """Tests `parse_date_or_minute` for input that represents a Minute."""
+
+    def f(ts: pd.Timestamp) -> tuple[pd.Timestamp, bool]:
+        return m.parse_date_or_minute(ts, param_name, calendar)
+
+    assert f(minute_mult) == (pd.Timestamp(minute, tz=pytz.UTC), True)
+    # verify that midnight with tz as UTC intepreted as minute, not date.
+    assert f(pd.Timestamp(date, tz=pytz.UTC)) == (pd.Timestamp(date, tz=pytz.UTC), True)
+
+
+def test_parse_date_or_minute_for_date(calendar, param_name, date, date_mult):
+    """Tests `parse_date_or_minute` for input that represents a Minute."""
+    f = m.parse_date_or_minute
+    assert f(date_mult, param_name, calendar) == (pd.Timestamp(date), False)
+
+
+def test_parse_date_or_minute_oob(
+    calendar,
+    param_name,
+    date_too_early,
+    date_too_late,
+    minute_too_early,
+    minute_too_late,
+):
+    """Tests `parse_date_or_minute` for out-of-bounds input.
+
+    Tests as if an extension of parse_timestamp, i.e. only tests added
+    functionality.
+    """
+
+    def f(ts: pd.Timestamp) -> tuple[pd.Timestamp, bool]:
+        return m.parse_date_or_minute(ts, param_name, calendar)
+
+    # Verify raises errors for out-of-bounds ts
+    first_min = calendar.first_minute
+    last_min = calendar.last_minute
+    first_date = calendar.first_session
+    last_date = calendar.last_session
+    # verify returns at calendar's minute bounds
+    assert f(first_min) == (first_min, True)
+    assert f(last_min) == (last_min, True)
+    # verify raises error other side of calendar's minute bounds
+    with pytest.raises(errors.MinuteOutOfBounds):
+        f(minute_too_early)
+    with pytest.raises(errors.MinuteOutOfBounds):
+        f(minute_too_late)
+    # verify returns at calendar's session bounds
+    assert f(first_date) == (first_date, False)
+    assert f(last_date) == (last_date, False)
+    # verify raises error other side of calendar's session bounds
+    with pytest.raises(errors.DateOutOfBounds):
+        f(date_too_early)
+    with pytest.raises(errors.DateOutOfBounds):
+        f(date_too_late)
 
 
 def test_parse_date(date_mult, param_name):
@@ -296,6 +390,7 @@ class TestTradingIndex:
 
     Also includes:
         - concrete tests to verify overlap handling.
+        - conceret test to verify passing start and/or end as a time.
         - parsing tests for ExchangeCalendar.trading_index.
 
     NOTE: `_TradingIndex` is also tested via
@@ -473,7 +568,7 @@ class TestTradingIndex:
                 As for `start` albeit indicating end times.
             """
             lower_bounds = start if closed_left else start + period
-            if force:
+            if force and closed_right:
                 if (lower_bounds > end).any():
                     # period longer than session/subsession duration
                     lower_bounds[lower_bounds > end] = end
@@ -543,7 +638,7 @@ class TestTradingIndex:
         calendars_with_answers,
         force_close: bool,
         force_break_close: bool,
-        one_minute,
+        one_min,
     ):
         """Fuzz for unexpected errors and options behaviour.
 
@@ -566,7 +661,7 @@ class TestTradingIndex:
         closed = data.draw(st.sampled_from(closed_options))
         closed_right = closed in ["right", "both"]
 
-        max_period = pd.Timedelta(1, "D") - one_minute
+        max_period = pd.Timedelta(1, "D") - one_min
 
         params_allow_overlap = closed_right and not (force_break_close and force_close)
         if params_allow_overlap:
@@ -580,12 +675,12 @@ class TestTradingIndex:
 
         # guard against "neither" returning empty. Tested for under seprate test.
         if closed == "neither":
-            if has_break and not force_break_close:
-                am_length = (ans.break_starts[slc] - ans.opens[slc]).min() - one_minute
-                pm_length = (ans.closes[slc] - ans.break_ends[slc]).min() - one_minute
+            if has_break:
+                am_length = (ans.break_starts[slc] - ans.opens[slc]).min() - one_min
+                pm_length = (ans.closes[slc] - ans.break_ends[slc]).min() - one_min
                 max_period = min(max_period, am_length, pm_length)
-            elif not force_close:
-                min_length = (ans.closes[slc] - ans.opens[slc]).min() - one_minute
+            else:
+                min_length = (ans.closes[slc] - ans.opens[slc]).min() - one_min
                 max_period = min(max_period, min_length)
 
         period = data.draw(self.st_periods(maximum=max_period))
@@ -647,7 +742,7 @@ class TestTradingIndex:
         calendars_with_answers,
         force_break_close: bool,
         curtail: bool,
-        one_minute,
+        one_min,
     ):
         """Fuzz for unexpected errors and options behaviour.
 
@@ -666,7 +761,7 @@ class TestTradingIndex:
 
         force_close = data.draw(st.booleans())
         closed = data.draw(st.sampled_from(["left", "right"]))
-        max_period = pd.Timedelta(1, "D") - one_minute
+        max_period = pd.Timedelta(1, "D") - one_min
 
         params_allow_overlap = not curtail and not (force_break_close and force_close)
         if params_allow_overlap:
@@ -794,9 +889,7 @@ class TestTradingIndex:
     @pytest.mark.parametrize("name", ["XHKG", "24/7", "CMES"])
     @given(data=st.data(), closed=st.sampled_from(["right", "both"]))
     @settings(deadline=None)
-    def test_overlap_error_fuzz(
-        self, data, name, calendars, answers, closed, one_minute
-    ):
+    def test_overlap_error_fuzz(self, data, name, calendars, answers, closed, one_min):
         """Fuzz for expected IndicesOverlapError.
 
         NB. Test should exclude calendars, such as "XLON", for which
@@ -820,7 +913,7 @@ class TestTradingIndex:
         else:
             min_period = (ans.opens.shift(-1)[slc] - ans.closes[slc]).min()
 
-        period = data.draw(self.st_periods(minimum=max(one_minute, min_period)))
+        period = data.draw(self.st_periods(minimum=max(one_min, min_period)))
 
         # assume overlaps (i.e. reject test parameters if does not overlap)
         op = operator.ge if closed == "both" else operator.gt
@@ -1014,9 +1107,304 @@ class TestTradingIndex:
         rtrn = cal_amended.trading_index(**kwargs, ignore_breaks=False)
         assert_index_equal(rtrn, index_true)
 
+    def test_start_end_times(self, one_min, calendars):
+        """Test effect of passing start and/or end as a time.
+
+        Tests passing start / end as combinations of dates and/or times.
+
+        Tests by comparing return with subset of return for start and end
+        as sessions.
+
+        Tests return with `intervals` as True (IntervalIndex) and False
+        (DatetimeIndex). With `intervals` as False test for all `closed`
+        options.
+        """
+        cal = calendars["XHKG"]
+        one_min = one_min
+
+        # Define a start session and end session as sessions of standard length
+        start_s = pd.Timestamp("2021-12-06")
+        end_s = pd.Timestamp("2021-12-20")
+
+        # assert of standard length
+        standard_length = pd.Timedelta(hours=6, minutes=30)
+        start_s_open, start_s_close = cal.session_open_close(start_s)
+        assert start_s_close - start_s_open == standard_length
+        end_s_open, end_s_close = cal.session_open_close(end_s)
+        assert end_s_close - end_s_open == standard_length
+
+        f = cal.trading_index
+
+        # Note: when intervals = False the return will include the indice coinciding
+        # with `start` and `end` even if the period that indice represents falls,
+        # respectively, before `start` or after `end`
+
+        def assertions(
+            starts: list[
+                tuple[
+                    pd.Timestamp,
+                    int | None,
+                    int | None,
+                    int | None,
+                    int | None,
+                    int | None,
+                ]
+            ],
+            ends: list[
+                tuple[
+                    pd.Timestamp,
+                    int | None,
+                    int | None,
+                    int | None,
+                    int | None,
+                    int | None,
+                ]
+            ],
+            period: pd.Timedelta | str,
+            force: bool,
+            ignore_breaks: bool,
+            curtail_overlaps: bool = False,
+        ):
+            """Assert returns slice of return for sessions.
+
+            Parameters
+            ----------
+            starts: list of tuple (see method signature) of:
+                [0] value to pass as start.
+                Other items define the start of slice of subset when start is [0] and:
+                [1] intervals is True.
+                [2] intervals is False and 'closed' is "left".
+                [3] intervals is False and 'closed' is "right".
+                [4] intervals is False and 'closed' is "both".
+                [5] intervals is False and 'closed' is "neither".
+
+            ends: list of tuple (see method signature) of:
+                [0] value to pass as end.
+                Other items define the end of slice of subset when end is [0] and:
+                [1] intervals is True.
+                [2] intervals is False and 'closed' is "left".
+                [3] intervals is False and 'closed' is "right".
+                [4] intervals is False and 'closed' is "both".
+                [5] intervals is False and 'closed' is "neither".
+
+            All other parameters will be passed thorugh to `trading_index`.
+            """
+            args_dates = (start_s, end_s, period)
+            kwargs = dict(
+                force=force,
+                ignore_breaks=ignore_breaks,
+                curtail_overlaps=curtail_overlaps,
+            )
+            for (start, slc_start, ssl, ssr, ssb, ssn), (
+                end,
+                slc_end,
+                sel,
+                ser,
+                seb,
+                sen,
+            ) in itertools.product(starts, ends):
+                args = (start, end, period)
+
+                # verify for intervals index
+                intervals = True
+                index_dates = f(*args_dates, intervals, **kwargs)
+                rtrn = f(*args, intervals=intervals, **kwargs)
+                assert_index_equal(rtrn, index_dates[slc_start:slc_end])
+
+                # verify for datetime index
+                intervals = False
+                closed = "left"
+                rtrn = f(*args, intervals=intervals, closed=closed, **kwargs)
+                index_dates = f(*args_dates, intervals, closed=closed, **kwargs)
+                assert_index_equal(rtrn, index_dates[ssl:sel])
+
+                closed = "right"
+                rtrn = f(*args, intervals=intervals, closed=closed, **kwargs)
+                index_dates = f(*args_dates, intervals, closed=closed, **kwargs)
+                assert_index_equal(rtrn, index_dates[ssr:ser])
+
+                closed = "both"
+                rtrn = f(*args, intervals=intervals, closed=closed, **kwargs)
+                index_dates = f(*args_dates, intervals, closed=closed, **kwargs)
+                assert_index_equal(rtrn, index_dates[ssb:seb])
+
+                closed = "neither"
+                rtrn = f(*args, intervals=intervals, closed=closed, **kwargs)
+                index_dates = f(*args_dates, intervals, closed=closed, **kwargs)
+                assert_index_equal(rtrn, index_dates[ssn:sen])
+
+        force, ignore_breaks = False, True
+
+        period = pd.Timedelta(1, "T")
+        delta = period * 22
+
+        starts = [
+            (start_s, None, None, None, None, None),
+            (start_s_open, None, None, None, None, None),
+            (start_s_open + delta, 22, 22, 21, 22, 21),
+            (start_s_open + delta - one_min, 21, 21, 20, 21, 20),
+            (start_s_open + delta + one_min, 23, 23, 22, 23, 22),
+        ]
+        ends = [
+            (end_s, None, None, None, None, None),
+            (end_s_close, None, None, None, None, None),
+            (end_s_close - delta, -22, -21, -22, -22, -21),
+            (end_s_close - delta + one_min, -21, -20, -21, -21, -20),
+            (end_s_close - delta - one_min, -23, -22, -23, -23, -22),
+        ]
+
+        assertions(starts, ends, period, force, ignore_breaks)
+
+        period = pd.Timedelta(5, "T")
+        delta = period * 2
+
+        starts = [
+            (start_s, None, None, None, None, None),
+            (start_s_open, None, None, None, None, None),
+            (start_s_open + delta, 2, 2, 1, 2, 1),
+            (start_s_open + delta - one_min, 2, 2, 1, 2, 1),
+            (start_s_open + delta + one_min, 3, 3, 2, 3, 2),
+        ]
+        ends = [
+            (end_s, None, None, None, None, None),
+            (end_s_close, None, None, None, None, None),
+            (end_s_close - delta, -2, -1, -2, -2, -1),
+            (end_s_close - delta + one_min, -2, -1, -2, -2, -1),
+            (end_s_close - delta - one_min, -3, -2, -3, -3, -2),
+        ]
+
+        assertions(starts, ends, period, force, ignore_breaks)
+
+        period = pd.Timedelta(1, "H")
+        end_s_open = cal.session_open(end_s)
+
+        # ignoring breaks...
+        # assert assumption that end unaligned by 30mins
+        assert (end_s_close - end_s_open) % period == pd.Timedelta(30, "T")
+
+        end_s_aligned_post_close = end_s_close + pd.Timedelta(30, "T")
+        end_s_break_end = cal.session_break_end(end_s)
+        # assert assumption that pm session 3H duration
+        assert end_s_close - end_s_break_end == pd.Timedelta(3, "H")
+
+        starts = [
+            (start_s, None, None, None, None, None),
+            (start_s_open, None, None, None, None, None),
+            (start_s_open + period, 1, 1, None, 1, None),
+            (start_s_open + period - one_min, 1, 1, None, 1, None),
+            (start_s_open + period + one_min, 2, 2, 1, 2, 1),
+        ]
+        ends = [
+            (end_s, None, None, None, None, None),
+            (end_s_aligned_post_close, None, None, None, None, None),
+            (end_s_aligned_post_close + one_min, None, None, None, None, None),
+            (end_s_aligned_post_close - one_min, -1, None, -1, -1, None),
+            (end_s_close, -1, None, -1, -1, None),
+            (end_s_aligned_post_close - period + one_min, -1, None, -1, -1, None),
+            (end_s_aligned_post_close - period, -1, None, -1, -1, None),
+            (end_s_aligned_post_close - period - one_min, -2, -1, -2, -2, -1),
+            (end_s_break_end, -4, -3, -4, -4, -3),
+            (end_s_break_end + pd.Timedelta(30, "T"), -3, -2, -3, -3, -2),
+            (end_s_break_end + pd.Timedelta(29, "T"), -4, -3, -4, -4, -3),
+            (end_s_break_end - pd.Timedelta(30, "T"), -4, -3, -4, -4, -3),
+            (end_s_break_end - pd.Timedelta(31, "T"), -5, -4, -5, -5, -4),
+        ]
+
+        assertions(starts, ends, period, force, ignore_breaks)
+
+        # verify effect of force
+        starts = [
+            (start_s, None, None, None, None, None),
+            (start_s_open, None, None, None, None, None),
+            (start_s_open + period, 1, 1, None, 1, None),
+            (start_s_open + period - one_min, 1, 1, None, 1, None),
+            (start_s_open + period + one_min, 2, 2, 1, 2, 1),
+        ]
+        ends = [
+            (end_s, None, None, None, None, None),
+            (end_s_aligned_post_close, None, None, None, None, None),
+            (end_s_close, None, None, None, None, None),
+            (end_s_close - one_min, -1, None, -1, -1, None),
+            (end_s_close - pd.Timedelta(30, "T"), -1, None, -1, -1, None),
+            (end_s_close - pd.Timedelta(31, "T"), -2, -1, -2, -2, -1),
+            # break end as before...
+            (end_s_break_end, -4, -3, -4, -4, -3),
+            (end_s_break_end + pd.Timedelta(30, "T"), -3, -2, -3, -3, -2),
+            (end_s_break_end + pd.Timedelta(29, "T"), -4, -3, -4, -4, -3),
+            (end_s_break_end - pd.Timedelta(30, "T"), -4, -3, -4, -4, -3),
+            (end_s_break_end - pd.Timedelta(31, "T"), -5, -4, -5, -5, -4),
+        ]
+
+        force = True
+        assertions(starts, ends, period, force, ignore_breaks)
+
+        # ACKNOWLEDGING BREAKS
+
+        end_s_break_start = cal.session_break_start(end_s)
+        # assert assumption that break start unaligned by 30mins
+        assert (end_s_break_start - end_s_open) % period == pd.Timedelta(30, "T")
+
+        starts = [
+            (start_s, None, None, None, None, None),
+            (start_s_open, None, None, None, None, None),
+            (start_s_open + period, 1, 1, None, 1, None),
+            (start_s_open + period - one_min, 1, 1, None, 1, None),
+            (start_s_open + period + one_min, 2, 2, 1, 2, 1),
+        ]
+        ends = [
+            (end_s, None, None, None, None, None),
+            (end_s_aligned_post_close, None, None, None, None, None),
+            (end_s_close, None, None, None, None, None),
+            (end_s_close - one_min, -1, None, -1, -1, None),
+            (end_s_close - period, -1, None, -1, -1, None),
+            (end_s_close - period - one_min, -2, -1, -2, -2, -1),
+            (end_s_break_end, -3, -2, -3, -3, -2),
+            (end_s_break_end + one_min, -3, -2, -3, -3, -2),
+            (end_s_break_end - one_min, -3, -3, -3, -4, -2),
+            (end_s_break_start, -4, -3, -4, -5, -2),
+            (end_s_break_start + pd.Timedelta(30, "T"), -3, -3, -3, -4, -2),
+            (end_s_break_start + pd.Timedelta(29, "T"), -4, -3, -4, -5, -2),
+            (end_s_break_start - pd.Timedelta(30, "T"), -4, -3, -4, -5, -2),
+            (end_s_break_start - pd.Timedelta(31, "T"), -5, -4, -5, -6, -3),
+        ]
+
+        force, ignore_breaks = False, False
+        # expected = expected_index(interval, force, ignore_breaks)
+        assertions(starts, ends, period, force, ignore_breaks)
+
+        # verifying effect of force when acknowledging breaks
+
+        starts = [
+            (start_s, None, None, None, None, None),
+            (start_s_open, None, None, None, None, None),
+            (start_s_open + period, 1, 1, None, 1, None),
+            (start_s_open + period - one_min, 1, 1, None, 1, None),
+            (start_s_open + period + one_min, 2, 2, 1, 2, 1),
+        ]
+        ends = [
+            (end_s, None, None, None, None, None),
+            (end_s_aligned_post_close, None, None, None, None, None),
+            # end_s_close and end_s_break_end as before
+            (end_s_close, None, None, None, None, None),
+            (end_s_close - one_min, -1, None, -1, -1, None),
+            (end_s_close - period, -1, None, -1, -1, None),
+            (end_s_close - period - one_min, -2, -1, -2, -2, -1),
+            (end_s_break_end, -3, -2, -3, -3, -2),
+            (end_s_break_end + one_min, -3, -2, -3, -3, -2),
+            (end_s_break_end - one_min, -3, -3, -3, -4, -2),
+            # end_s_break_start affected by force
+            (end_s_break_start, -3, -3, -3, -4, -2),
+            (end_s_break_start - one_min, -4, -3, -4, -5, -2),
+            (end_s_break_start - pd.Timedelta(30, "T"), -4, -3, -4, -5, -2),
+            (end_s_break_start - pd.Timedelta(31, "T"), -5, -4, -5, -6, -3),
+        ]
+
+        force, ignore_breaks = True, False
+        assertions(starts, ends, period, force, ignore_breaks)
+
     # PARSING TESTS
 
-    def test_parsing_errors(self, cal_start_end):
+    def test_parsing_errors(self, cal_start_end, one_min, one_day):
         cal, start, end = cal_start_end
         error_msg = (
             "`period` cannot be greater than one day although received as"
@@ -1036,3 +1424,15 @@ class TestTradingIndex:
             cal.trading_index(
                 start, end, "20T", intervals=True, closed="both", parse=False
             )
+
+        # Verify raises error if period "1D" and start or end not passed as a date.
+        start = pd.Timestamp("2018-05-01", tz=pytz.UTC)
+        end = pd.Timestamp("2018-05-31")
+        with pytest.raises(ValueError, match="a Date must be timezone naive"):
+            cal.trading_index(start, end, "1D")
+
+        start = pd.Timestamp("2018-05-01 00:01")
+        with pytest.raises(
+            ValueError, match="a Date must have a time component of 00:00"
+        ):
+            cal.trading_index(start, end, "1D")

@@ -114,6 +114,42 @@ def one_minute_later(arr: np.ndarray) -> np.ndarray:
     return arr
 
 
+def is_date(ts: pd.Timestamp) -> bool:
+    """Query if a timestamp represents a date (as opposed to a time).
+
+    `ts` considered to represent a date if tz-naive and has time component
+    as 00:00.
+
+    Parameters
+    ----------
+    ts
+        Timestamp to query.
+
+    Returns
+    -------
+    bool
+        Boolean indicating if `ts` represents a date.
+    """
+    return ts.tz is None and ts == ts.normalize()
+
+
+def to_utc(ts: pd.Timestamp) -> pd.Timestamp:
+    """Return a copy of a given timestamp with timezone set to UTC.
+
+    If `ts` is tz-aware will convert `ts` to UTC.
+    If `ts` is tz-naive will localize as UTC.
+
+    Parameters
+    ----------
+    ts
+        Timestamp to return a copy of with timezone set to UTC.
+    """
+    try:
+        return ts.tz_convert(pytz.UTC)
+    except TypeError:
+        return ts.tz_localize(pytz.UTC)
+
+
 def parse_timestamp(
     timestamp: Date | Minute,
     param_name: str = "minute",
@@ -215,6 +251,43 @@ def parse_timestamp(
             raise errors.MinuteOutOfBounds(calendar, ts, param_name)
 
     return ts
+
+
+def parse_date_or_minute(
+    ts: Date | Minute,
+    param_name: str,
+    calendar: ExchangeCalendar,
+) -> tuple[pd.Timestamp, bool]:
+    """Parse input that can be interpreted as a Date or a Minute.
+
+    Parameters
+    ----------
+    ts
+        Input that can be interpreted as a Date or a Minute. Must be valid
+        input to pd.Timestamp.
+
+    param_name
+        Name of a parameter that was to receive a Date or a Minute.
+
+    calendar
+        ExchangeCalendar against which to evaluate out-of-bounds
+        timestamps.
+
+    Returns
+    -------
+    tuple[pd.Timestamp, bool]:
+        [0] Parsed input to a pd.Timestamp.
+        [1] Boolean indicating if input was interpreted as a Minute (True)
+            or a Date (False).
+    """
+    ts = parse_timestamp(ts, param_name, calendar, raise_oob=False, utc=False)
+    is_time = not is_date(ts)
+    ts = to_utc(ts) if is_time else ts
+    if is_time and calendar._minute_oob(ts):
+        raise errors.MinuteOutOfBounds(calendar, ts, param_name)
+    elif not is_time and calendar._date_oob(ts):
+        raise errors.DateOutOfBounds(calendar, ts, param_name)
+    return ts, is_time
 
 
 def parse_trading_minute(
@@ -374,10 +447,11 @@ class _TradingIndex:
     def __init__(
         self,
         calendar: ExchangeCalendar,
-        start: Date,
-        end: Date,
+        start_: Date | Minute,
+        end_: Date | Minute,
         period: pd.Timedelta,
-        closed: str,  # Literal["left", "right", "both", "neither"] when min python 3.8
+        # TODO Literal["left", "right", "both", "neither"] when min python 3.8...
+        closed: str,
         force_close: bool,
         force_break_close: bool,
         curtail_overlaps: bool,
@@ -387,6 +461,16 @@ class _TradingIndex:
         self.force_break_close = False if ignore_breaks else force_break_close
         self.force_close = force_close
         self.curtail_overlaps = curtail_overlaps
+
+        # parse `start_` and `end_`
+        start_, self.start_as_time = parse_date_or_minute(start_, "start", calendar)
+        end_, self.end_as_time = parse_date_or_minute(end_, "end", calendar)
+        self.start_, self.end_ = start_, end_
+        # define start and end as sessions
+        start = (
+            calendar.minute_to_session(start_, "next") if self.start_as_time else start_
+        )
+        end = calendar.minute_to_session(end_, "previous") if self.end_as_time else end_
 
         # get session bound values over requested range
         slice_start = calendar.sessions.searchsorted(start)
@@ -483,7 +567,7 @@ class _TradingIndex:
                 if not on_freq:
                     num_indices -= 1  # add the close later
             else:
-                on_freq = False
+                on_freq = True
 
         if self.closed == "both":
             num_indices += 1
@@ -554,13 +638,31 @@ class _TradingIndex:
 
         return index
 
+    def curtail_for_times(
+        self, index: pd.DatetimeIndex | pd.IntervalIndex
+    ) -> pd.DatetimeIndex | pd.IntervalIndex:
+        """Curtail start and end of trading index.
+
+        Curtails any unwanted rows from the start and end of `index` if
+        class received `start_` and/or `end_` as times.
+        """
+        intervals = isinstance(index, pd.IntervalIndex)
+        bv: np.ndarray | None = None
+        if self.start_as_time:
+            bv = index.left >= self.start_ if intervals else index >= self.start_
+        if self.end_as_time:
+            bv_end = index.right <= self.end_ if intervals else index <= self.end_
+            bv = bv & bv_end if bv is not None else bv_end
+        return index if bv is None else index[bv]
+
     def trading_index(self) -> pd.DatetimeIndex:
         """Create trading index as a DatetimeIndex."""
         self.verify_non_overlapping()
         index = self._trading_index()
         if self.has_break:
             index.sort()
-        return pd.DatetimeIndex(index, tz="UTC")
+        index = pd.DatetimeIndex(index, tz="UTC")
+        return self.curtail_for_times(index)
 
     @contextlib.contextmanager
     def _override_defaults(self, **kwargs):
@@ -599,4 +701,5 @@ class _TradingIndex:
 
         left = pd.DatetimeIndex(left, tz="UTC")
         right = pd.DatetimeIndex(right, tz="UTC")
-        return pd.IntervalIndex.from_arrays(left, right, self.closed)
+        index = pd.IntervalIndex.from_arrays(left, right, self.closed)
+        return self.curtail_for_times(index)
