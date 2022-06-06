@@ -596,10 +596,10 @@ class XSHGExchangeCalendar(PrecomputedExchangeCalendar):
     break_end_times = ((None, time(13, 0)),)
     close_times = ((None, time(15, 0)),)
 
-    @property
-    def precomputed_holidays(self):
+    @classmethod
+    def precomputed_holidays(cls):
         return precomputed_shanghai_holidays
 
-    @property
-    def bound_start(self) -> pd.Timestamp:
+    @classmethod
+    def bound_start(cls) -> pd.Timestamp:
         return pd.Timestamp("1990-12-03")

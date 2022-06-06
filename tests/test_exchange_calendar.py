@@ -2270,6 +2270,7 @@ class ExchangeCalendarTestBase:
                 calendar_cls(start=start, end=end)
 
     def test_bound_start(self, calendar_cls, start_bound, today):
+        assert calendar_cls.bound_start() == start_bound
         if start_bound is not None:
             cal = calendar_cls(start_bound, today)
             assert isinstance(cal, ExchangeCalendar)
@@ -2283,6 +2284,7 @@ class ExchangeCalendarTestBase:
             assert isinstance(cal, ExchangeCalendar)
 
     def test_bound_end(self, calendar_cls, end_bound, today):
+        assert calendar_cls.bound_end() == end_bound
         if end_bound is not None:
             cal = calendar_cls(today, end_bound)
             assert isinstance(cal, ExchangeCalendar)

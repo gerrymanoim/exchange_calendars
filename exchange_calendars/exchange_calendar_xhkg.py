@@ -286,6 +286,26 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
         (pd.Timestamp("2011-03-07"), time(12, 00)),
     )
 
+    @classmethod
+    def precomputed_holidays(cls):
+        lunisolar_holidays = (
+            chinese_buddhas_birthday_dates,
+            chinese_lunar_new_year_dates,
+            day_after_mid_autumn_festival_dates,
+            double_ninth_festival_dates,
+            dragon_boat_festival_dates,
+            qingming_festival_dates,
+        )
+        return lunisolar_holidays
+
+    @classmethod
+    def _earliest_precomputed_year(cls) -> int:
+        return max(map(np.min, cls.precomputed_holidays())).year
+
+    @classmethod
+    def _latest_precomputed_year(cls) -> int:
+        return min(map(np.max, cls.precomputed_holidays())).year
+
     @property
     def regular_holidays(self):
         return HolidayCalendar(
@@ -305,26 +325,6 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
                 boxing_day(observance=boxing_day_obs),
             ]
         )
-
-    @property
-    def precomputed_holidays(self):
-        lunisolar_holidays = (
-            chinese_buddhas_birthday_dates,
-            chinese_lunar_new_year_dates,
-            day_after_mid_autumn_festival_dates,
-            double_ninth_festival_dates,
-            dragon_boat_festival_dates,
-            qingming_festival_dates,
-        )
-        return lunisolar_holidays
-
-    @property
-    def _earliest_precomputed_year(self) -> int:
-        return max(map(np.min, self.precomputed_holidays)).year
-
-    @property
-    def _latest_precomputed_year(self) -> int:
-        return min(map(np.max, self.precomputed_holidays)).year
 
     @property
     def adhoc_holidays(self):
