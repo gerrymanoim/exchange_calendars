@@ -3654,49 +3654,6 @@ class ExchangeCalendarTestBase:
             minutes = ans.get_sessions_minutes(sessions[0], sessions[-1])
             tm.assert_index_equal(f(start, end), minutes)
 
-    def test_session_opens_closes_in_range(self, default_calendar_with_answers):
-        """Test methods that return range of open / close times.
-
-        Tests methods:
-            sessions_opens
-            sessions_closes
-        """
-        cal, ans = default_calendar_with_answers
-        f_opens = no_parsing(cal.sessions_opens)
-        f_closes = no_parsing(cal.sessions_closes)
-
-        # test where start and end are sessions
-        start, end = ans.sessions[10], ans.sessions[-10]
-        tm.assert_series_equal(f_opens(start, end), ans.opens[10:-9], check_freq=False)
-        tm.assert_series_equal(
-            f_closes(start, end), ans.closes[10:-9], check_freq=False
-        )
-
-        # test session blocks
-        for _, block in ans.session_block_generator():
-            tm.assert_series_equal(
-                f_opens(block[0], block[-1]), ans.opens[block], check_freq=False
-            )
-            tm.assert_series_equal(
-                f_closes(block[0], block[-1]), ans.closes[block], check_freq=False
-            )
-
-        # tests where start and end are non-session dates
-        if len(ans.non_sessions) > 1:
-            # test that range within which there are no sessions returns empty
-            start, end = ans.non_sessions_range
-            assert f_opens(start, end).empty
-            assert f_closes(start, end).empty
-
-            # test range defined with start and end as non-sessions
-            (start, end), sessions = ans.sessions_range_defined_by_non_sessions
-            tm.assert_series_equal(
-                f_opens(start, end), ans.opens[sessions], check_freq=False
-            )
-            tm.assert_series_equal(
-                f_closes(start, end), ans.closes[sessions], check_freq=False
-            )
-
     def test_sessions_minutes_count(self, all_calendars_with_answers):
         cal, ans = all_calendars_with_answers
         f = no_parsing(cal.sessions_minutes_count)
@@ -3810,38 +3767,17 @@ class ExchangeCalendarTestBase:
                 tst_intervals_index("right", overlaps)
 
     def test_deprecated(self, default_calendar_with_answers):
+        """Test currently deprecated properties/methods raise FutureWarning."""
         cal, ans = default_calendar_with_answers
 
         # deprecated properties / attributes
-        for name in [
-            "all_sessions",
-            "all_minutes",
-            "all_minutes_nanos",
-            "first_trading_minute",
-            "last_trading_minute",
-            "first_trading_session",
-            "last_trading_session",
-            "market_opens_nanos",
-            "market_closes_nanos",
-            "market_break_starts_nanos",
-            "market_break_ends_nanos",
-        ]:
+        for name in []:
             with pytest.warns(FutureWarning):
                 getattr(cal, name)
 
         # deprecated methods that take a single 'session' argument.
         session = ans.sessions[-5]
-        for name in [
-            "execution_time_from_open",
-            "execution_time_from_close",
-            "execution_minutes_for_session",
-            "date_to_session_label",
-            "open_and_close_for_session",
-            "break_start_and_end_for_session",
-            "next_session_label",
-            "previous_session_label",
-            "minutes_for_session",
-        ]:
+        for name in []:
             with pytest.warns(FutureWarning):
                 getattr(cal, name)(session, _parse=False)
 
@@ -3849,30 +3785,17 @@ class ExchangeCalendarTestBase:
         start = ans.sessions[-10]
         end = session
         for name in [
-            "execution_minutes_for_sessions_in_range",
-            "has_breaks",
-            "session_distance",
-            "minutes_for_sessions_in_range",
-            "session_opens_in_range",
-            "session_closes_in_range",
-            "minutes_count_for_sessions_in_range",
+            "sessions_opens",
+            "sessions_closes",
         ]:
             with pytest.warns(FutureWarning):
                 getattr(cal, name)(start, end, _parse=False)
 
         # deprecated methods that take a single 'minute' argument.
         minute = ans.trading_minutes[len(ans.trading_minutes) // 2][0][1]
-        for name in [
-            "minute_to_session_label",
-        ]:
+        for name in []:
             with pytest.warns(FutureWarning):
                 getattr(cal, name)(minute, _parse=False)
-
-        # deprecated methods that take a 'minutes' argument.
-        trading_minutes = ans.trading_minutes[len(ans.trading_minutes) // 2][0]
-        dti = pd.DatetimeIndex(trading_minutes).sort_values()
-        with pytest.warns(FutureWarning):
-            cal.minute_index_to_session_labels(dti)
 
 
 class EuronextCalendarTestBase(ExchangeCalendarTestBase):
