@@ -105,24 +105,15 @@ def _group_times(
 
 
 class deprecate:
-    """Decorator for deprecated/renamed ExchangeCalendar methods."""
+    """Decorator for deprecated ExchangeCalendar methods."""
 
     def __init__(
         self,
-        deprecated_release: str = "3.4",
-        removal_release: str = "4.0",
-        alt: str = "",
-        renamed: bool = True,
-        prop: bool = False,
+        deprecated_release: str = "4.0",
+        message: str | None = None,
     ):
         self.deprecated_release = "release " + deprecated_release
-        self.removal_release = "release " + removal_release
-        self.alt = alt
-        self.renamed = renamed
-        if renamed:
-            assert alt, "pass `alt` if renaming"
-        self.obj_type = "property" if prop else "method"
-        self.is_method = not prop
+        self.message = message
 
     def __call__(self, f):
         @functools.wraps(f)
@@ -135,18 +126,10 @@ class deprecate:
     def _message(self, f):
         msg = (
             f"`{f.__name__}` was deprecated in {self.deprecated_release}"
-            f" and will be removed in {self.removal_release}."
+            f" and will be removed in a future release."
         )
-        if self.alt:
-            if self.renamed:
-                msg += f" The {self.obj_type} has been renamed `{self.alt}`."
-                if self.is_method:
-                    msg += (
-                        f" NB parameter names may also have changed (see "
-                        f" documentation for `{self.alt}`)."
-                    )
-            else:
-                msg += f" Use `{self.alt}`."
+        if self.message is not None:
+            msg += " " + self.message
         return msg
 
 
@@ -2196,50 +2179,6 @@ class ExchangeCalendar(ABC):
         last_minute = self.session_last_minute(end)
         return self.minutes_in_range(first_minute, last_minute)
 
-    def sessions_opens(self, start: Date, end: Date, _parse: bool = True) -> pd.Series:
-        """Return UTC open time by session for sessions in given range.
-
-        Parameters
-        ----------
-        start
-            Start of session range (range inclusive of `start`).
-
-        end
-            End of session range (range inclusive of `end`).
-
-        Returns
-        -------
-        pd.Series
-            index:
-                Sessions from `start` through `end` (inclusive of both).
-            values:
-                UTC open times for corresponding sessions.
-        """
-        start, end = self._parse_start_end_dates(start, end, _parse)
-        return self.schedule.loc[start:end, "open"]
-
-    def sessions_closes(self, start: Date, end: Date, _parse: bool = True) -> pd.Series:
-        """Return UTC close time by session for sessions in given range.
-
-        Parameters
-        ----------
-        start
-            Start of session range (range inclusive of `start`).
-
-        end
-            End of session range (range inclusive of `end`).
-
-        Returns
-        -------
-        pd.Series
-            index:
-                Sessions from `start` through `end` (inclusive of both).
-            values:
-                UTC close times for corresponding sessions.
-        """
-        start, end = self._parse_start_end_dates(start, end, _parse)
-        return self.schedule.loc[start:end, "close"]
-
     def sessions_minutes_count(
         self, start: Date, end: Date, _parse: bool = True
     ) -> int:
@@ -2641,220 +2580,53 @@ class ExchangeCalendar(ABC):
             end,
         )
 
-    # Deprecated methods to be removed in release 4.0.
+    # Methods deprecated in 4.0 and to be removed in a future release (see #98)
 
-    @deprecate(renamed=False)
-    def execution_time_from_open(self, open_dates, _parse=False):
-        return open_dates
-
-    @deprecate(renamed=False)
-    def execution_time_from_close(self, close_dates, _parse=False):
-        return close_dates
-
-    @deprecate(alt="minutes_for_session", renamed=False)
-    def execution_minutes_for_session(
-        self, session_label: Session, _parse=False
-    ) -> pd.DatetimeIndex:
-        """
-        Given a session label, return the execution minutes for that session.
+    @deprecate(message="Use `.opens[start:end]` instead.")
+    def sessions_opens(self, start: Date, end: Date, _parse: bool = True) -> pd.Series:
+        """Return UTC open time by session for sessions in given range.
 
         Parameters
         ----------
-        session_label
-            A session label whose session's minutes are desired.
+        start
+            Start of session range (range inclusive of `start`).
+
+        end
+            End of session range (range inclusive of `end`).
 
         Returns
         -------
-        pd.DateTimeIndex
-            All the execution minutes for the given session.
+        pd.Series
+            index:
+                Sessions from `start` through `end` (inclusive of both).
+            values:
+                UTC open times for corresponding sessions.
         """
-        return self.session_minutes(session_label)
+        start, end = self._parse_start_end_dates(start, end, _parse)
+        return self.schedule.loc[start:end, "open"]
 
-    @deprecate(alt="minutes_for_sessions_in_range", renamed=False)
-    def execution_minutes_for_sessions_in_range(self, start, stop, _parse=False):
-        minutes = self.execution_minutes_for_session
-        return pd.DatetimeIndex(
-            np.concatenate(
-                [minutes(session) for session in self.sessions_in_range(start, stop)]
-            ),
-            tz=UTC,
-        )
+    @deprecate(message="Use `.closes[start:end]` instead.")
+    def sessions_closes(self, start: Date, end: Date, _parse: bool = True) -> pd.Series:
+        """Return UTC close time by session for sessions in given range.
 
-    @deprecate(alt="date_to_session")
-    def date_to_session_label(
-        self,
-        date: Date,
-        direction: str = "none",
-        _parse: bool = True,
-    ) -> pd.Timestamp:
-        """Method renamed. Use `date_to_session`."""
-        return self.date_to_session(date, direction, _parse)
+        Parameters
+        ----------
+        start
+            Start of session range (range inclusive of `start`).
 
-    @deprecate(alt="session_open_close")
-    def open_and_close_for_session(
-        self, session_label: Session, _parse: bool = True
-    ) -> tuple[pd.Timestamp, pd.Timestamp]:
-        """Method renamed. Use `session_open_close`."""
-        return self.session_open_close(session_label, _parse)
+        end
+            End of session range (range inclusive of `end`).
 
-    @deprecate(alt="session_break_start_end")
-    def break_start_and_end_for_session(
-        self, session_label: Session, _parse: bool = True
-    ) -> tuple[pd.Timestamp | pd.NaT, pd.Timestamp | pd.NaT]:
-        """Method renamed. Use `session_break_start_end."""
-        return self.session_break_start_end(session_label, _parse)
-
-    @deprecate(alt="next_session")
-    def next_session_label(
-        self, session_label: Session, _parse: bool = True
-    ) -> pd.Timestamp:
-        """Method renamed. Use `next_session`."""
-        return self.next_session(session_label, _parse)
-
-    @deprecate(alt="previous_session")
-    def previous_session_label(
-        self, session_label: Session, _parse: bool = True
-    ) -> pd.Timestamp:
-        """Method renamed. Use `previous_session`."""
-        return self.previous_session(session_label, _parse)
-
-    @deprecate(alt="session_minutes")
-    def minutes_for_session(
-        self, session_label: Session, _parse: bool = True
-    ) -> pd.DatetimeIndex:
-        """Method renamed. Use `session_minutes`."""
-        return self.session_minutes(session_label, _parse)
-
-    @property
-    @deprecate(alt="sessions", prop=True)
-    def all_sessions(self) -> pd.DatetimeIndex:
-        """Property renamed. See `sessions`."""
-        return self.sessions
-
-    @property
-    @deprecate(alt="minutes", prop=True)
-    def all_minutes(self) -> pd.DatetimeIndex:
-        """Property renamed. Use `minutes`."""
-        return self.minutes
-
-    @property
-    @deprecate(alt="minutes_nanos", prop=True)
-    def all_minutes_nanos(self) -> pd.DatetimeIndex:
-        """Property renamed. Use `minutes_nanos`."""
-        return self.minutes_nanos
-
-    @property
-    @deprecate(alt="first_minute", prop=True)
-    def first_trading_minute(self) -> pd.Timestamp:
-        """Property renamed. Use `first_minute`."""
-        return self.first_minute
-
-    @property
-    @deprecate(alt="last_minute", prop=True)
-    def last_trading_minute(self) -> pd.Timestamp:
-        """Property renamed. Use `last_minute`."""
-        return self.last_minute
-
-    @property
-    @deprecate(alt="first_session", prop=True)
-    def first_trading_session(self) -> pd.Timestamp:
-        """Property renamed. Use `first_session`."""
-        return self.first_session
-
-    @property
-    @deprecate(alt="last_session", prop=True)
-    def last_trading_session(self) -> pd.Timestamp:
-        """Property renamed. Use `last_session`."""
-        return self.last_session
-
-    @deprecate(alt="sessions_has_break")
-    def has_breaks(
-        self, start: Date | None = None, end: Date | None = None, _parse: bool = True
-    ) -> bool:
-        """Method renamed. Use `sessions_has_break`."""
-        return self.sessions_has_break(start, end, _parse)
-
-    @property
-    @deprecate(alt="opens_nanos", prop=True)
-    def market_opens_nanos(self) -> np.ndarray:
-        """Attribute renamed. Use `opens_nanos`."""
-        return self.opens_nanos
-
-    @property
-    @deprecate(alt="closes_nanos", prop=True)
-    def market_closes_nanos(self) -> np.ndarray:
-        """Attribute renamed. Use `closes_nanos`."""
-        return self.closes_nanos
-
-    @property
-    @deprecate(alt="break_starts_nanos", prop=True)
-    def market_break_starts_nanos(self) -> np.ndarray:
-        """Attribute renamed. Use `break_starts_nanos`."""
-        return self.break_starts_nanos
-
-    @property
-    @deprecate(alt="break_ends_nanos", prop=True)
-    def market_break_ends_nanos(self) -> np.ndarray:
-        """Attribute renamed. Use `break_ends_nanos`."""
-        return self.break_ends_nanos
-
-    @deprecate(alt="minute_to_session")
-    def minute_to_session_label(
-        self,
-        dt: Minute,
-        direction: str = "next",
-        _parse: bool = True,
-    ) -> pd.Timestamp:
-        """Method renamed. Use `minute_to_session`."""
-        return self.minute_to_session(dt, direction, _parse)
-
-    @deprecate(alt="minutes_to_sessions")
-    def minute_index_to_session_labels(
-        self, index: pd.DatetimeIndex
-    ) -> pd.DatetimeIndex:
-        """Method renamed. Use `minutes_to_sessions`."""
-        return self.minutes_to_sessions(index)
-
-    @deprecate(alt="sessions_distance")
-    def session_distance(
-        self,
-        start_session_label: Date,
-        end_session_label: Date,
-        _parse: bool = True,
-    ) -> int:
-        """Method renamed. Use `sessions_distance`."""
-        return self.sessions_distance(start_session_label, end_session_label, _parse)
-
-    @deprecate(alt="sessions_minutes")
-    def minutes_for_sessions_in_range(
-        self,
-        start_session_label: Date,
-        end_session_label: Date,
-        _parse: bool = True,
-    ) -> pd.DatetimeIndex:
-        """Method renamed. Use `sessions_minutes`."""
-        return self.sessions_minutes(start_session_label, end_session_label, _parse)
-
-    @deprecate(alt="sessions_opens")
-    def session_opens_in_range(
-        self, start_session_label: Date, end_session_label: Date, _parse: bool = True
-    ) -> pd.Series:
-        """Method renamed. Use `sessions_opens`."""
-        return self.sessions_opens(start_session_label, end_session_label, _parse)
-
-    @deprecate(alt="sessions_closes")
-    def session_closes_in_range(
-        self, start_session_label: Date, end_session_label: Date, _parse: bool = True
-    ) -> pd.Series:
-        """Method renamed. Use `sessions_closes`."""
-        return self.sessions_closes(start_session_label, end_session_label, _parse)
-
-    @deprecate(alt="sessions_minutes_count")
-    def minutes_count_for_sessions_in_range(
-        self, start_session: Date, end_session: Date, _parse=False
-    ) -> int:
-        """Method renamed. Use `sessions_minutes_count`."""
-        return self.sessions_minutes_count(start_session, end_session, _parse)
+        Returns
+        -------
+        pd.Series
+            index:
+                Sessions from `start` through `end` (inclusive of both).
+            values:
+                UTC close times for corresponding sessions.
+        """
+        start, end = self._parse_start_end_dates(start, end, _parse)
+        return self.schedule.loc[start:end, "close"]
 
 
 def _check_breaks_match(break_starts_nanos: np.ndarray, break_ends_nanos: np.ndarray):
