@@ -370,19 +370,19 @@ class ExchangeCalendar(ABC):
             index=_all_days,
             data=collections.OrderedDict(
                 [
-                    ("market_open", self._opens),
+                    ("open", self._opens),
                     ("break_start", break_starts),
                     ("break_end", break_ends),
-                    ("market_close", self._closes),
+                    ("close", self._closes),
                 ]
             ),
             dtype="datetime64[ns, UTC]",
         )
 
-        self.opens_nanos = self.schedule.market_open.values.astype(np.int64)
+        self.opens_nanos = self.schedule.open.values.astype(np.int64)
         self.break_starts_nanos = self.schedule.break_start.values.astype(np.int64)
         self.break_ends_nanos = self.schedule.break_end.values.astype(np.int64)
-        self.closes_nanos = self.schedule.market_close.values.astype(np.int64)
+        self.closes_nanos = self.schedule.close.values.astype(np.int64)
 
         _check_breaks_match(self.break_starts_nanos, self.break_ends_nanos)
 
@@ -749,7 +749,7 @@ class ExchangeCalendar(ABC):
             dtype : datetime64[ns, UTC]
                 UTC open time of corresponding session.
         """
-        return self.schedule.market_open
+        return self.schedule.open
 
     @property
     def closes(self) -> pd.Series:
@@ -763,7 +763,7 @@ class ExchangeCalendar(ABC):
             dtype : datetime64[ns, UTC]
                 UTC close time of corresponding session.
         """
-        return self.schedule.market_close
+        return self.schedule.close
 
     @property
     def break_starts(self) -> pd.Series:
@@ -955,42 +955,40 @@ class ExchangeCalendar(ABC):
             assert isinstance(session_, pd.Timestamp)
         return self.sessions_nanos.searchsorted(session_.value, side="left")
 
-    def session_open(self, session_label: Session, _parse: bool = True) -> pd.Timestamp:
+    def session_open(self, session: Session, _parse: bool = True) -> pd.Timestamp:
         """Return open time for a given session."""
         if _parse:
-            session_label = parse_session(self, session_label, "session_label")
-        return self.schedule.at[session_label, "market_open"]
+            session = parse_session(self, session, "session")
+        return self.schedule.at[session, "open"]
 
-    def session_close(
-        self, session_label: Session, _parse: bool = True
-    ) -> pd.Timestamp:
+    def session_close(self, session: Session, _parse: bool = True) -> pd.Timestamp:
         """Return close time for a given session."""
         if _parse:
-            session_label = parse_session(self, session_label, "session_label")
-        return self.schedule.at[session_label, "market_close"]
+            session = parse_session(self, session, "session")
+        return self.schedule.at[session, "close"]
 
     def session_break_start(
-        self, session_label: Session, _parse: bool = True
+        self, session: Session, _parse: bool = True
     ) -> pd.Timestamp | NaTType:
         """Return break-start time for a given session.
 
         Returns pd.NaT if no break.
         """
         if _parse:
-            session_label = parse_session(self, session_label, "session_label")
-        break_start = self.schedule.at[session_label, "break_start"]
+            session = parse_session(self, session, "session")
+        break_start = self.schedule.at[session, "break_start"]
         return break_start
 
     def session_break_end(
-        self, session_label: Session, _parse: bool = True
+        self, session: Session, _parse: bool = True
     ) -> pd.Timestamp | NaTType:
         """Return break-end time for a given session.
 
         Returns pd.NaT if no break.
         """
         if _parse:
-            session_label = parse_session(self, session_label, "session_label")
-        break_end = self.schedule.at[session_label, "break_end"]
+            session = parse_session(self, session, "session")
+        break_end = self.schedule.at[session, "break_end"]
         return break_end
 
     def session_open_close(
@@ -1215,23 +1213,23 @@ class ExchangeCalendar(ABC):
             date.value < self.sessions_nanos[0] or date.value > self.sessions_nanos[-1]
         )
 
-    def is_session(self, dt: Date, _parse: bool = True) -> bool:
+    def is_session(self, date: Date, _parse: bool = True) -> bool:
         """Query if a date is a valid session.
 
         Parameters
         ----------
-        dt
+        date
             Date to be queried.
 
         Return
         ------
         bool
-            True if `dt` is a session, False otherwise.
+            True if `date` is a session, False otherwise.
         """
         if _parse:
-            dt = parse_date(dt, "dt", self)
-        idx = self._get_date_idx(dt, _parse=False)
-        return bool(self.sessions_nanos[idx] == dt.value)  # convert from np.bool_
+            date = parse_date(date, "date", self)
+        idx = self._get_date_idx(date, _parse=False)
+        return bool(self.sessions_nanos[idx] == date.value)  # convert from np.bool_
 
     def date_to_session(
         self,
@@ -1355,7 +1353,7 @@ class ExchangeCalendar(ABC):
         return bool(numpy_bool)
 
     def is_open_on_minute(
-        self, dt: Minute, ignore_breaks: bool = False, _parse: bool = True
+        self, minute: Minute, ignore_breaks: bool = False, _parse: bool = True
     ) -> bool:
         """Query if exchange is open on a given minute.
 
@@ -1365,7 +1363,7 @@ class ExchangeCalendar(ABC):
 
         Parameters
         ----------
-        dt
+        minute
             Minute being queried.
 
         ignore_breaks
@@ -1376,31 +1374,31 @@ class ExchangeCalendar(ABC):
         Returns
         -------
         bool
-            Boolean indicting if exchange is open on `dt`.
+            Boolean indicting if exchange is open on `minute`.
 
         See Also
         --------
         is_trading_minute
         """
         if _parse:
-            dt = parse_timestamp(dt, "dt", self)
+            minute = parse_timestamp(minute, "minute", self)
 
-        is_trading_minute = self.is_trading_minute(dt, _parse=False)
+        is_trading_minute = self.is_trading_minute(minute, _parse=False)
         if is_trading_minute or not ignore_breaks:
             return is_trading_minute
         else:
             # not a trading minute although should return True if in break
-            return self.is_break_minute(dt, _parse=False)
+            return self.is_break_minute(minute, _parse=False)
 
-    def next_open(self, dt: Minute, _parse: bool = True) -> pd.Timestamp:
+    def next_open(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
         """Return next open that follows a given minute.
 
-        If `dt` is a session open, the next session's open will be
+        If `minute` is a session open, the next session's open will be
         returned.
 
         Parameters
         ----------
-        dt
+        minute
             Minute for which to get the next open.
 
         Returns
@@ -1409,29 +1407,29 @@ class ExchangeCalendar(ABC):
             UTC timestamp of the next open.
         """
         if _parse:
-            dt = parse_timestamp(dt, "dt", self)
+            minute = parse_timestamp(minute, "minute", self)
         try:
-            idx = next_divider_idx(self.opens_nanos, dt.value)
+            idx = next_divider_idx(self.opens_nanos, minute.value)
         except IndexError:
-            if dt >= self.opens[-1]:
+            if minute >= self.opens[-1]:
                 raise ValueError(
-                    "Minute cannot be the last open or later (received `dt`"
-                    f" parsed as '{dt}'.)"
+                    "Minute cannot be the last open or later (received `minute`"
+                    f" parsed as '{minute}'.)"
                 ) from None
             else:
                 raise
 
         return pd.Timestamp(self.opens_nanos[idx], tz=UTC)
 
-    def next_close(self, dt: Minute, _parse: bool = True) -> pd.Timestamp:
+    def next_close(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
         """Return next close that follows a given minute.
 
-        If `dt` is a session close, the next session's close will be
+        If `minute` is a session close, the next session's close will be
         returned.
 
         Parameters
         ----------
-        dt
+        minute
             Minute for which to get the next close.
 
         Returns
@@ -1440,28 +1438,28 @@ class ExchangeCalendar(ABC):
             UTC timestamp of the next close.
         """
         if _parse:
-            dt = parse_timestamp(dt, "dt", self)
+            minute = parse_timestamp(minute, "minute", self)
         try:
-            idx = next_divider_idx(self.closes_nanos, dt.value)
+            idx = next_divider_idx(self.closes_nanos, minute.value)
         except IndexError:
-            if dt == self.closes[-1]:
+            if minute == self.closes[-1]:
                 raise ValueError(
-                    "Minute cannot be the last close (received `dt` parsed as"
-                    f" '{dt}'.)"
+                    "Minute cannot be the last close (received `minute` parsed as"
+                    f" '{minute}'.)"
                 ) from None
             else:
                 raise
         return pd.Timestamp(self.closes_nanos[idx], tz=UTC)
 
-    def previous_open(self, dt: Minute, _parse: bool = True) -> pd.Timestamp:
+    def previous_open(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
         """Return previous open that preceeds a given minute.
 
-        If `dt` is a session open, the previous session's open will be
+        If `minute` is a session open, the previous session's open will be
         returned.
 
         Parameters
         ----------
-        dt
+        minute
             Minute for which to get the previous open.
 
         Returns
@@ -1470,29 +1468,29 @@ class ExchangeCalendar(ABC):
             UTC timestamp of the previous open.
         """
         if _parse:
-            dt = parse_timestamp(dt, "dt", self)
+            minute = parse_timestamp(minute, "minute", self)
         try:
-            idx = previous_divider_idx(self.opens_nanos, dt.value)
+            idx = previous_divider_idx(self.opens_nanos, minute.value)
         except ValueError:
-            if dt == self.opens[0]:
+            if minute == self.opens[0]:
                 raise ValueError(
-                    "Minute cannot be the first open (received `dt` parsed as"
-                    f" '{dt}'.)"
+                    "Minute cannot be the first open (received `minute` parsed as"
+                    f" '{minute}'.)"
                 ) from None
             else:
                 raise
 
         return pd.Timestamp(self.opens_nanos[idx], tz=UTC)
 
-    def previous_close(self, dt: Minute, _parse: bool = True) -> pd.Timestamp:
+    def previous_close(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
         """Return previous close that preceeds a given minute.
 
-        If `dt` is a session close, the previous session's close will be
+        If `minute` is a session close, the previous session's close will be
         returned.
 
         Parameters
         ----------
-        dt
+        minute
             Minute for which to get the previous close.
 
         Returns
@@ -1501,26 +1499,26 @@ class ExchangeCalendar(ABC):
             UTC timestamp of the previous close.
         """
         if _parse:
-            dt = parse_timestamp(dt, "dt", self)
+            minute = parse_timestamp(minute, "minute", self)
         try:
-            idx = previous_divider_idx(self.closes_nanos, dt.value)
+            idx = previous_divider_idx(self.closes_nanos, minute.value)
         except ValueError:
-            if dt <= self.closes[0]:
+            if minute <= self.closes[0]:
                 raise ValueError(
                     "Minute cannot be the first close or earlier (received"
-                    f" `dt` parsed as '{dt}'.)"
+                    f" `minute` parsed as '{minute}'.)"
                 ) from None
             else:
                 raise
 
         return pd.Timestamp(self.closes_nanos[idx], tz=UTC)
 
-    def next_minute(self, dt: Minute, _parse: bool = True) -> pd.Timestamp:
+    def next_minute(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
         """Return trading minute that immediately follows a given minute.
 
         Parameters
         ----------
-        dt
+        minute
             Minute for which to get next trading minute. Minute can be a
             trading or a non-trading minute.
 
@@ -1535,21 +1533,21 @@ class ExchangeCalendar(ABC):
             If `minute` is the last calendar minute.
         """
         if _parse:
-            dt = parse_timestamp(dt, "dt", self)
+            minute = parse_timestamp(minute, "minute", self)
         try:
-            idx = next_divider_idx(self.minutes_nanos, dt.value)
+            idx = next_divider_idx(self.minutes_nanos, minute.value)
         except IndexError:
             # dt > last_minute handled via parsing
-            if dt == self.last_minute:
+            if minute == self.last_minute:
                 raise errors.RequestedMinuteOutOfBounds(self, False) from None
         return self.minutes[idx]
 
-    def previous_minute(self, dt: Minute, _parse: bool = True) -> pd.Timestamp:
+    def previous_minute(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
         """Return trading minute that immediately preceeds a given minute.
 
         Parameters
         ----------
-        dt
+        minute
             Minute for which to get previous trading minute. Minute can be
             a trading or a non-trading minute.
 
@@ -1564,12 +1562,12 @@ class ExchangeCalendar(ABC):
             If `minute` is the first calendar minute.
         """
         if _parse:
-            dt = parse_timestamp(dt, "dt", self)
+            minute = parse_timestamp(minute, "minute", self)
         try:
-            idx = previous_divider_idx(self.minutes_nanos, dt.value)
+            idx = previous_divider_idx(self.minutes_nanos, minute.value)
         except ValueError:
             # dt < first_minute handled via parsing
-            if dt == self.first_minute:
+            if minute == self.first_minute:
                 raise errors.RequestedMinuteOutOfBounds(self, True) from None
         return self.minutes[idx]
 
@@ -2073,24 +2071,24 @@ class ExchangeCalendar(ABC):
         return slice(slice_start, slice_end)
 
     def sessions_in_range(
-        self, start_session_label: Date, end_session_label: Date, _parse: bool = True
+        self, start: Date, end: Date, _parse: bool = True
     ) -> pd.DatetimeIndex:
         """Return sessions within a given range.
 
         Parameters
         ----------
-        start_session_label
+        start
             Start of session range (range inclusive of `start`).
 
-        end_session_label
+        end
             End of session range (range inclusive of `end`).
 
         Returns
         -------
         pd.DatetimeIndex
-            Sessions from `start_session_label` through `end_session_label`.
+            Sessions from `start` through `end`.
         """
-        slc = self._get_sessions_slice(start_session_label, end_session_label, _parse)
+        slc = self._get_sessions_slice(start, end, _parse)
         return self.sessions[slc]
 
     def sessions_has_break(self, start: Date, end: Date, _parse: bool = True) -> bool:
@@ -2218,7 +2216,7 @@ class ExchangeCalendar(ABC):
                 UTC open times for corresponding sessions.
         """
         start, end = self._parse_start_end_dates(start, end, _parse)
-        return self.schedule.loc[start:end, "market_open"]
+        return self.schedule.loc[start:end, "open"]
 
     def sessions_closes(self, start: Date, end: Date, _parse: bool = True) -> pd.Series:
         """Return UTC close time by session for sessions in given range.
@@ -2240,7 +2238,7 @@ class ExchangeCalendar(ABC):
                 UTC close times for corresponding sessions.
         """
         start, end = self._parse_start_end_dates(start, end, _parse)
-        return self.schedule.loc[start:end, "market_close"]
+        return self.schedule.loc[start:end, "close"]
 
     def sessions_minutes_count(
         self, start: Date, end: Date, _parse: bool = True

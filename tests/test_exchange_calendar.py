@@ -251,12 +251,12 @@ class Answers:
     @property
     def opens(self) -> pd.Series:
         """Market open time for each session."""
-        return self.answers.market_open
+        return self.answers.open
 
     @property
     def closes(self) -> pd.Series:
         """Market close time for each session."""
-        return self.answers.market_close
+        return self.answers.close
 
     @property
     def break_starts(self) -> pd.Series:
@@ -1977,7 +1977,7 @@ class ExchangeCalendarTestBase:
     @pytest.fixture(scope="class")
     def has_24h_session(self, name) -> abc.Iterator[bool]:
         df = get_csv(name)
-        yield (df.market_close == df.market_open.shift(-1)).any()
+        yield (df.close == df.open.shift(-1)).any()
 
     @pytest.fixture(scope="class")
     def default_side(self, has_24h_session) -> abc.Iterator[str]:
@@ -2323,7 +2323,7 @@ class ExchangeCalendarTestBase:
             next_day = cal.date_to_session(T(date), "next")
             open_date = next_day + pd.Timedelta(days=cal.open_offset)
 
-            the_open = cal.schedule.loc[next_day].market_open
+            the_open = cal.schedule.loc[next_day].open
 
             localized_open = the_open.tz_convert(cal.tz)
 
