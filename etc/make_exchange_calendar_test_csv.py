@@ -70,7 +70,7 @@ cal = get_calendar(cal_name, start=start, end=end)
 
 df = pd.DataFrame(
     list(zip(cal.opens, cal.closes, cal.break_starts, cal.break_ends)),
-    columns=["market_open", "market_close", "break_start", "break_end"],
+    columns=["open", "close", "break_start", "break_end"],
     index=cal.closes.index,
 )
 
