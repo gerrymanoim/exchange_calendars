@@ -404,6 +404,6 @@ class XSESExchangeCalendar(PrecomputedExchangeCalendar):
     open_times = ((None, time(9)),)
     close_times = ((None, time(17, 0)),)
 
-    @property
-    def precomputed_holidays(self):
+    @classmethod
+    def precomputed_holidays(cls):
         return precomputed_ses_holidays

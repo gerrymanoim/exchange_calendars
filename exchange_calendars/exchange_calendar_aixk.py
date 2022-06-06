@@ -154,8 +154,8 @@ class AIXKExchangeCalendar(ExchangeCalendar):
 
     close_times = ((None, time(17, 00)),)
 
-    @property
-    def bound_start(self) -> pd.Timestamp:
+    @classmethod
+    def bound_start(cls) -> pd.Timestamp:
         return pd.Timestamp("2017-01-01")
 
     def _bound_start_error_msg(self, start: pd.Timestamp) -> str:

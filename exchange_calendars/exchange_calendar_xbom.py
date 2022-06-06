@@ -402,7 +402,7 @@ precomputed_bse_holidays = pd.to_datetime(
         "2022-10-22",
         "2022-10-24",
         "2022-10-26",
-        "2022-11-08"
+        "2022-11-08",
     ]
 )
 
@@ -424,6 +424,6 @@ class XBOMExchangeCalendar(PrecomputedExchangeCalendar):
     open_times = ((None, time(9, 15)),)
     close_times = ((None, time(15, 30)),)
 
-    @property
-    def precomputed_holidays(self):
+    @classmethod
+    def precomputed_holidays(cls):
         return precomputed_bse_holidays

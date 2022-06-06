@@ -130,12 +130,16 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
             (None, pd.Timestamp("1998-12-06"), "1111110"),
         ]
 
-    @property
-    def _earliest_precomputed_year(self) -> int:
+    @classmethod
+    def precomputed_holidays(cls) -> list[pd.Timestamp]:
+        return precomputed_krx_holidays.tolist()
+
+    @classmethod
+    def _earliest_precomputed_year(cls) -> int:
         return 1956
 
-    @property
-    def _latest_precomputed_year(self) -> int:
+    @classmethod
+    def _latest_precomputed_year(cls) -> int:
         return 2050
 
     # KRX regular and precomputed adhoc holidays
@@ -143,10 +147,6 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
     @property
     def regular_holidays(self):
         return HolidayCalendar(krx_regular_holiday_rules)
-
-    @property
-    def precomputed_holidays(self) -> pd.DatetimeIndex:
-        return precomputed_krx_holidays.tolist()
 
     # The first business day of each year:
     #  opening schedule is delayed by an hour.
@@ -401,6 +401,6 @@ class PrecomputedXKRXExchangeCalendar(PrecomputedExchangeCalendar):
     open_times = ((None, time(9)),)
     close_times = ((None, time(15, 30)),)
 
-    @property
-    def precomputed_holidays(self):
+    @classmethod
+    def precomputed_holidays(cls):
         return precomputed_krx_holidays
