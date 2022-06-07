@@ -1,4 +1,3 @@
-#
 # Copyright 2018 Quantopian, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +18,7 @@ import functools
 import warnings
 from abc import ABC, abstractmethod
 import collections
-from collections.abc import Sequence
+from collections.abc import Sequence, Callable
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -31,7 +30,6 @@ import pytz
 from pytz import UTC
 
 from exchange_calendars import errors
-
 from .calendar_helpers import (
     NANOSECONDS_PER_MINUTE,
     NP_NAT,
@@ -52,7 +50,8 @@ from .calendar_helpers import (
 )
 from .utils.pandas_utils import days_at_time
 
-NaTType = type(pd.NaT)
+if TYPE_CHECKING:
+    from pandas._libs.tslibs.nattype import NaTType
 
 GLOBAL_DEFAULT_START = pd.Timestamp.now().floor("D") - pd.DateOffset(years=20)
 # Give an aggressive buffer for logic that needs to use the next trading
@@ -114,7 +113,7 @@ class deprecate:
         self.deprecated_release = "release " + deprecated_release
         self.message = message
 
-    def __call__(self, f):
+    def __call__(self, f: Callable) -> Callable:
         @functools.wraps(f)
         def wrapped_f(*args, **kwargs):
             warnings.warn(self._message(f), FutureWarning)
@@ -122,7 +121,7 @@ class deprecate:
 
         return wrapped_f
 
-    def _message(self, f):
+    def _message(self, f: Callable) -> str:
         msg = (
             f"`{f.__name__}` was deprecated in {self.deprecated_release}"
             f" and will be removed in a future release."
@@ -134,7 +133,7 @@ class deprecate:
 
 class HolidayCalendar(AbstractHolidayCalendar):
     def __init__(self, rules):
-        super(HolidayCalendar, self).__init__(rules=rules)
+        super().__init__(rules=rules)
 
 
 class ExchangeCalendar(ABC):
@@ -260,17 +259,29 @@ class ExchangeCalendar(ABC):
 
     @classmethod
     def default_start(cls) -> pd.Timestamp:
-        if cls.bound_start() is None:
+        """Return default calendar start date.
+
+        Calendar will start from this date if 'start' is not otherwise
+        passed to the constructor.
+        """
+        bound_start = cls.bound_start()
+        if bound_start is None:
             return GLOBAL_DEFAULT_START
         else:
-            return max(GLOBAL_DEFAULT_START, cls.bound_start())
+            return max(GLOBAL_DEFAULT_START, bound_start)
 
     @classmethod
     def default_end(cls) -> pd.Timestamp:
-        if cls.bound_end() is None:
+        """Return default calendar end date.
+
+        Calendar will end at this date if 'end' is not otherwise passed to
+        the constructor.
+        """
+        bound_end = cls.bound_end()
+        if bound_end is None:
             return GLOBAL_DEFAULT_END
         else:
-            return min(GLOBAL_DEFAULT_END, cls.bound_end())
+            return min(GLOBAL_DEFAULT_END, bound_end)
 
     def __init__(
         self,
@@ -289,14 +300,16 @@ class ExchangeCalendar(ABC):
             start = self.default_start()
         else:
             start = parse_date(start, "start", raise_oob=False)
-            if self.bound_start() is not None and start < self.bound_start():
+            bound_start = self.bound_start()
+            if bound_start is not None and start < bound_start:
                 raise ValueError(self._bound_start_error_msg(start))
 
         if end is None:
             end = self.default_end()
         else:
             end = parse_date(end, "end", raise_oob=False)
-            if self.bound_end() is not None and end > self.bound_end():
+            bound_end = self.bound_end()
+            if bound_end is not None and end > bound_end:
                 raise ValueError(self._bound_end_error_msg(end))
 
         if start >= end:
@@ -378,6 +391,7 @@ class ExchangeCalendar(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
+        """Calendar name."""
         raise NotImplementedError()
 
     def _bound_start_error_msg(self, start: pd.Timestamp) -> str:
@@ -408,6 +422,7 @@ class ExchangeCalendar(ABC):
     @property
     @abstractmethod
     def tz(self) -> pytz.tzinfo.BaseTzInfo:
+        """Calendar timezone."""
         raise NotImplementedError()
 
     @property
@@ -640,10 +655,23 @@ class ExchangeCalendar(ABC):
         """
         return []
 
-    def apply_special_offsets(self, _all_days, start, end) -> None:
+    def apply_special_offsets(
+        self, sessions: pd.DatetimeIndex, start: pd.Timestamp, end: pd.Timestamp
+    ) -> None:
         """Hook for subclass to apply changes.
 
         Method executed by constructor prior to overwritting special dates.
+
+        Parameters
+        ----------
+        sessions
+            All calendar sessions.
+
+        start
+            Date from which special offsets to be applied.
+
+        end
+            Date through which special offsets to be applied.
 
         Notes
         -----
@@ -659,6 +687,7 @@ class ExchangeCalendar(ABC):
 
     @functools.cached_property
     def day(self) -> CustomBusinessDay:
+        """CustomBusinessDay instance representing calendar sessions."""
         return CustomBusinessDay(
             holidays=self.adhoc_holidays,
             calendar=self.regular_holidays,
@@ -674,7 +703,7 @@ class ExchangeCalendar(ABC):
             return ["both", "left", "right", "neither"]
 
     @classmethod
-    def default_side(cls) -> str:
+    def default_side(cls) -> Literal["right", "both"]:
         """Default `side` option."""
         if cls.close_times == cls.open_times:
             return "right"
@@ -682,7 +711,7 @@ class ExchangeCalendar(ABC):
             return "both"
 
     @property
-    def side(self) -> str:
+    def side(self) -> Literal["left", "right", "both", "neither"]:
         """Side on which sessions are closed.
 
         Returns
@@ -777,6 +806,7 @@ class ExchangeCalendar(ABC):
 
     @functools.cached_property
     def first_minutes_nanos(self) -> np.ndarray:
+        """Each session's first minute as an integer."""
         if self.side in self._LEFT_SIDES:
             return self.opens_nanos
         else:
@@ -784,6 +814,7 @@ class ExchangeCalendar(ABC):
 
     @functools.cached_property
     def last_minutes_nanos(self) -> np.ndarray:
+        """Each session's last minute as an integer."""
         if self.side in self._RIGHT_SIDES:
             return self.closes_nanos
         else:
@@ -791,6 +822,7 @@ class ExchangeCalendar(ABC):
 
     @functools.cached_property
     def last_am_minutes_nanos(self) -> np.ndarray:
+        """Each morning subsessions's last minute as an integer."""
         if self.side in self._RIGHT_SIDES:
             return self.break_starts_nanos
         else:
@@ -798,6 +830,7 @@ class ExchangeCalendar(ABC):
 
     @functools.cached_property
     def first_pm_minutes_nanos(self) -> np.ndarray:
+        """Each afternoon subsessions's first minute as an integer."""
         if self.side in self._LEFT_SIDES:
             return self.break_ends_nanos
         else:
@@ -1033,7 +1066,7 @@ class ExchangeCalendar(ABC):
         self,
         session: Session,
         _parse: bool = True,
-    ) -> tuple(pd.Timestamp, pd.Timestamp):
+    ) -> tuple[pd.Timestamp, pd.Timestamp]:
         """Return first and last trading minutes of a given session."""
         idx = self._get_session_idx(session, _parse=_parse)
         first = pd.Timestamp(self.first_minutes_nanos[idx], tz=UTC)
@@ -1581,11 +1614,9 @@ class ExchangeCalendar(ABC):
                 return self.first_session
             else:
                 raise ValueError(
-                    "Received `minute` as '{0}' although this is earlier than the"
-                    " calendar's first trading minute ({1}). Consider passing"
-                    " `direction` as 'next' to get first session.".format(
-                        minute, self.first_minute
-                    )
+                    f"Received `minute` as '{minute}' although this is earlier than the"
+                    f" calendar's first trading minute ({self.first_minute}). Consider"
+                    " passing `direction` as 'next' to get first session."
                 )
 
         if minute.value > self.minutes_nanos[-1]:
@@ -1594,11 +1625,9 @@ class ExchangeCalendar(ABC):
                 return self.last_session
             else:
                 raise ValueError(
-                    "Received `minute` as '{0}' although this is later than the"
-                    " calendar's last trading minute ({1}). Consider passing"
-                    " `direction` as 'previous' to get last session.".format(
-                        minute, self.last_minute
-                    )
+                    f"Received `minute` as '{minute}' although this is later than the"
+                    f" calendar's last trading minute ({self.last_minute}). Consider"
+                    " passing `direction` as 'previous' to get last session."
                 )
 
         idx = np.searchsorted(self.last_minutes_nanos, minute.value)
@@ -1618,7 +1647,7 @@ class ExchangeCalendar(ABC):
                 )
         else:
             # invalid direction
-            raise ValueError("Invalid direction parameter: " "{0}".format(direction))
+            raise ValueError(f"Invalid direction parameter: {direction}")
 
         return current_or_next_session
 
@@ -1831,12 +1860,12 @@ class ExchangeCalendar(ABC):
             try:
                 target_session = self.minute_to_future_session(minute, abs(count))
             except errors.RequestedSessionOutOfBounds:
-                raise errors.RequestedMinuteOutOfBounds(self, too_early=False)
+                raise errors.RequestedMinuteOutOfBounds(self, too_early=False) from None
         else:
             try:
                 target_session = self.minute_to_past_session(minute, abs(count))
             except errors.RequestedSessionOutOfBounds:
-                raise errors.RequestedMinuteOutOfBounds(self, too_early=True)
+                raise errors.RequestedMinuteOutOfBounds(self, too_early=True) from None
 
         base_session = self.minute_to_session(minute)
         day_offset = (minute.normalize() - base_session.tz_localize(UTC)).days
@@ -2536,9 +2565,11 @@ class ExchangeCalendar(ABC):
         # exclude any special date that coincides with a holiday
         adhoc_holidays = pd.DatetimeIndex(self.adhoc_holidays)
         result = result[~result.index.isin(adhoc_holidays)]
-        reg_holidays = self.regular_holidays.holidays(start_date, end_date)
-        if not reg_holidays.empty:
-            result = result[~result.index.isin(reg_holidays)]
+        regular_holidays = self.regular_holidays
+        if regular_holidays is not None:
+            reg_holidays = regular_holidays.holidays(start_date, end_date)
+            if not reg_holidays.empty:
+                result = result[~result.index.isin(reg_holidays)]
         return result
 
     def _calculate_special_opens(
@@ -2615,16 +2646,13 @@ def _check_breaks_match(break_starts_nanos: np.ndarray, break_ends_nanos: np.nda
     nats_match = np.equal(NP_NAT == break_starts_nanos, NP_NAT == break_ends_nanos)
     if not nats_match.all():
         raise ValueError(
-            """
+            f"""
             Mismatched market breaks
             Break starts:
-            {0}
+            {break_starts_nanos[~nats_match]}
             Break ends:
-            {1}
-            """.format(
-                break_starts_nanos[~nats_match],
-                break_ends_nanos[~nats_match],
-            )
+            {break_ends_nanos[~nats_match]}
+            """
         )
 
 
@@ -2666,7 +2694,7 @@ def _overwrite_special_dates(
     `session_labels` required for alignment.
     """
     # Short circuit when nothing to apply.
-    if not len(special_times):
+    if special_times.empty:
         return
 
     len_m, len_oc = len(session_labels), len(standard_times)
@@ -2712,7 +2740,7 @@ def _remove_breaks_for_special_dates(
         return
 
     # Short circuit when nothing to apply.
-    if not len(special_times):
+    if special_times.empty:
         return
 
     len_m, len_oc = len(session_labels), len(standard_break_times)
