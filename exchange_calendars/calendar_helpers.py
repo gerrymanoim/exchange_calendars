@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import datetime
 import typing
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -61,7 +62,7 @@ def compute_minutes(
     break_starts_in_ns: np.ndarray,
     break_ends_in_ns: np.ndarray,
     closes_in_ns: np.ndarray,
-    side: str = "both",
+    side: Literal["left", "right", "both", "neither"] = "both",
 ) -> np.ndarray:
     """Return array of trading minutes."""
     start_ext = 0 if side in ["left", "both"] else NANOSECONDS_PER_MINUTE
@@ -155,7 +156,7 @@ def parse_timestamp(
     param_name: str = "minute",
     calendar: ExchangeCalendar | None = None,
     raise_oob: bool = True,
-    side: str | None = None,
+    side: Literal["left", "right", "both", "neither"] | None = None,
     utc: bool = True,
 ) -> pd.Timestamp:
     """Parse input intended to represent either a date or a minute.

@@ -16,6 +16,7 @@ import itertools
 import pathlib
 import re
 import typing
+from typing import Literal
 from collections import abc
 from datetime import time
 
@@ -215,7 +216,7 @@ class Answers:
     def __init__(
         self,
         calendar_name: str,
-        side: str,
+        side: Literal["left", "right", "both", "neither"],
     ):
         self._name = calendar_name.upper()
         self._side = side
@@ -234,14 +235,10 @@ class Answers:
 
     # --- Properties read (indirectly) from csv file ---
 
-    @functools.lru_cache(maxsize=4)
-    def _answers(self) -> pd.DataFrame:
-        return get_csv(self.name)
-
-    @property
+    @functools.cached_property
     def answers(self) -> pd.DataFrame:
         """Answers as correspoding csv."""
-        return self._answers()
+        return get_csv(self.name)
 
     @property
     def sessions(self) -> pd.DatetimeIndex:
@@ -433,14 +430,10 @@ class Answers:
 
     # --- Evaluated general calendar properties ---
 
-    @functools.lru_cache(maxsize=4)
-    def _has_a_session_with_break(self) -> pd.DatetimeIndex:
-        return self.break_starts.notna().any()
-
-    @property
-    def has_a_session_with_break(self) -> bool:
+    @functools.cached_property
+    def has_a_session_with_break(self) -> pd.DatetimeIndex:
         """Does any session of answers have a break."""
-        return self._has_a_session_with_break()
+        return self.break_starts.notna().any()
 
     @property
     def has_a_session_without_break(self) -> bool:
@@ -513,19 +506,15 @@ class Answers:
 
     # --- Evaluated properties covering every session. ---
 
-    @functools.lru_cache(maxsize=4)
-    def _first_minutes(self) -> pd.Series:
+    @functools.cached_property
+    def first_minutes(self) -> pd.Series:
+        """First trading minute of each session (UTC)."""
         if self.side in self.LEFT_SIDES:
             minutes = self.opens.copy()
         else:
             minutes = self.opens + self.ONE_MIN
         minutes.name = "first_minutes"
         return minutes
-
-    @property
-    def first_minutes(self) -> pd.Series:
-        """First trading minute of each session (UTC)."""
-        return self._first_minutes()
 
     @property
     def first_minutes_plus_one(self) -> pd.Series:
@@ -537,19 +526,15 @@ class Answers:
         """First trading minute of each session less one minute."""
         return self.first_minutes - self.ONE_MIN
 
-    @functools.lru_cache(maxsize=4)
-    def _last_minutes(self) -> pd.Series:
+    @functools.cached_property
+    def last_minutes(self) -> pd.Series:
+        """Last trading minute of each session."""
         if self.side in self.RIGHT_SIDES:
             minutes = self.closes.copy()
         else:
             minutes = self.closes - self.ONE_MIN
         minutes.name = "last_minutes"
         return minutes
-
-    @property
-    def last_minutes(self) -> pd.Series:
-        """Last trading minute of each session."""
-        return self._last_minutes()
 
     @property
     def last_minutes_plus_one(self) -> pd.Series:
@@ -561,22 +546,18 @@ class Answers:
         """Last trading minute of each session less one minute."""
         return self.last_minutes - self.ONE_MIN
 
-    @functools.lru_cache(maxsize=4)
-    def _last_am_minutes(self) -> pd.Series:
+    @functools.cached_property
+    def last_am_minutes(self) -> pd.Series:
+        """Last pre-break trading minute of each session.
+
+        NaT if session does not have a break.
+        """
         if self.side in self.RIGHT_SIDES:
             minutes = self.break_starts.copy()
         else:
             minutes = self.break_starts - self.ONE_MIN
         minutes.name = "last_am_minutes"
         return minutes
-
-    @property
-    def last_am_minutes(self) -> pd.Series:
-        """Last pre-break trading minute of each session.
-
-        NaT if session does not have a break.
-        """
-        return self._last_am_minutes()
 
     @property
     def last_am_minutes_plus_one(self) -> pd.Series:
@@ -588,22 +569,18 @@ class Answers:
         """Last pre-break trading minute of each session less one minute."""
         return self.last_am_minutes - self.ONE_MIN
 
-    @functools.lru_cache(maxsize=4)
-    def _first_pm_minutes(self) -> pd.Series:
+    @functools.cached_property
+    def first_pm_minutes(self) -> pd.Series:
+        """First post-break trading minute of each session.
+
+        NaT if session does not have a break.
+        """
         if self.side in self.LEFT_SIDES:
             minutes = self.break_ends.copy()
         else:
             minutes = self.break_ends + self.ONE_MIN
         minutes.name = "first_pm_minutes"
         return minutes
-
-    @property
-    def first_pm_minutes(self) -> pd.Series:
-        """First post-break trading minute of each session.
-
-        NaT if session does not have a break.
-        """
-        return self._first_pm_minutes()
 
     @property
     def first_pm_minutes_plus_one(self) -> pd.Series:
@@ -621,21 +598,13 @@ class Answers:
     def _mask_breaks(self) -> pd.Series:
         return self.break_starts.notna()
 
-    @functools.lru_cache(maxsize=4)
-    def _sessions_with_break(self) -> pd.DatetimeIndex:
+    @functools.cached_property
+    def sessions_with_break(self) -> pd.DatetimeIndex:
         return self.sessions[self._mask_breaks]
 
-    @property
-    def sessions_with_break(self) -> pd.DatetimeIndex:
-        return self._sessions_with_break()
-
-    @functools.lru_cache(maxsize=4)
-    def _sessions_without_break(self) -> pd.DatetimeIndex:
-        return self.sessions[~self._mask_breaks]
-
-    @property
+    @functools.cached_property
     def sessions_without_break(self) -> pd.DatetimeIndex:
-        return self._sessions_without_break()
+        return self.sessions[~self._mask_breaks]
 
     @property
     def sessions_without_break_run(self) -> pd.DatetimeIndex:
@@ -690,53 +659,37 @@ class Answers:
         else:
             return self.closes.shift(1) == self.opens
 
-    @functools.lru_cache(maxsize=4)
-    def _sessions_without_gap_after(self) -> pd.DatetimeIndex:
-        mask = self._mask_sessions_without_gap_after
-        return self.sessions[mask][:-1]
-
-    @property
+    @functools.cached_property
     def sessions_without_gap_after(self) -> pd.DatetimeIndex:
         """Sessions not followed by a non-trading minute.
 
         Rather, sessions immediately followed by first trading minute of
         next session.
         """
-        return self._sessions_without_gap_after()
+        mask = self._mask_sessions_without_gap_after
+        return self.sessions[mask][:-1]
 
-    @functools.lru_cache(maxsize=4)
-    def _sessions_with_gap_after(self) -> pd.DatetimeIndex:
+    @functools.cached_property
+    def sessions_with_gap_after(self) -> pd.DatetimeIndex:
+        """Sessions followed by a non-trading minute."""
         mask = self._mask_sessions_without_gap_after
         return self.sessions[~mask][:-1]
 
-    @property
-    def sessions_with_gap_after(self) -> pd.DatetimeIndex:
-        """Sessions followed by a non-trading minute."""
-        return self._sessions_with_gap_after()
-
-    @functools.lru_cache(maxsize=4)
-    def _sessions_without_gap_before(self) -> pd.DatetimeIndex:
-        mask = self._mask_sessions_without_gap_before
-        return self.sessions[mask][1:]
-
-    @property
+    @functools.cached_property
     def sessions_without_gap_before(self) -> pd.DatetimeIndex:
         """Sessions not preceeded by a non-trading minute.
 
         Rather, sessions immediately preceeded by last trading minute of
         previous session.
         """
-        return self._sessions_without_gap_before()
-
-    @functools.lru_cache(maxsize=4)
-    def _sessions_with_gap_before(self) -> pd.DatetimeIndex:
         mask = self._mask_sessions_without_gap_before
-        return self.sessions[~mask][1:]
+        return self.sessions[mask][1:]
 
-    @property
+    @functools.cached_property
     def sessions_with_gap_before(self) -> pd.DatetimeIndex:
         """Sessions preceeded by a non-trading minute."""
-        return self._sessions_with_gap_before()
+        mask = self._mask_sessions_without_gap_before
+        return self.sessions[~mask][1:]
 
     # times are changing...
 
@@ -750,7 +703,7 @@ class Answers:
     @functools.lru_cache(maxsize=16)
     def _get_sessions_with_times_different_to_next_session(
         self,
-        column: str,  # typing.Literal["opens", "closes", "break_starts", "break_ends"]
+        column: Literal["opens", "closes", "break_starts", "break_ends"],
     ) -> list[pd.DatetimeIndex]:
         """For a given answers column, get session labels where time differs
         from time of next session.
@@ -870,7 +823,7 @@ class Answers:
         later = self.sessions_next_break_end_later
         return earlier.union(later)
 
-    @functools.lru_cache(maxsize=4)
+    @functools.cached_property
     def _get_sessions_with_has_break_different_to_next_session(
         self,
     ) -> tuple[pd.DatetimeIndex, pd.DatetimeIndex]:
@@ -897,14 +850,19 @@ class Answers:
 
     @property
     def sessions_with_break_next_session_without_break(self) -> pd.DatetimeIndex:
-        return self._get_sessions_with_has_break_different_to_next_session()[0]
+        return self._get_sessions_with_has_break_different_to_next_session[0]
 
     @property
     def sessions_without_break_next_session_with_break(self) -> pd.DatetimeIndex:
-        return self._get_sessions_with_has_break_different_to_next_session()[1]
+        return self._get_sessions_with_has_break_different_to_next_session[1]
 
-    @functools.lru_cache(maxsize=4)
-    def _sessions_next_time_different(self) -> pd.DatetimeIndex:
+    @functools.cached_property
+    def sessions_next_time_different(self) -> pd.DatetimeIndex:
+        """Sessions where next session has a different time for any column.
+
+        Includes sessions where next session has a different `has_break`
+        status.
+        """
         return pandas_utils.indexes_union(
             [
                 self.sessions_next_open_different,
@@ -915,15 +873,6 @@ class Answers:
                 self.sessions_without_break_next_session_with_break,
             ]
         )
-
-    @property
-    def sessions_next_time_different(self) -> pd.DatetimeIndex:
-        """Sessions where next session has a different time for any column.
-
-        Includes sessions where next session has a different `has_break`
-        status.
-        """
-        return self._sessions_next_time_different()
 
     # session blocks...
 
@@ -991,8 +940,53 @@ class Answers:
 
         return self.sessions[start_idx : end_idx + 2]
 
-    @functools.lru_cache(maxsize=4)
-    def _session_blocks(self) -> dict[str, pd.DatetimeIndex]:
+    @functools.cached_property
+    def session_blocks(self) -> dict[str, pd.DatetimeIndex]:
+        """Dictionary of session blocks of a particular behaviour.
+
+        A block comprises either a single session or multiple contiguous
+        sessions.
+
+        Keys:
+            "normal" - three sessions with unchanging timings.
+            "first_three" - answers' first three sessions.
+            "last_three" - answers's last three sessions.
+            "next_open_earlier" - session 1 open is earlier than session 0
+                open.
+            "next_open_later" - session 1 open is later than session 0
+                open.
+            "next_close_earlier" - session 1 close is earlier than session
+                0 close.
+            "next_close_later" - session 1 close is later than session 0
+                close.
+            "next_break_start_earlier" - session 1 break_start is earlier
+                than session 0 break_start.
+            "next_break_start_later" - session 1 break_start is later than
+                session 0 break_start.
+            "next_break_end_earlier" - session 1 break_end is earlier than
+                session 0 break_end.
+            "next_break_end_later" - session 1 break_end is later than
+                session 0 break_end.
+            "with_break_to_without_break" - session 0 has a break, session
+                1 does not have a break.
+            "without_break_to_with_break" - session 0 does not have a
+                break, session 1 does have a break.
+            "without_gap_to_with_gap" - session 0 is not followed by a
+                gap, session -2 is followed by a gap, session -1 is
+                preceeded by a gap.
+            "with_gap_to_without_gap" - session 0 is followed by a gap,
+                session -2 is not followed by a gap, session -1 is not
+                preceeded by a gap.
+            "follows_non_session" - one or two sessions where session 0
+                is preceeded by a date that is a non-session.
+            "follows_non_session" - one or two sessions where session -1
+                is followed by a date that is a non-session.
+            "contains_non_session" = two sessions with at least one
+                non-session date in between.
+
+        If no such session block exists for any key then value will take an
+        empty DatetimeIndex (UTC).
+        """
         blocks = {}
         blocks["normal"] = self._get_normal_session_block()
         blocks["first_three"] = self.sessions[:3]
@@ -1071,72 +1065,13 @@ class Answers:
 
         return blocks
 
-    @property
-    def session_blocks(self) -> dict[str, pd.DatetimeIndex]:
-        """Dictionary of session blocks of a particular behaviour.
-
-        A block comprises either a single session or multiple contiguous
-        sessions.
-
-        Keys:
-            "normal" - three sessions with unchanging timings.
-            "first_three" - answers' first three sessions.
-            "last_three" - answers's last three sessions.
-            "next_open_earlier" - session 1 open is earlier than session 0
-                open.
-            "next_open_later" - session 1 open is later than session 0
-                open.
-            "next_close_earlier" - session 1 close is earlier than session
-                0 close.
-            "next_close_later" - session 1 close is later than session 0
-                close.
-            "next_break_start_earlier" - session 1 break_start is earlier
-                than session 0 break_start.
-            "next_break_start_later" - session 1 break_start is later than
-                session 0 break_start.
-            "next_break_end_earlier" - session 1 break_end is earlier than
-                session 0 break_end.
-            "next_break_end_later" - session 1 break_end is later than
-                session 0 break_end.
-            "with_break_to_without_break" - session 0 has a break, session
-                1 does not have a break.
-            "without_break_to_with_break" - session 0 does not have a
-                break, session 1 does have a break.
-            "without_gap_to_with_gap" - session 0 is not followed by a
-                gap, session -2 is followed by a gap, session -1 is
-                preceeded by a gap.
-            "with_gap_to_without_gap" - session 0 is followed by a gap,
-                session -2 is not followed by a gap, session -1 is not
-                preceeded by a gap.
-            "follows_non_session" - one or two sessions where session 0
-                is preceeded by a date that is a non-session.
-            "follows_non_session" - one or two sessions where session -1
-                is followed by a date that is a non-session.
-            "contains_non_session" = two sessions with at least one
-                non-session date in between.
-
-        If no such session block exists for any key then value will take an
-        empty DatetimeIndex (UTC).
-        """
-        return self._session_blocks()
-
     def session_block_generator(self) -> abc.Iterator[tuple[str, pd.DatetimeIndex]]:
         """Generator of session blocks of a particular behaviour."""
         for name, block in self.session_blocks.items():
             if not block.empty:
                 yield (name, block)
 
-    @functools.lru_cache(maxsize=4)
-    def _session_block_minutes(self) -> dict[str, pd.DatetimeIndex]:
-        d = {}
-        for name, block in self.session_blocks.items():
-            if block.empty:
-                d[name] = pd.DatetimeIndex([], tz=UTC)
-                continue
-            d[name] = self.get_sessions_minutes(block[0], len(block))
-        return d
-
-    @property
+    @functools.cached_property
     def session_block_minutes(self) -> dict[str, pd.DatetimeIndex]:
         """Trading minutes for each `session_block`.
 
@@ -1145,7 +1080,13 @@ class Answers:
         Value:
             Trading minutes of corresponding session block.
         """
-        return self._session_block_minutes()
+        d = {}
+        for name, block in self.session_blocks.items():
+            if block.empty:
+                d[name] = pd.DatetimeIndex([], tz=UTC)
+                continue
+            d[name] = self.get_sessions_minutes(block[0], len(block))
+        return d
 
     @property
     def sessions_sample(self) -> pd.DatetimeIndex:
@@ -1160,17 +1101,13 @@ class Answers:
 
     # non-sessions...
 
-    @functools.lru_cache(maxsize=4)
-    def _non_sessions(self) -> pd.DatetimeIndex:
+    @functools.cached_property
+    def non_sessions(self) -> pd.DatetimeIndex:
+        """Dates (UTC midnight) within answers range that are not sessions."""
         all_dates = pd.date_range(
             start=self.first_session, end=self.last_session, freq="D"
         )
         return all_dates.difference(self.sessions)
-
-    @property
-    def non_sessions(self) -> pd.DatetimeIndex:
-        """Dates (UTC midnight) within answers range that are not sessions."""
-        return self._non_sessions()
 
     @property
     def sessions_range_defined_by_non_sessions(
@@ -1233,8 +1170,24 @@ class Answers:
 
     # --- Evaluated sets of minutes ---
 
-    @functools.lru_cache(maxsize=4)
+    @functools.cached_property
     def _evaluate_trading_and_break_minutes(self) -> tuple[tuple, tuple]:
+        """Edge trading minutes of `sessions_sample`.
+
+        Returns
+        -------
+        tuple of tuple[tuple[trading_minutes], session]
+
+            tuple[trading_minutes] includes:
+                first two trading minutes of a session.
+                last two trading minutes of a session.
+                If breaks:
+                    last two trading minutes of session's am subsession.
+                    first two trading minutes of session's pm subsession.
+
+            session
+                Session of trading_minutes
+        """
         sessions = self.sessions_sample
         first_mins = self.first_minutes[sessions]
         first_mins_plus_one = first_mins + self.ONE_MIN
@@ -1305,7 +1258,7 @@ class Answers:
             session
                 Session of trading_minutes
         """
-        return self._evaluate_trading_and_break_minutes()[0]
+        return self._evaluate_trading_and_break_minutes[0]
 
     def trading_minutes_only(self) -> abc.Iterator[pd.Timestamp]:
         """Generator of trading minutes of `self.trading_minutes`."""
@@ -1333,7 +1286,7 @@ class Answers:
             session
                 Session of break_minutes
         """
-        return self._evaluate_trading_and_break_minutes()[1]
+        return self._evaluate_trading_and_break_minutes[1]
 
     def break_minutes_only(self) -> abc.Iterator[pd.Timestamp]:
         """Generator of break minutes of `self.break_minutes`."""
@@ -1341,28 +1294,7 @@ class Answers:
             for minute in mins:
                 yield minute
 
-    @functools.lru_cache(maxsize=4)
-    def _non_trading_minutes(
-        self,
-    ) -> tuple[tuple[tuple[pd.Timestamp], pd.Timestamp, pd.Timestamp]]:
-        non_trading_mins = []
-
-        sessions = self.sessions_sample
-        sessions = prev_sessions = sessions[sessions.isin(self.sessions_with_gap_after)]
-
-        next_sessions = self.sessions[self.sessions.get_indexer(sessions) + 1]
-
-        last_mins_plus_one = self.last_minutes[sessions] + self.ONE_MIN
-        first_mins_less_one = self.first_minutes[next_sessions] - self.ONE_MIN
-
-        for prev_session, next_session, mins_ in zip(
-            prev_sessions, next_sessions, zip(last_mins_plus_one, first_mins_less_one)
-        ):
-            non_trading_mins.append((mins_, prev_session, next_session))
-
-        return tuple(non_trading_mins)
-
-    @property
+    @functools.cached_property
     def non_trading_minutes(
         self,
     ) -> tuple[tuple[tuple[pd.Timestamp], pd.Timestamp, pd.Timestamp]]:
@@ -1389,7 +1321,22 @@ class Answers:
         --------
         break_minutes
         """
-        return self._non_trading_minutes()
+        non_trading_mins = []
+
+        sessions = self.sessions_sample
+        sessions = prev_sessions = sessions[sessions.isin(self.sessions_with_gap_after)]
+
+        next_sessions = self.sessions[self.sessions.get_indexer(sessions) + 1]
+
+        last_mins_plus_one = self.last_minutes[sessions] + self.ONE_MIN
+        first_mins_less_one = self.first_minutes[next_sessions] - self.ONE_MIN
+
+        for prev_session, next_session, mins_ in zip(
+            prev_sessions, next_sessions, zip(last_mins_plus_one, first_mins_less_one)
+        ):
+            non_trading_mins.append((mins_, prev_session, next_session))
+
+        return tuple(non_trading_mins)
 
     def non_trading_minutes_only(self) -> abc.Iterator[pd.Timestamp]:
         """Generator of non-trading minutes of `self.non_trading_minutes`."""
@@ -2310,34 +2257,32 @@ class ExchangeCalendarTestBase:
     def test_daylight_savings(self, default_calendar, daylight_savings_dates):
         # make sure there's no weirdness around calculating the next day's
         # session's open time.
-        if not daylight_savings_dates:
-            pytest.skip()
+        if daylight_savings_dates:
+            cal = default_calendar
+            d = dict(cal.open_times)
+            d[pd.Timestamp.min] = d.pop(None)
+            open_times = pd.Series(d)
 
-        cal = default_calendar
-        d = dict(cal.open_times)
-        d[pd.Timestamp.min] = d.pop(None)
-        open_times = pd.Series(d)
+            for date in daylight_savings_dates:
+                # where `next day` is first session of new daylight savings regime
+                next_day = cal.date_to_session(T(date), "next")
+                open_date = next_day + pd.Timedelta(days=cal.open_offset)
 
-        for date in daylight_savings_dates:
-            # where `next day` is first session of new daylight savings regime
-            next_day = cal.date_to_session(T(date), "next")
-            open_date = next_day + pd.Timedelta(days=cal.open_offset)
+                the_open = cal.schedule.loc[next_day].open
 
-            the_open = cal.schedule.loc[next_day].open
+                localized_open = the_open.tz_convert(cal.tz)
 
-            localized_open = the_open.tz_convert(cal.tz)
+                assert open_date.year == localized_open.year
+                assert open_date.month == localized_open.month
+                assert open_date.day == localized_open.day
 
-            assert open_date.year == localized_open.year
-            assert open_date.month == localized_open.month
-            assert open_date.day == localized_open.day
+                open_ix = open_times.index.searchsorted(date, side="right")
+                if open_ix == len(open_times):
+                    open_ix -= 1
 
-            open_ix = open_times.index.searchsorted(date, side="right")
-            if open_ix == len(open_times):
-                open_ix -= 1
-
-            open_time = open_times.iloc[open_ix]
-            assert open_time.hour == localized_open.hour
-            assert open_time.minute == localized_open.minute
+                open_time = open_times.iloc[open_ix]
+                assert open_time.hour == localized_open.hour
+                assert open_time.minute == localized_open.minute
 
     # Tests for properties covering all sessions.
 
@@ -2506,38 +2451,33 @@ class ExchangeCalendarTestBase:
 
     def test_regular_holidays_sample(self, default_calendar, regular_holidays_sample):
         """Test that calendar-specific sample of holidays are not sessions."""
-        if not regular_holidays_sample:
-            pytest.skip()
-        for holiday in regular_holidays_sample:
-            assert T(holiday) not in default_calendar.sessions
+        if regular_holidays_sample:
+            for holiday in regular_holidays_sample:
+                assert T(holiday) not in default_calendar.sessions
 
     def test_adhoc_holidays_sample(self, default_calendar, adhoc_holidays_sample):
         """Test that calendar-specific sample of holidays are not sessions."""
-        if not adhoc_holidays_sample:
-            pytest.skip()
-        for holiday in adhoc_holidays_sample:
-            assert T(holiday) not in default_calendar.sessions
+        if adhoc_holidays_sample:
+            for holiday in adhoc_holidays_sample:
+                assert T(holiday) not in default_calendar.sessions
 
     def test_non_holidays_sample(self, default_calendar, non_holidays_sample):
         """Test that calendar-specific sample of non-holidays are sessions."""
-        if not non_holidays_sample:
-            pytest.skip()
-        for date in non_holidays_sample:
-            assert T(date) in default_calendar.sessions
+        if non_holidays_sample:
+            for date in non_holidays_sample:
+                assert T(date) in default_calendar.sessions
 
     def test_late_opens_sample(self, default_calendar, late_opens_sample):
         """Test calendar-specific sample of sessions are included to late opens."""
-        if not late_opens_sample:
-            pytest.skip()
-        for date in late_opens_sample:
-            assert T(date) in default_calendar.late_opens
+        if late_opens_sample:
+            for date in late_opens_sample:
+                assert T(date) in default_calendar.late_opens
 
     def test_early_closes_sample(self, default_calendar, early_closes_sample):
         """Test calendar-specific sample of sessions are included to early closes."""
-        if not early_closes_sample:
-            pytest.skip()
-        for date in early_closes_sample:
-            assert T(date) in default_calendar.early_closes
+        if early_closes_sample:
+            for date in early_closes_sample:
+                assert T(date) in default_calendar.early_closes
 
     def test_early_closes_sample_time(
         self, default_calendar, early_closes_sample, early_closes_sample_time
@@ -2549,21 +2489,19 @@ class ExchangeCalendarTestBase:
         TEST RELIES ON ACCURACY OF CALENDAR PROPERTIES `closes`, `tz` and
         `close_offset`.
         """
-        if early_closes_sample_time is None:
-            pytest.skip()
-        cal, tz = default_calendar, default_calendar.tz
-        offset = pd.Timedelta(cal.close_offset, "D") + early_closes_sample_time
-        for date in early_closes_sample:
-            early_close = cal.closes[date].tz_convert(tz)
-            expected = pd.Timestamp(date, tz=tz) + offset
-            assert early_close == expected
+        if early_closes_sample_time is not None:
+            cal, tz = default_calendar, default_calendar.tz
+            offset = pd.Timedelta(cal.close_offset, "D") + early_closes_sample_time
+            for date in early_closes_sample:
+                early_close = cal.closes[date].tz_convert(tz)
+                expected = pd.Timestamp(date, tz=tz) + offset
+                assert early_close == expected
 
     def test_non_early_closes_sample(self, default_calendar, non_early_closes_sample):
         """Test calendar-specific sample of sessions are not early closes."""
-        if not non_early_closes_sample:
-            pytest.skip()
-        for date in non_early_closes_sample:
-            assert T(date) not in default_calendar.early_closes
+        if non_early_closes_sample:
+            for date in non_early_closes_sample:
+                assert T(date) not in default_calendar.early_closes
 
     def test_non_early_closes_sample_time(
         self, default_calendar, non_early_closes_sample, non_early_closes_sample_time
@@ -2575,14 +2513,13 @@ class ExchangeCalendarTestBase:
         TEST RELIES ON ACCURACY OF CALENDAR PROPERTIES `closes`, `tz` and
         `close_offset`.
         """
-        if non_early_closes_sample_time is None:
-            pytest.skip()
-        cal, tz = default_calendar, default_calendar.tz
-        offset = pd.Timedelta(cal.close_offset, "D") + non_early_closes_sample_time
-        for date in non_early_closes_sample:
-            close = cal.closes[date].tz_convert(tz)
-            expected_close = pd.Timestamp(date, tz=tz) + offset
-            assert close == expected_close
+        if non_early_closes_sample_time is not None:
+            cal, tz = default_calendar, default_calendar.tz
+            offset = pd.Timedelta(cal.close_offset, "D") + non_early_closes_sample_time
+            for date in non_early_closes_sample:
+                close = cal.closes[date].tz_convert(tz)
+                expected_close = pd.Timestamp(date, tz=tz) + offset
+                assert close == expected_close
 
     def test_late_opens(self, default_calendar, late_opens):
         """Test late opens.

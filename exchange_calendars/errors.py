@@ -16,8 +16,6 @@ from __future__ import annotations
 import typing
 import pandas as pd
 
-from exchange_calendars.utils.memoize import lazyval
-
 if typing.TYPE_CHECKING:
     from exchange_calendars import ExchangeCalendar
 
@@ -27,10 +25,6 @@ class CalendarError(Exception):
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
-
-    @lazyval
-    def message(self):
-        return str(self)
 
     def __str__(self):
         msg = self.msg.format(**self.kwargs)
@@ -65,19 +59,6 @@ class CyclicCalendarAlias(CalendarError):
     msg = "Cycle in calendar aliases: [{cycle}]"
 
 
-class ScheduleFunctionWithoutCalendar(CalendarError):
-    """
-    Raised when schedule_function is called but there is not a calendar to be
-    used in the construction of an event rule.
-    """
-
-    # TODO update message when new TradingSchedules are built
-    msg = (
-        "To use schedule_function, the TradingAlgorithm must be running on an "
-        "ExchangeTradingSchedule, rather than {schedule}."
-    )
-
-
 class NoSessionsError(CalendarError):
     """Raised if a requested calendar would have no sessions.
 
@@ -90,17 +71,6 @@ class NoSessionsError(CalendarError):
         "The requested ExchangeCalendar, {calendar_name}, cannot be created as"
         " there would be no sessions between the requested `start` ('{start}')"
         " and `end` ('{end}') dates."
-    )
-
-
-class ScheduleFunctionInvalidCalendar(CalendarError):
-    """
-    Raised when schedule_function is called with an invalid calendar argument.
-    """
-
-    msg = (
-        "Invalid calendar '{given_calendar}' passed to schedule_function. "
-        "Allowed options are {allowed_calendars}."
     )
 
 

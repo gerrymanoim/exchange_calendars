@@ -20,7 +20,7 @@ import warnings
 from abc import ABC, abstractmethod
 import collections
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
@@ -50,7 +50,6 @@ from .calendar_helpers import (
     parse_trading_minute,
     previous_divider_idx,
 )
-from .utils.memoize import lazyval
 from .utils.pandas_utils import days_at_time
 
 NaTType = type(pd.NaT)
@@ -277,7 +276,7 @@ class ExchangeCalendar(ABC):
         self,
         start: Date | None = None,
         end: Date | None = None,
-        side: str | None = None,
+        side: Literal["left", "right", "both", "neither"] | None = None,
     ):
         side = side if side is not None else self.default_side()
         if side not in self.valid_sides():
@@ -658,7 +657,7 @@ class ExchangeCalendar(ABC):
 
     # Methods and properties that define calendar (continued...).
 
-    @lazyval
+    @functools.cached_property
     def day(self) -> CustomBusinessDay:
         return CustomBusinessDay(
             holidays=self.adhoc_holidays,
@@ -711,14 +710,10 @@ class ExchangeCalendar(ABC):
         """All calendar sessions."""
         return self.schedule.index
 
-    @functools.lru_cache(maxsize=1)
-    def _sessions_nanos(self) -> np.ndarray:
-        return self.sessions.values.astype("int64")
-
-    @property
+    @functools.cached_property
     def sessions_nanos(self) -> np.ndarray:
         """All calendar sessions as nano seconds."""
-        return self._sessions_nanos()
+        return self.sessions.values.astype("int64")
 
     @property
     def opens(self) -> pd.Series:
@@ -780,49 +775,33 @@ class ExchangeCalendar(ABC):
         """
         return self.schedule.break_end
 
-    @functools.lru_cache(maxsize=1)
-    def _first_minutes_nanos(self) -> np.ndarray:
+    @functools.cached_property
+    def first_minutes_nanos(self) -> np.ndarray:
         if self.side in self._LEFT_SIDES:
             return self.opens_nanos
         else:
             return one_minute_later(self.opens_nanos)
 
-    @property
-    def first_minutes_nanos(self) -> np.ndarray:
-        return self._first_minutes_nanos()
-
-    @functools.lru_cache(maxsize=1)
-    def _last_minutes_nanos(self) -> np.ndarray:
+    @functools.cached_property
+    def last_minutes_nanos(self) -> np.ndarray:
         if self.side in self._RIGHT_SIDES:
             return self.closes_nanos
         else:
             return one_minute_earlier(self.closes_nanos)
 
-    @property
-    def last_minutes_nanos(self) -> np.ndarray:
-        return self._last_minutes_nanos()
-
-    @functools.lru_cache(maxsize=1)
-    def _last_am_minutes_nanos(self) -> np.ndarray:
+    @functools.cached_property
+    def last_am_minutes_nanos(self) -> np.ndarray:
         if self.side in self._RIGHT_SIDES:
             return self.break_starts_nanos
         else:
             return one_minute_earlier(self.break_starts_nanos)
 
-    @property
-    def last_am_minutes_nanos(self) -> np.ndarray:
-        return self._last_am_minutes_nanos()
-
-    @functools.lru_cache(maxsize=1)
-    def _first_pm_minutes_nanos(self) -> np.ndarray:
+    @functools.cached_property
+    def first_pm_minutes_nanos(self) -> np.ndarray:
         if self.side in self._LEFT_SIDES:
             return self.break_ends_nanos
         else:
             return one_minute_later(self.break_ends_nanos)
-
-    @property
-    def first_pm_minutes_nanos(self) -> np.ndarray:
-        return self._first_pm_minutes_nanos()
 
     def _minutes_as_series(self, nanos: np.ndarray, name: str) -> pd.Series:
         """Convert trading minute nanos to pd.Series."""
@@ -852,7 +831,9 @@ class ExchangeCalendar(ABC):
 
     # Properties covering all minutes.
 
-    def _minutes(self, side: str) -> pd.DatetimeIndex:
+    def _minutes(
+        self, side: Literal["left", "right", "both", "neither"]
+    ) -> pd.DatetimeIndex:
         return pd.DatetimeIndex(
             compute_minutes(
                 self.opens_nanos,
@@ -864,12 +845,12 @@ class ExchangeCalendar(ABC):
             tz=UTC,
         )
 
-    @lazyval
+    @functools.cached_property
     def minutes(self) -> pd.DatetimeIndex:
         """All trading minutes."""
         return self._minutes(self.side)
 
-    @lazyval
+    @functools.cached_property
     def minutes_nanos(self) -> np.ndarray:
         """All trading minutes as nanoseconds."""
         return self.minutes.values.astype(np.int64)
@@ -1217,7 +1198,7 @@ class ExchangeCalendar(ABC):
     def date_to_session(
         self,
         date: Date,
-        direction: str = "none",  # when min 3.8, Literal["none", "previous", "next"]
+        direction: Literal["next", "previous", "none"] = "none",
         _parse: bool = True,
     ) -> pd.Timestamp:
         """Return a session corresponding to a given date.
@@ -1554,11 +1535,10 @@ class ExchangeCalendar(ABC):
                 raise errors.RequestedMinuteOutOfBounds(self, True) from None
         return self.minutes[idx]
 
-    # NOTE: when min to 3.8, direction annotation to Literal["next", "previous", "none"]
     def minute_to_session(
         self,
         minute: Minute,
-        direction: str = "next",
+        direction: Literal["next", "previous", "none"] = "next",
         _parse: bool = True,
     ) -> pd.Timestamp:
         """Get session corresponding with a trading or break minute.
@@ -1726,9 +1706,11 @@ class ExchangeCalendar(ABC):
         count -= 1
         return self.session_offset(base_session, count, _parse=False)
 
-    # NOTE: when min to 3.8, direction annotation to Literal["next", "previous", "none"]
     def minute_to_trading_minute(
-        self, minute: Minute, direction: str = "none", _parse: bool = True
+        self,
+        minute: Minute,
+        direction: Literal["next", "previous", "none"] = "none",
+        _parse: bool = True,
     ) -> pd.Timestamp:
         """Resolve a minute to a trading minute.
 
@@ -2211,8 +2193,7 @@ class ExchangeCalendar(ABC):
         end: Date | Minute,
         period: pd.Timedelta | str,
         intervals: bool = True,
-        # TODO Literal["left", "right", "both", "neither"] when min python 3.8...
-        closed: str = "left",
+        closed: Literal["left", "right", "both", "neither"] = "left",
         force_close: bool = False,
         force_break_close: bool = False,
         force: bool | None = None,
