@@ -40,10 +40,19 @@ EuropeanLabourDay = european_labour_day()
 # starting in 2015.
 WhitMonday2007AdHoc = Timestamp("2007-05-28")
 
-WhitMonday = whit_monday(start_date="2015-01-01")
+WhitMonday = whit_monday(
+    start_date="2015-01-01",
+    # In 2022 regular trading took place
+    end_date="2022-01-01"
+)
 
 DayOfGermanUnity = Holiday(
-    "Day of German Unity", month=10, day=3, start_date="2014-01-01"
+    "Day of German Unity",
+    month=10,
+    day=3,
+    start_date="2014-01-01",
+    # In 2022 regular trading took place
+    end_date="2022-01-01"
 )
 
 # Reformation Day was a German national holiday in 2017.

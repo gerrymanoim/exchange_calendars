@@ -50,11 +50,14 @@ class TestXETRCalendar(ExchangeCalendarTestBase):
             # Whit Monday
             "2006-06-05",  # not observed prior to 2007 (observed in 2007)
             "2008-05-12",  # and not observed from 2008 through 2014
+            "2022-06-06",  # not observed in 2022
             #
             # Reformation Day observed only in 2017, ensure not a holiday
             # in surrounding years.
             "2016-10-31",
             "2018-10-31",
+            # German unity day
+            "2022-10-03",  # not observed in 2022
         ]
 
     @pytest.fixture
