@@ -413,8 +413,7 @@ class TestTradingIndex:
         """Dict of answers for tested calendars, key as name, value as Answers."""
         d = {}
         for name in self.calendar_names:
-            cal_cls = calendar_utils._default_calendar_factories[name]
-            d[name] = Answers(name, cal_cls.default_side())
+            d[name] = Answers(name, side="left")
         return d
 
     @pytest.fixture(scope="class")

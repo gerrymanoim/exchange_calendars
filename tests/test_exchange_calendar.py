@@ -26,7 +26,6 @@ import pandas.testing as tm
 import pytest
 import pytz
 from pytz import UTC
-from toolz import concat
 
 from exchange_calendars import errors
 from exchange_calendars.calendar_utils import (
@@ -109,18 +108,23 @@ class TestCalendarRegistration:
 
 
 def test_default_calendars():
+    """Test dispatcher and calendar default values."""
     dispatcher = ExchangeCalendarDispatcher(
         calendars={},
         calendar_factories=_default_calendar_factories,
         aliases=_default_calendar_aliases,
     )
-    # These are ordered aliases first, so that we can deregister the
-    # canonical factories when we're done with them, and we'll be done with
-    # them after they've been used by all aliases and by canonical name.
-    for name in concat([_default_calendar_aliases, _default_calendar_factories]):
-        assert (
-            dispatcher.get_calendar(name) is not None
-        ), f"get_calendar({name}) returned None"
+    for alias in _default_calendar_aliases:
+        cal = dispatcher.get_calendar(alias)
+        assert cal is not None
+        dispatcher.deregister_calendar(alias)
+
+    for name, cal_cls in _default_calendar_factories.items():
+        cal = dispatcher.get_calendar(name)
+        assert cal is not None
+        assert cal.side == "left"
+        assert cal.first_session >= cal_cls.default_start()
+        assert cal.last_session <= cal_cls.default_end()
         dispatcher.deregister_calendar(name)
 
 
@@ -179,8 +183,10 @@ def get_csv(name: str) -> pd.DataFrame:
         parse_dates=[0, 1, 2, 3, 4],
         infer_datetime_format=True,
     )
+    # Necessary for csv saved prior to v4.0
     if df.index.tz is not None:
         df.index = df.index.tz_convert(None)
+    # Necessary for csv saved prior to v4.0
     for col in df:
         if df[col].dt.tz is None:
             df[col] = df[col].dt.tz_localize(UTC)
@@ -1927,12 +1933,9 @@ class ExchangeCalendarTestBase:
         yield (df.close == df.open.shift(-1)).any()
 
     @pytest.fixture(scope="class")
-    def default_side(self, has_24h_session) -> abc.Iterator[str]:
+    def default_side(self) -> abc.Iterator[str]:
         """Default calendar side."""
-        if has_24h_session:
-            yield "left"
-        else:
-            yield "both"
+        yield "left"
 
     @pytest.fixture(scope="class")
     def sides(self, has_24h_session) -> abc.Iterator[list[str]]:
