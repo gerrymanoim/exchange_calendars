@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from .calendar_helpers import parse_date, Date
 from .always_open import AlwaysOpenCalendar
 from .errors import CalendarNameCollision, CyclicCalendarAlias, InvalidCalendarName
@@ -202,7 +204,7 @@ class ExchangeCalendarDispatcher(object):
         name: str,
         start: Date | None = None,
         end: Date | None = None,
-        side: str | None = None,
+        side: Literal["left", "right", "both", "neither"] | None = None,
     ) -> ExchangeCalendar:
         """Get exchange calendar with a given name.
 

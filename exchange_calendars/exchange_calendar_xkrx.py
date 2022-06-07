@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 from datetime import time
+import functools
 
 import pandas as pd
 from pandas.tseries.holiday import Holiday
@@ -30,7 +31,6 @@ from .xkrx_holidays import (
 )
 from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 from .pandas_extensions.korean_holiday import next_business_day
-from .utils.memoize import lazyval
 
 
 class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
@@ -347,7 +347,7 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
             end,
         )
 
-    @lazyval
+    @functools.cached_property
     def day(self):
         if self.special_weekmasks:
             return MultipleWeekmaskCustomBusinessDay(
