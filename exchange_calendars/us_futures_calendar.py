@@ -66,7 +66,7 @@ class QuantopianUSFuturesCalendar(ExchangeCalendar):
         """
         start = self.execution_time_from_open(self.session_first_minute(session_label))
         end = self.execution_time_from_close(self.session_last_minute(session_label))
-        return self.minutes_in_range(start_minute=start, end_minute=end)
+        return self.minutes_in_range(start=start, end=end)
 
     def execution_minutes_for_sessions_in_range(self, start, stop):
         minutes = self.execution_minutes_for_session

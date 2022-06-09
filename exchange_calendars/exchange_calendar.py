@@ -1145,7 +1145,7 @@ class ExchangeCalendar(ABC):
             Trading minutes for `session`.
         """
         first, last = self.session_first_last_minute(session, _parse=_parse)
-        return self.minutes_in_range(start_minute=first, end_minute=last)
+        return self.minutes_in_range(start=first, end=last)
 
     def session_offset(
         self, session: Session, count: int, _parse: bool = True
@@ -1900,21 +1900,21 @@ class ExchangeCalendar(ABC):
         return slice(slice_start, slice_end)
 
     def minutes_in_range(
-        self, start_minute: Minute, end_minute: Minute, _parse: bool = True
+        self, start: Minute, end: Minute, _parse: bool = True
     ) -> pd.DatetimeIndex:
         """Return all trading minutes between given minutes.
 
         Parameters
         ----------
-        start_minute
+        start
             Minute representing start of desired range. Can be a trading
             minute or non-trading minute.
 
-        end_minute
+        end
             Minute representing end of desired range. Can be a trading
             minute or non-trading minute.
         """
-        slc = self._get_minutes_slice(start_minute, end_minute, _parse)
+        slc = self._get_minutes_slice(start, end, _parse)
         return self.minutes[slc]
 
     def minutes_window(
