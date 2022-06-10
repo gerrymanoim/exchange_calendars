@@ -6,7 +6,7 @@ on:
 jobs:
   build-n-publish:
     name: Build and publish Python 🐍 distributions 📦 to TestPyPI
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.10
@@ -14,26 +14,32 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Build sdist
-      run: python setup.py sdist
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build
+
+    - name: Build package
+      run: python -m build
 
     - name: Publish distribution 📦 to Test PyPI
-      uses: pypa/gh-action-pypi-publish@master
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
+        user: __token__
         password: ${{ secrets.test_pypi_password }}
         repository_url: https://test.pypi.org/legacy/
         skip_existing: true
 
     - name: Install from test and test running
       run: |
-        python -m pip install --upgrade pip
         pip install --extra-index-url https://test.pypi.org/simple exchange_calendars
         python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
         pip uninstall -y exchange_calendars
 
     - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@master
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
+        user: __token__
         password: ${{ secrets.pypi_password }}
 
     - name: Install and test running
