@@ -1,5 +1,6 @@
 name: Publish Python 🐍 distributions 📦 to PyPI
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
@@ -36,13 +37,13 @@ jobs:
         python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
         pip uninstall -y exchange_calendars
 
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
+    # - name: Publish distribution 📦 to PyPI
+    #   uses: pypa/gh-action-pypi-publish@release/v1
+    #   with:
+    #     user: __token__
+    #     password: ${{ secrets.pypi_password }}
 
-    - name: Install and test running
-      run: |
-        pip install exchange_calendars
-        python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
+    # - name: Install and test running
+    #   run: |
+    #     pip install exchange_calendars
+    #     python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
