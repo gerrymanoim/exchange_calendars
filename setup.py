@@ -18,8 +18,7 @@ from setuptools import find_packages, setup
 import versioneer
 
 DISTNAME = "exchange_calendars"
-DESCRIPTION = """exchange_calendars is a Python library with \
-securities exchange calendars"""
+DESCRIPTION = "Calendars for securities exchanges"
 
 AUTHOR = "Gerry Manoim"
 AUTHOR_EMAIL = "gerrymanoim@gmail.com"
@@ -27,7 +26,7 @@ URL = "https://github.com/gerrymanoim/exchange_calendars"
 LICENSE = "Apache License, Version 2.0"
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
