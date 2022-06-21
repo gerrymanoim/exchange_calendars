@@ -13,13 +13,14 @@
 # limitations under the License.
 from __future__ import annotations
 
-import datetime
-import functools
-import warnings
 from abc import ABC, abstractmethod
 import collections
 from collections.abc import Sequence, Callable
+import datetime
+import functools
+import operator
 from typing import TYPE_CHECKING, Literal
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -1308,6 +1309,7 @@ class ExchangeCalendar(ABC):
         See Also
         --------
         is_open_on_minute
+        is_open_at_time
         """
         if _parse:
             minute = parse_timestamp(minute, calendar=self)
@@ -1367,6 +1369,7 @@ class ExchangeCalendar(ABC):
         See Also
         --------
         is_trading_minute
+        is_open_at_time
         """
         if _parse:
             minute = parse_timestamp(minute, "minute", self)
@@ -1377,6 +1380,95 @@ class ExchangeCalendar(ABC):
         else:
             # not a trading minute although should return True if in break
             return self.is_break_minute(minute, _parse=False)
+
+    def is_open_at_time(
+        self,
+        timestamp: pd.Timestamp,
+        side: Literal["left", "right", "both", "neither"] = "left",
+        ignore_breaks: bool = False,
+    ) -> bool:
+        """Query if exchange is open at a given timestamp.
+
+        Note: method differs from `is_trading_minute` and
+        `is_open_on_minute` in that it does not consider if the market is
+        open over an evaluated minute, but rather as at a specific
+        instance that can be of any resolution.
+
+        Parameters
+        ----------
+        timestamp
+            Timestamp being queried.
+
+            Can have any resolution (i.e. can be defined with second and
+            more accurate components).
+
+            If timezone naive then will be assumed as representing UTC.
+
+        side
+            Determines whether the exchange will be considered open or
+            closed on a session's open, close, break-start and break-end:
+
+                "left" - treat exchange as open on session open and
+                any break-end, treat as closed on session close and any
+                break-start.
+
+                "right" - treat exchange as open on session close and
+                any break-start, treat as closed on session open and any
+                break-end.
+
+                "both" (default) - treat exchange as open on all of session
+                open, close and any break-start and break-end.
+
+                "neither" - treat exchange as closed on all of session
+                open, close and any break-start and break-end.
+
+        ignore_breaks
+            Should exchange be considered open during any break?
+                True - treat exchange as open during any break.
+                False - treat exchange as closed during any break.
+
+        Returns
+        -------
+        bool
+            Boolean indicting if exchange is open at time.
+
+        See Also
+        --------
+        is_trading_minute
+        is_open_on_minute
+        """
+        ts = timestamp
+        if not isinstance(ts, pd.Timestamp):
+            raise TypeError(
+                "`timestamp` expected to receive type pd.Timestamp although"
+                f" got type {type(ts)}."
+            )
+
+        if ts.tz is not pytz.UTC:
+            ts = ts.tz_localize("UTC") if ts.tz is None else ts.tz_convert("UTC")
+
+        if self._minute_oob(ts):
+            raise errors.MinuteOutOfBounds(self, ts, "timestamp")
+
+        op_left = operator.le if side in self._LEFT_SIDES else operator.lt
+        op_right = operator.le if side in self._RIGHT_SIDES else operator.lt
+
+        nano = ts.value
+        if not self.has_break or ignore_breaks:
+            # only one check requried
+            bv = op_left(self.opens_nanos, nano) & op_right(nano, self.closes_nanos)
+            return bv.any()
+
+        break_starts_nanos = self.break_starts_nanos.copy()
+        bv_missing = self.break_starts.isna()
+        close_replacement = self.closes_nanos[bv_missing]
+        break_starts_nanos[bv_missing] = close_replacement
+        break_ends_nanos = self.break_ends_nanos.copy()
+        break_ends_nanos[bv_missing] = close_replacement
+
+        bv_am = op_left(self.opens_nanos, nano) & op_right(nano, break_starts_nanos)
+        bv_pm = op_left(break_ends_nanos, nano) & op_right(nano, self.closes_nanos)
+        return (bv_am | bv_pm).any()
 
     def next_open(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
         """Return next open that follows a given minute.

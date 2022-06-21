@@ -2810,6 +2810,111 @@ class ExchangeCalendarTestBase:
             rtrn = f(break_min)
             assert rtrn is False
 
+    def test_is_open_at_time(self, all_calendars_with_answers, one_minute):
+        cal, ans = all_calendars_with_answers
+
+        one_min = one_minute
+        one_sec = pd.Timedelta(1, "S")
+
+        sides = ("left", "both", "right", "neither")
+
+        # verify raises expected errors
+        oob_time = ans.first_minute - one_sec
+        for side in sides:
+            with pytest.raises(errors.MinuteOutOfBounds):
+                cal.is_open_at_time(oob_time, side, ignore_breaks=True)
+
+        match = (
+            "`timestamp` expected to receive type pd.Timestamp although got type"
+            " <class 'str'>."
+        )
+        with pytest.raises(TypeError, match=match):
+            cal.is_open_at_time("2022-06-21 14:22", "left", ignore_breaks=True)
+
+        # verify expected returns
+        bools = (True, False)
+
+        def get_returns(
+            ts: pd.Timestamp,
+            ignore_breaks: bool,
+        ) -> list[bool]:
+            return [cal.is_open_at_time(ts, side, ignore_breaks) for side in sides]
+
+        gap_before = ans.sessions_with_gap_before
+        gap_after = ans.sessions_with_gap_after
+
+        for session in ans.sessions_sample:
+            ts = ans.opens[session]
+            expected = [True, True, False, False]
+            expected_no_gap = [True, True, True, False]
+            if ts > ans.first_minute:
+                for ignore in bools:
+                    expected_ = expected if session in gap_before else expected_no_gap
+                    assert get_returns(ts, ignore) == expected_
+
+                for ignore, ts_ in itertools.product(
+                    bools, (ts - one_sec, ts - one_min)
+                ):
+                    if session in gap_before:
+                        assert not any(get_returns(ts_, ignore))
+                    else:
+                        assert all(get_returns(ts_, ignore))
+
+                for ignore, ts_ in itertools.product(
+                    bools, (ts + one_sec, ts + one_min)
+                ):
+                    assert all(get_returns(ts_, ignore))
+
+            if ans.session_has_break(session):
+                ts = ans.break_ends[session]
+                assert get_returns(ts, ignore_breaks=False) == expected
+                assert all(get_returns(ts, ignore_breaks=True))
+
+                for ignore, ts_ in itertools.product(
+                    bools, (ts + one_sec, ts + one_min)
+                ):
+                    assert all(get_returns(ts_, ignore))
+
+                for ts_ in (ts - one_sec, ts - one_min):
+                    assert not any(get_returns(ts_, ignore_breaks=False))
+                    assert all(get_returns(ts_, ignore_breaks=True))
+
+            ts = ans.closes[session]
+            expected = [False, True, True, False]
+            expected_no_gap = [True, True, True, False]
+            if ts < ans.last_minute:
+                for ignore in bools:
+                    expected_ = expected if session in gap_after else expected_no_gap
+                    # check interprets tz-naive timestamp as UTC
+                    assert get_returns(ts.astimezone(None), ignore) == expected_
+
+                for ignore, ts_ in itertools.product(
+                    bools, (ts - one_sec, ts - one_min)
+                ):
+                    assert all(get_returns(ts_, ignore))
+
+                for ignore, ts_ in itertools.product(
+                    bools, (ts + one_sec, ts + one_min)
+                ):
+                    if session in gap_after:
+                        assert not any(get_returns(ts_, ignore))
+                    else:
+                        assert all(get_returns(ts_.astimezone(None), ignore))
+
+            if ans.session_has_break(session):
+                ts = ans.break_starts[session]
+                assert get_returns(ts, ignore_breaks=False) == expected
+                assert all(get_returns(ts, ignore_breaks=True))
+
+                for ignore, ts_ in itertools.product(
+                    bools, (ts - one_sec, ts - one_min)
+                ):
+                    assert all(get_returns(ts_, ignore))
+
+                for ts_ in (ts + one_sec, ts + one_min):
+                    assert not any(get_returns(ts_, ignore_breaks=False))
+                    assert all(get_returns(ts_, ignore_breaks=True))
+
     def test_prev_next_open_close(self, default_calendar_with_answers):
         """Test methods that return previous/next open/close.
 
