@@ -20,8 +20,9 @@ Version 4.0 completes the transition to a more consistent interface across the p
 * The following schedule columns were renamed:
     * 'market_open' renamed as 'open'.
     * 'market_close' renamed as 'close'.
-* Default calendar 'side' for all calendars is now "left" (previously "right" for 24-hour calendars and "both" for all others).
+* Default calendar 'side' for all calendars is now "left" (previously "right" for 24-hour calendars and "both" for all others). This **changes the minutes that are considered trading minutes by default** (see [minutes tutorial](docs/tutorials/minutes.ipynb) for an explanation of trading minutes).
 * The 'count' parameter of `sessions_window` and `minutes_window` methods now reflects the window length (previously window length + 1).
+* New `is_open_at_time` calendar method to evaluate if an exchange is open as at a specific instance (as opposed to over an evaluated minute).
 * The minimum Python version supported is now 3.8 (previously 3.7).
 * Parameters have been renamed for some methods (list [here](#Methods-with-a-parameter-renamed-in-40))
 * The following methods have been deprecated:
