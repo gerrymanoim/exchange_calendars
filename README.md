@@ -32,7 +32,7 @@ Version 4.0 completes the transition to a more consistent interface across the p
 
 See the [4.0 release todo](https://github.com/gerrymanoim/exchange_calendars/issues/61) for a full list of changes and corresponding PRs.
 
-Please offer any feedback at the [4.0 discussion](https://github.com/gerrymanoim/exchange_calendars/discussions/200). <!-- #### UPDATE LINK #### -->
+Please offer any feedback at the [4.0 discussion](https://github.com/gerrymanoim/exchange_calendars/discussions/202).
 
 ## Installation
 
