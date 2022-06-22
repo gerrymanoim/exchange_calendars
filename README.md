@@ -9,11 +9,13 @@ Calendars for more than [50 exchanges](#Calendars) available out-the-box! If you
 ### Notice: **[market_prices](https://github.com/maread99/market_prices) - the new library for prices data!**
 Much of the recent development of `exchange_calendars` has been driven by the new [`market_prices`](https://github.com/maread99/market_prices) library. Check it out if you like the idea of using `exchange_calendars` to create meaningful OHLCV datasets. Works out-the-box with freely available data!
 
-## Notice: **4.0 released** (June 2022)
+## Notice: **v4 released** (June 2022)
+
+**The earliest stable version of v4 is 4.0.1** (not 4.0).
 
 ### What's changed?
 
-Version 4.0 completes the transition to a more consistent interface across the package. The most significant changes are:
+Version 4.0.1 completes the transition to a more consistent interface across the package. The most significant changes are:
 
 * **Sessions are now timezone-naive** (previously UTC).
 * Schedule columns now have timezone set as UTC (whilst the times have always been defined in terms of UTC, previously the dtype was timezone-naive).
@@ -32,7 +34,7 @@ Version 4.0 completes the transition to a more consistent interface across the p
 
 See the [4.0 release todo](https://github.com/gerrymanoim/exchange_calendars/issues/61) for a full list of changes and corresponding PRs.
 
-Please offer any feedback at the [4.0 discussion](https://github.com/gerrymanoim/exchange_calendars/discussions/202).
+Please offer any feedback at the [v4 discussion](https://github.com/gerrymanoim/exchange_calendars/discussions/202).
 
 ## Installation
 

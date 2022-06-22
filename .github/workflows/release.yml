@@ -44,5 +44,5 @@ jobs:
 
     - name: Install and test running
       run: |
-        pip install exchange_calendars
-        # python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
+        pip install --index-url https://pypi.org/simple exchange_calendars
+        python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
