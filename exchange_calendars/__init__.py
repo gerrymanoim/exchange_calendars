@@ -41,7 +41,7 @@ __all__ = [
     "ExchangeCalendar",
 ]
 
-from ._version import get_versions
+from importlib.metadata import version
 
-__version__ = get_versions()["version"]
-del get_versions
+__version__ = version("exchange_calendars")
+del version

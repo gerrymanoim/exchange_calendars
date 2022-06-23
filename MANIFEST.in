@@ -1,7 +1,3 @@
-include LICENSE
-
-include etc/requirements*.txt
-
-include tests/resources *.csv
-include versioneer.py
 include exchange_calendars/_version.py
+recursive-exclude .devcontainer *
+recursive-exclude .github *

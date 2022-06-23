@@ -1,6 +1,66 @@
 [build-system]
-requires = ["setuptools>=43.0.0", "wheel"]
+requires = ["setuptools>=43.0.0", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "exchange_calendars"
+description = "Calendars for securities exchanges"
+authors = [
+  {email = "gerrymanoim@gmail.com"},
+  {name = "Gerry Manoim"}
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["finance", "security", "calendar", "exchange"]
+requires-python = "~=3.8"
+classifiers = [
+	"Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "pandas >= 1.1",
+    "pyluach",
+    "python-dateutil",
+    "pytz",
+    "toolz",
+    "korean_lunar_calendar",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = [
+    "flake8",
+    "hypothesis",
+    "pytest",
+    "pytest-benchmark",
+    "pytest-xdist",
+    "pip-tools",
+]
+
+[project.scripts]
+ecal = "exchange_calendars.ecal:main"
+
+[project.urls]
+homepage = "https://github.com/gerrymanoim/exchange_calendars"
+documentation = "https://github.com/gerrymanoim/exchange_calendars/tree/master/docs"
+"Issue Tracker" = "https://github.com/gerrymanoim/exchange_calendars/issues"
+"Source Code" = "https://github.com/gerrymanoim/exchange_calendars"
+
+[tool.setuptools.packages.find]
+include = ["exchange_calendars", "exchange_calendars.*"]
+
+[tool.setuptools_scm]
+write_to = "exchange_calendars/_version.py"
 
 [tool.black]
 line-length = 88
