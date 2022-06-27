@@ -59,9 +59,7 @@ Get a calendar:
 
 ```python
 >>> xnys = xcals.get_calendar("XNYS")  # New York Stock Exchange
->>> xhkg = xcals.get_calendar(
-        "XHKG", start="2018-01", end="2022-12-31",  # cover only specific period
-)  # Hong Kong Stock Exchange
+>>> xhkg = xcals.get_calendar("XHKG")  # Hong Kong Stock Exchange
 ```
 Query the schedule:
 

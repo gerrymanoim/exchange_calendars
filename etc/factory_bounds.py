@@ -1,7 +1,7 @@
 """Classes and functions to explore the bounds of calendar factories.
 
-Jul 21. Module written (prior to implementation of `bound_start`,
-`bound_end`) to explore the bounds of calendar factories. Provides for
+Jul 21. Module written (prior to implementation of `bound_min`,
+`bound_max`) to explore the bounds of calendar factories. Provides for
 evaluating the earliest start date and latest end date for which a
 calendar can be instantiated without raising an error. Also records errors
 raised when dates are passed beyond these limits.

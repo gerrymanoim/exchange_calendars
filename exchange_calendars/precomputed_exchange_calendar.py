@@ -34,21 +34,21 @@ class PrecomputedExchangeCalendar(ExchangeCalendar):
         return np.max(cls.precomputed_holidays()).year
 
     @classmethod
-    def bound_start(cls) -> pd.Timestamp:
+    def bound_min(cls) -> pd.Timestamp:
         return pd.Timestamp(f"{cls._earliest_precomputed_year()}-01-01")
 
     @classmethod
-    def bound_end(cls) -> pd.Timestamp:
+    def bound_max(cls) -> pd.Timestamp:
         return pd.Timestamp(f"{cls._latest_precomputed_year()}-12-31")
 
-    def _bound_start_error_msg(self, start: pd.Timestamp) -> str:
+    def _bound_min_error_msg(self, start: pd.Timestamp) -> str:
         return (
             f"The {self.name} holidays are only recorded back to the year"
             f" {self._earliest_precomputed_year()}, cannot instantiate the"
             f" {self.name} calendar from {start}."
         )
 
-    def _bound_end_error_msg(self, end: pd.Timestamp) -> str:
+    def _bound_max_error_msg(self, end: pd.Timestamp) -> str:
         return (
             f"The {self.name} holidays are only recorded to the year"
             f" {self._latest_precomputed_year()}, cannot instantiate the"

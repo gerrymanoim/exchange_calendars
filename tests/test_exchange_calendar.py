@@ -2004,10 +2004,10 @@ class ExchangeCalendarTestBase:
         """Names of methods that can be overriden by a subclass."""
         yield [
             "name",
-            "bound_start",
-            "bound_end",
-            "_bound_start_error_msg",
-            "_bound_end_error_msg",
+            "bound_min",
+            "bound_max",
+            "_bound_min_error_msg",
+            "_bound_max_error_msg",
             "default_start",
             "default_end",
             "tz",
@@ -2219,8 +2219,8 @@ class ExchangeCalendarTestBase:
             with pytest.raises(errors.NoSessionsError, match=re.escape(error_msg)):
                 calendar_cls(start=start, end=end)
 
-    def test_bound_start(self, calendar_cls, start_bound, today):
-        assert calendar_cls.bound_start() == start_bound
+    def test_bound_min(self, calendar_cls, start_bound, today):
+        assert calendar_cls.bound_min() == start_bound
         if start_bound is not None:
             cal = calendar_cls(start_bound, today)
             assert isinstance(cal, ExchangeCalendar)
@@ -2233,8 +2233,8 @@ class ExchangeCalendarTestBase:
             cal = calendar_cls(pd.Timestamp("1902-01-01"), today)
             assert isinstance(cal, ExchangeCalendar)
 
-    def test_bound_end(self, calendar_cls, end_bound, today):
-        assert calendar_cls.bound_end() == end_bound
+    def test_bound_max(self, calendar_cls, end_bound, today):
+        assert calendar_cls.bound_max() == end_bound
         if end_bound is not None:
             cal = calendar_cls(today, end_bound)
             assert isinstance(cal, ExchangeCalendar)
@@ -3819,6 +3819,11 @@ class ExchangeCalendarTestBase:
         for name in []:
             with pytest.warns(FutureWarning):
                 getattr(cal, name)
+
+        # deprecated class methods
+        for name in ["bound_start", "bound_end"]:
+            with pytest.warns(FutureWarning):
+                getattr(cal, name)()
 
         # deprecated methods that take a single 'session' argument.
         session = ans.sessions[-5]

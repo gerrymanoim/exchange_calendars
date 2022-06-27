@@ -601,5 +601,5 @@ class XSHGExchangeCalendar(PrecomputedExchangeCalendar):
         return precomputed_shanghai_holidays
 
     @classmethod
-    def bound_start(cls) -> pd.Timestamp:
+    def bound_min(cls) -> pd.Timestamp:
         return pd.Timestamp("1990-12-03")

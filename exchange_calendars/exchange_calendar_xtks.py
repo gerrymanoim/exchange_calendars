@@ -88,7 +88,7 @@ class XTKSExchangeCalendar(ExchangeCalendar):
     close_times = ((None, time(15)),)
 
     @classmethod
-    def bound_start(cls) -> pd.Timestamp:
+    def bound_min(cls) -> pd.Timestamp:
         # not tracking holiday info farther back than 1997
         return pd.Timestamp("1997-01-01")
 

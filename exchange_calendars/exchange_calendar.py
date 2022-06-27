@@ -162,11 +162,13 @@ class ExchangeCalendar(ABC):
     ----------
     start : default: later of 20 years ago or first supported start date.
         First calendar session will be `start`, if `start` is a session, or
-        first session after `start`.
+        first session after `start`. Cannot be earlier than any date
+        returned by class method `bound_min`.
 
-    end : default: earliest of 1 year from 'today' or last supported end date.
-        Last calendar session will be `end`, if `end` is a session, or last
-        session before `end`.
+    end : default: earliest of 1 year from 'today' or last supported end
+        date. Last calendar session will be `end`, if `end` is a session,
+        or last session before `end`. Cannot be later than any date
+        returned by class method `bound_max`.
 
     side : default: "left"
         Define which of session open/close and break start/end should
@@ -199,10 +201,10 @@ class ExchangeCalendar(ABC):
     outside of which the calendar would not be accurate. These bounds
     are enforced such that passing `start` or `end` as dates that are
     out-of-bounds will raise a ValueError. The bounds of each calendar are
-    exposed via the `bound_start` and `bound_end` class methods.
+    exposed via the `bound_min` and `bound_max` class methods.
 
-    Many calendars do not have bounds defined (in these cases `bound_start`
-    and/or `bound_end` return None). These calendars can be created through
+    Many calendars do not have bounds defined (in these cases `bound_min`
+    and/or `bound_max` return None). These calendars can be created through
     any date range although it should be noted that the earlier the start
     date, the greater the potential for inaccuracies.
 
@@ -223,7 +225,7 @@ class ExchangeCalendar(ABC):
     _RIGHT_SIDES = ["right", "both"]
 
     @classmethod
-    def bound_start(cls) -> pd.Timestamp | None:
+    def bound_min(cls) -> pd.Timestamp | None:
         """Earliest date from which calendar can be constructed.
 
         Returns
@@ -236,12 +238,12 @@ class ExchangeCalendar(ABC):
         -----
         To impose a constraint on the earliest date from which a calendar
         can be constructed subclass should override this method and
-        optionally override `_bound_start_error_msg`.
+        optionally override `_bound_min_error_msg`.
         """
         return None
 
     @classmethod
-    def bound_end(cls) -> pd.Timestamp | None:
+    def bound_max(cls) -> pd.Timestamp | None:
         """Latest date to which calendar can be constructed.
 
         Returns
@@ -254,7 +256,7 @@ class ExchangeCalendar(ABC):
         -----
         To impose a constraint on the latest date to which a calendar can
         be constructed subclass should override this method and optionally
-        override `_bound_end_error_msg`.
+        override `_bound_max_error_msg`.
         """
         return None
 
@@ -265,11 +267,11 @@ class ExchangeCalendar(ABC):
         Calendar will start from this date if 'start' is not otherwise
         passed to the constructor.
         """
-        bound_start = cls.bound_start()
-        if bound_start is None:
+        bound_min = cls.bound_min()
+        if bound_min is None:
             return GLOBAL_DEFAULT_START
         else:
-            return max(GLOBAL_DEFAULT_START, bound_start)
+            return max(GLOBAL_DEFAULT_START, bound_min)
 
     @classmethod
     def default_end(cls) -> pd.Timestamp:
@@ -278,11 +280,11 @@ class ExchangeCalendar(ABC):
         Calendar will end at this date if 'end' is not otherwise passed to
         the constructor.
         """
-        bound_end = cls.bound_end()
-        if bound_end is None:
+        bound_max = cls.bound_max()
+        if bound_max is None:
             return GLOBAL_DEFAULT_END
         else:
-            return min(GLOBAL_DEFAULT_END, bound_end)
+            return min(GLOBAL_DEFAULT_END, bound_max)
 
     def __init__(
         self,
@@ -300,17 +302,17 @@ class ExchangeCalendar(ABC):
             start = self.default_start()
         else:
             start = parse_date(start, "start", raise_oob=False)
-            bound_start = self.bound_start()
-            if bound_start is not None and start < bound_start:
-                raise ValueError(self._bound_start_error_msg(start))
+            bound_min = self.bound_min()
+            if bound_min is not None and start < bound_min:
+                raise ValueError(self._bound_min_error_msg(start))
 
         if end is None:
             end = self.default_end()
         else:
             end = parse_date(end, "end", raise_oob=False)
-            bound_end = self.bound_end()
-            if bound_end is not None and end > bound_end:
-                raise ValueError(self._bound_end_error_msg(end))
+            bound_max = self.bound_max()
+            if bound_max is not None and end > bound_max:
+                raise ValueError(self._bound_max_error_msg(end))
 
         if start >= end:
             raise ValueError(
@@ -394,29 +396,29 @@ class ExchangeCalendar(ABC):
         """Calendar name."""
         raise NotImplementedError()
 
-    def _bound_start_error_msg(self, start: pd.Timestamp) -> str:
+    def _bound_min_error_msg(self, start: pd.Timestamp) -> str:
         """Return error message to handle `start` being out-of-bounds.
 
         See Also
         --------
-        bound_start
+        bound_min
         """
         return (
             f"The earliest date from which calendar {self.name} can be"
-            f" evaluated is {self.bound_start()}, although received `start` as"
+            f" evaluated is {self.bound_min()}, although received `start` as"
             f" {start}."
         )
 
-    def _bound_end_error_msg(self, end: pd.Timestamp) -> str:
+    def _bound_max_error_msg(self, end: pd.Timestamp) -> str:
         """Return error message to handle `end` being out-of-bounds.
 
         See Also
         --------
-        bound_end
+        bound_max
         """
         return (
             f"The latest date to which calendar {self.name} can be evaluated"
-            f" is {self.bound_end()}, although received `end` as {end}."
+            f" is {self.bound_max()}, although received `end` as {end}."
         )
 
     @property
@@ -2722,6 +2724,44 @@ class ExchangeCalendar(ABC):
         """
         start, end = self._parse_start_end_dates(start, end, _parse)
         return self.schedule.loc[start:end, "close"]
+
+    @classmethod
+    @deprecate("4.0.3", "Renamed as `bound_min`.")
+    def bound_start(cls) -> pd.Timestamp | None:
+        """Earliest date from which calendar can be constructed.
+
+        Returns
+        -------
+        pd.Timestamp or None
+            Earliest date from which calendar can be constructed. Must be
+            timezone naive. None if no limit.
+
+        Notes
+        -----
+        To impose a constraint on the earliest date from which a calendar
+        can be constructed subclass should override this method and
+        optionally override `_bound_min_error_msg`.
+        """
+        return cls.bound_min()
+
+    @classmethod
+    @deprecate("4.0.3", "Renamed as `bound_max`.")
+    def bound_end(cls) -> pd.Timestamp | None:
+        """Latest date to which calendar can be constructed.
+
+        Returns
+        -------
+        pd.Timestamp or None
+            Latest date to which calendar can be constructed. Must be
+            timezone naive. None if no limit.
+
+        Notes
+        -----
+        To impose a constraint on the latest date to which a calendar can
+        be constructed subclass should override this method and optionally
+        override `_bound_max_error_msg`.
+        """
+        return cls.bound_max()
 
 
 def _check_breaks_match(break_starts_nanos: np.ndarray, break_ends_nanos: np.ndarray):

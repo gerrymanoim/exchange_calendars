@@ -222,11 +222,14 @@ class ExchangeCalendarDispatcher(object):
 
         start : default: as default for calendar factory
             First calendar session will be `start`, if `start` is a
-            session, or first session after `start`.
+            session, or first session after `start`. Cannot be earlier than
+            any date returned by the respective calendar class method
+            `bound_min`.
 
         end : default: as default for calendar factory
             Last calendar session will be `end`, if `end` is a session, or
-            last session before `end`.
+            last session before `end`. Cannot be later than any date
+            returned by the respective calendar class method `bound_max`.
 
         side : default: as default for calendar factory
             Define which of session open/close and break start/end should

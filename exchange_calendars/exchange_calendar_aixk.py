@@ -155,11 +155,11 @@ class AIXKExchangeCalendar(ExchangeCalendar):
     close_times = ((None, time(17, 00)),)
 
     @classmethod
-    def bound_start(cls) -> pd.Timestamp:
+    def bound_min(cls) -> pd.Timestamp:
         return pd.Timestamp("2017-01-01")
 
-    def _bound_start_error_msg(self, start: pd.Timestamp) -> str:
-        msg = super()._bound_start_error_msg(start)
+    def _bound_min_error_msg(self, start: pd.Timestamp) -> str:
+        msg = super()._bound_min_error_msg(start)
         return msg + f" (The exchange {self.name} was founded in 2017.)"
 
     @property
