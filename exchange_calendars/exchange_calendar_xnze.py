@@ -123,6 +123,38 @@ XMAS27DEC91 = Timestamp("1991-12-27")
 NYDX03JAN92 = Timestamp("1992-01-03")
 XMAS31DEC99 = Timestamp("1999-12-31")
 
+# Matariki Day. Is set by Maori Lunar system which fluctuates relative to Gregorian so no set date each year.
+# https://www.mbie.govt.nz/business-and-employment/employment-and-skills/employment-legislation-reviews/matariki/matariki-public-holiday/
+MatarikiDayDates = {}
+MatarikiDayDates["2022"] = Timestamp("2022-06-24")
+MatarikiDayDates["2023"] = Timestamp("2022-07-14")
+MatarikiDayDates["2024"] = Timestamp("2022-06-28")
+MatarikiDayDates["2025"] = Timestamp("2022-06-20")
+MatarikiDayDates["2026"] = Timestamp("2022-07-10")
+MatarikiDayDates["2027"] = Timestamp("2022-06-25")
+MatarikiDayDates["2028"] = Timestamp("2022-07-14")
+MatarikiDayDates["2029"] = Timestamp("2022-07-06")
+MatarikiDayDates["2030"] = Timestamp("2022-06-21")
+MatarikiDayDates["2031"] = Timestamp("2022-07-11")
+MatarikiDayDates["2032"] = Timestamp("2022-07-02")
+MatarikiDayDates["2033"] = Timestamp("2022-06-24")
+MatarikiDayDates["2034"] = Timestamp("2022-07-07")
+MatarikiDayDates["2035"] = Timestamp("2022-06-29")
+MatarikiDayDates["2036"] = Timestamp("2022-07-21")
+MatarikiDayDates["2037"] = Timestamp("2022-07-10")
+MatarikiDayDates["2038"] = Timestamp("2022-06-25")
+MatarikiDayDates["2039"] = Timestamp("2022-07-15")
+MatarikiDayDates["2040"] = Timestamp("2022-07-06")
+MatarikiDayDates["2041"] = Timestamp("2022-07-19")
+MatarikiDayDates["2042"] = Timestamp("2022-07-11")
+MatarikiDayDates["2043"] = Timestamp("2022-07-03")
+MatarikiDayDates["2044"] = Timestamp("2022-06-24")
+MatarikiDayDates["2045"] = Timestamp("2022-07-07")
+MatarikiDayDates["2046"] = Timestamp("2022-06-29")
+MatarikiDayDates["2047"] = Timestamp("2022-07-19")
+MatarikiDayDates["2048"] = Timestamp("2022-07-03")
+MatarikiDayDates["2049"] = Timestamp("2022-06-25")
+
 
 class XNZEExchangeCalendar(ExchangeCalendar):
     """
@@ -180,7 +212,7 @@ class XNZEExchangeCalendar(ExchangeCalendar):
     # add extra ad-hoc holidays
     @property
     def adhoc_holidays(self):
-        return [
+        dates = [
             XMAS22DEC86,
             XMAS23DEC86,
             XMAS24DEC86,
@@ -193,6 +225,8 @@ class XNZEExchangeCalendar(ExchangeCalendar):
             NYDX03JAN92,
             XMAS31DEC99,
         ]
+        dates += MatarikiDayDates.values()
+        return dates
 
     @property
     def special_closes(self):
