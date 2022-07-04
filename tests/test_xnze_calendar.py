@@ -43,6 +43,11 @@ class TestXNZECalendar(ExchangeCalendarTestBase):
         ]
 
     @pytest.fixture
+    def adhoc_holidays_sample(self):
+        # Mataraki Day (a small selection):
+        yield ["2022-06-24", "2035-06-29", "2049-06-25"]
+
+    @pytest.fixture
     def non_holidays_sample(self):
         yield [
             # In 2012 New Year's Day fell on Sunday such that Day after New Year's Day
