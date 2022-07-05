@@ -32,8 +32,8 @@ jobs:
 
     - name: Install from test and test running
       run: |
-        echo "Will wait 20s" && sleep 20s
-        pip install --extra-index-url https://test.pypi.org/simple exchange_calendars
+        echo "Will wait 10s" && sleep 10s
+        pip install --extra-index-url https://test.pypi.org/simple exchange_calendars==${{ github.ref_name }}
         python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
         pip uninstall -y exchange_calendars
 
@@ -45,6 +45,6 @@ jobs:
 
     - name: Install and test running
       run: |
-        echo "Will wait 20s" && sleep 20s
-        pip install --index-url https://pypi.org/simple exchange_calendars
+        echo "Will wait 10s" && sleep 10s
+        pip install --index-url https://pypi.org/simple exchange_calendars==${{ github.ref_name }}
         python -c 'import exchange_calendars;print(exchange_calendars.__version__)'

@@ -13,6 +13,9 @@ categories:
   - title: 'Bug Fixes'
     labels:
       - 'bug'
+  - title: 'Calendar Updates'
+    labels:
+      - 'calendar update'
   - title: 'Deprecation'
     labels:
       - 'deprecation'
