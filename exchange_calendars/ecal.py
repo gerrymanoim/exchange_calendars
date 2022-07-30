@@ -41,7 +41,7 @@ def _render_month(calendar, year, month, print_year):
     else:
         end = "{year}-{month}".format(year=year, month=month + 1)
 
-    days = pd.date_range(start, end, closed="left", tz="UTC")
+    days = pd.date_range(start, end, closed="left")
 
     title = months[month - 1]
     if print_year:
