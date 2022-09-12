@@ -234,6 +234,8 @@ class XLONExchangeCalendar(ExchangeCalendar):
             # Platinum Jubilee (moved Spring bank holiday followed by Jubilee day)
             pd.Timestamp("2022-06-02"),
             pd.Timestamp("2022-06-03"),
+            # Queen Elizabeth II Funeral
+            pd.Timestamp("2022-09-19"),
             # Royal Weddings
             # Wedding Day of Princess Anne and Mark Phillips
             pd.Timestamp("1973-11-14"),
