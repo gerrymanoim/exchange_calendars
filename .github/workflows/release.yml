@@ -14,7 +14,7 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Install dependencies
+    - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
         pip install build
@@ -30,12 +30,22 @@ jobs:
         repository_url: https://test.pypi.org/legacy/
         skip_existing: true
 
-    - name: Install from test and test running
+    - name: Install from testpypi
       run: |
         echo "Will wait 10s" && sleep 10s
-        # pip install --extra-index-url https://test.pypi.org/simple exchange_calendars==${{ github.ref_name }}
-        # python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
-        # pip uninstall -y exchange_calendars
+        pip install --index-url https://test.pypi.org/simple exchange_calendars==${{ github.ref_name }} --no-deps
+
+    - name: Import test release
+      run: |
+        # install local package to download dependencies from pypi (#207)
+        pip install .
+        mv exchange_calendars exchange_calendars_copy
+        python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
+
+    - name: Clean pip
+      run: |
+        pip uninstall -y exchange_calendars
+        pip cache purge
 
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
@@ -45,7 +55,6 @@ jobs:
 
     - name: Install and test running
       run: |
-        pip cache purge
         echo "Will wait 10s" && sleep 10s
-        # pip install --index-url https://pypi.org/simple exchange_calendars==${{ github.ref_name }}
-        # python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
+        pip install --index-url https://pypi.org/simple exchange_calendars==${{ github.ref_name }}
+        python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
