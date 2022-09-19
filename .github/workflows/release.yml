@@ -33,9 +33,9 @@ jobs:
     - name: Install from test and test running
       run: |
         echo "Will wait 10s" && sleep 10s
-        pip install --extra-index-url https://test.pypi.org/simple exchange_calendars==${{ github.ref_name }}
-        python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
-        pip uninstall -y exchange_calendars
+        # pip install --extra-index-url https://test.pypi.org/simple exchange_calendars==${{ github.ref_name }}
+        # python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
+        # pip uninstall -y exchange_calendars
 
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
@@ -47,5 +47,5 @@ jobs:
       run: |
         pip cache purge
         echo "Will wait 10s" && sleep 10s
-        pip install --index-url https://pypi.org/simple exchange_calendars==${{ github.ref_name }}
-        python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
+        # pip install --index-url https://pypi.org/simple exchange_calendars==${{ github.ref_name }}
+        # python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
