@@ -122,6 +122,7 @@ XMAS31DEC90 = Timestamp("1990-12-31")
 XMAS27DEC91 = Timestamp("1991-12-27")
 NYDX03JAN92 = Timestamp("1992-01-03")
 XMAS31DEC99 = Timestamp("1999-12-31")
+QueenMourning2022 = Timestamp("2022-09-22")
 
 # Matariki Day. Is set by Maori Lunar system which fluctuates relative to Gregorian so no set date each year.
 # https://www.mbie.govt.nz/business-and-employment/employment-and-skills/employment-legislation-reviews/matariki/matariki-public-holiday/
@@ -224,6 +225,7 @@ class XNZEExchangeCalendar(ExchangeCalendar):
             XMAS27DEC91,
             NYDX03JAN92,
             XMAS31DEC99,
+            QueenMourning2022
         ]
         dates += MatarikiDayDates.values()
         return dates
