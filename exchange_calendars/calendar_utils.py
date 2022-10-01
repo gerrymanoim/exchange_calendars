@@ -185,31 +185,32 @@ class ExchangeCalendarDispatcher(object):
         cache_dp = os.path.join(appdirs.user_cache_dir(), "py-exchange_calendars")
         return os.path.join(cache_dp, cache_fn)
 
-    def _send_cal_to_cache(self, calendar, name: str, **kwargs):
+    def _send_cal_to_cache(self, calendar, name: str, cache: bool, **kwargs):
         self._factory_output_cache[name] = (calendar, kwargs)
 
-        pkl_data = {}
-        pkl_data["calendar"] = calendar
-        pkl_data["kwargs"] = kwargs
-        cache_fp = self._get_cal_cache_fp(name)
-        cache_dp = os.path.dirname(cache_fp)
-        if not os.path.isdir(cache_dp):
-            os.makedirs(cache_dp)
-        with open(cache_fp, 'wb') as f:
-            pickle.dump(pkl_data, f, 4)
+        if cache:
+            pkl_data = {}
+            pkl_data["calendar"] = calendar
+            pkl_data["kwargs"] = kwargs
+            cache_fp = self._get_cal_cache_fp(name)
+            cache_dp = os.path.dirname(cache_fp)
+            if not os.path.isdir(cache_dp):
+                os.makedirs(cache_dp)
+            with open(cache_fp, 'wb') as f:
+                pickle.dump(pkl_data, f, 4)
 
-    def _fabricate(self, name: str, **kwargs) -> ExchangeCalendar:
+    def _fabricate(self, name: str, cache: bool, **kwargs) -> ExchangeCalendar:
         """Fabricate calendar with `name` and `**kwargs`."""
         try:
             factory = self._calendar_factories[name]
         except KeyError as e:
             raise InvalidCalendarName(calendar_name=name) from e
         calendar = factory(**kwargs)
-        self._send_cal_to_cache(calendar, name, **kwargs)
+        self._send_cal_to_cache(calendar, name, cache, **kwargs)
         return calendar
 
     def _get_cached_factory_output(
-        self, name: str, **kwargs
+        self, name: str, cache: bool, **kwargs
     ) -> ExchangeCalendar | None:
         """Get calendar from factory output cache.
 
@@ -221,19 +222,23 @@ class ExchangeCalendarDispatcher(object):
         if calendar is not None and calendar_kwargs == kwargs:
             return calendar
 
-        # Next check local file cache:
-        cache_fp = self._get_cal_cache_fp(name)
-        if os.path.isfile(cache_fp):
-            moddt = _dt.datetime.fromtimestamp(os.path.getmtime(cache_fp))
-            # Additional condition that file created in last 24 hours
-            if (_dt.datetime.now() - moddt) < _dt.timedelta(days=1):
-                with open(cache_fp, 'rb') as f:
-                    pkl_data = pickle.load(f)
-                    if pkl_data["kwargs"] == kwargs:
-                        calendar = pkl_data["calendar"]
-                        if name not in self._factory_output_cache:
-                            self._factory_output_cache[name] = (calendar, kwargs)
-                        return calendar
+        if cache:
+            # Next check local file cache:
+            cache_fp = self._get_cal_cache_fp(name)
+            if os.path.isfile(cache_fp):
+                moddt = _dt.datetime.fromtimestamp(os.path.getmtime(cache_fp))
+                # Additional condition that file created in last 24 hours
+                if (_dt.datetime.now() - moddt) < _dt.timedelta(days=1):
+                    try:
+                        with open(cache_fp, 'rb') as f:
+                            pkl_data = pickle.load(f)
+                            if pkl_data["kwargs"] == kwargs:
+                                calendar = pkl_data["calendar"]
+                                if name not in self._factory_output_cache:
+                                    self._factory_output_cache[name] = (calendar, kwargs)
+                                return calendar
+                    except Exception:
+                        return None
 
         return None
 
@@ -243,6 +248,7 @@ class ExchangeCalendarDispatcher(object):
         start: Date | None = None,
         end: Date | None = None,
         side: Literal["left", "right", "both", "neither"] | None = None,
+        cache: bool = False
     ) -> ExchangeCalendar:
         """Get exchange calendar with a given name.
 
@@ -280,6 +286,10 @@ class ExchangeCalendarDispatcher(object):
                 and break_end as trading minutes.
             "neither" - treat none of session open, session close,
                 break_start or break_end as trading minutes.
+
+        cache : default: False
+            Whether to save calendars in your user cache folder. Reduces run
+            time of multiple script executions.
 
         Returns
         -------
@@ -325,8 +335,8 @@ class ExchangeCalendarDispatcher(object):
         else:
             kwargs["end"] = None
 
-        cached = self._get_cached_factory_output(name, **kwargs)
-        return cached if cached is not None else self._fabricate(name, **kwargs)
+        cached = self._get_cached_factory_output(name, cache, **kwargs)
+        return cached if cached is not None else self._fabricate(name, cache, **kwargs)
 
     def get_calendar_names(
         self, include_aliases: bool = True, sort: bool = True
