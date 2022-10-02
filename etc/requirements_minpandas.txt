@@ -27,15 +27,15 @@ execnet==1.9.0
     # via pytest-xdist
 flake8==5.0.4
     # via exchange-calendars (pyproject.toml)
-hypothesis==6.54.5
+hypothesis==6.56.0
     # via exchange-calendars (pyproject.toml)
 iniconfig==1.1.1
     # via pytest
-korean-lunar-calendar==0.2.1
+korean-lunar-calendar==0.3.1
     # via exchange-calendars (pyproject.toml)
 mccabe==0.7.0
     # via flake8
-numpy==1.23.2
+numpy==1.23.3
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
@@ -81,7 +81,7 @@ python-dateutil==2.8.2
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
-pytz==2022.2.1
+pytz==2022.4
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
