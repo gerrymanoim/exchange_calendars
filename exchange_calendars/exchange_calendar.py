@@ -64,13 +64,13 @@ MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
 WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
 WEEKENDS = (SATURDAY, SUNDAY)
 DAY_TO_STR = {}
-DAY_TO_STR[0] = "MON"
-DAY_TO_STR[1] = "TUE"
-DAY_TO_STR[2] = "WED"
-DAY_TO_STR[3] = "THU"
-DAY_TO_STR[4] = "FRI"
-DAY_TO_STR[5] = "SAT"
-DAY_TO_STR[6] = "SUN"
+DAY_TO_STR[0] = "Monday"
+DAY_TO_STR[1] = "Tuesday"
+DAY_TO_STR[2] = "Wednesday"
+DAY_TO_STR[3] = "Thursday"
+DAY_TO_STR[4] = "Friday"
+DAY_TO_STR[5] = "Saturday"
+DAY_TO_STR[6] = "Sunday"
 
 
 def selection(
@@ -2806,7 +2806,9 @@ def scheduled_special_times(
         dtype is datetime64[ns, UTC].
     """
     if isinstance(calendar,int):
-        days = pd.date_range(start, end, freq="W-"+DAY_TO_STR[calendar])
+        if not calendar in DAY_TO_STR:
+            raise Exception("Int {} is not a valid weekday".format(calendar))
+        days = pd.date_range(start, end, freq="W-"+DAY_TO_STR[calendar].upper()[0:3])
     else:
         days = calendar.holidays(start, end)
     if not isinstance(days, pd.DatetimeIndex):
