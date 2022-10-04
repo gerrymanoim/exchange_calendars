@@ -16,7 +16,7 @@
 from datetime import time
 
 import pandas as pd
-from pytz import UTC, timezone
+import pytz
 
 from .tase_holidays import (
     FastDay,
@@ -93,7 +93,7 @@ class XTAEExchangeCalendar(ExchangeCalendar):
 
     name = "XTAE"
 
-    tz = timezone("Asia/Tel_Aviv")
+    tz = pytz.timezone("Asia/Tel_Aviv")
 
     open_times = ((None, time(9, 59)),)
 
@@ -101,7 +101,7 @@ class XTAEExchangeCalendar(ExchangeCalendar):
 
     regular_early_close = time(14, 15)
 
-    sunday_close = time(15,40)
+    sunday_close = time(15, 40)
 
     @property
     def regular_holidays(self):

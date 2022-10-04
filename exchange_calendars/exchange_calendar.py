@@ -2805,10 +2805,11 @@ def scheduled_special_times(
         Index is timezone naive.
         dtype is datetime64[ns, UTC].
     """
-    if isinstance(calendar,int):
-        if not calendar in DAY_TO_STR:
+    if isinstance(calendar, int):
+        if calendar not in DAY_TO_STR:
             raise Exception("Int {} is not a valid weekday".format(calendar))
-        days = pd.date_range(start, end, freq="W-"+DAY_TO_STR[calendar].upper()[0:3])
+        day_str = "W-" + DAY_TO_STR[calendar].upper()[0:3]
+        days = pd.date_range(start, end, freq=day_str)
     else:
         days = calendar.holidays(start, end)
     if not isinstance(days, pd.DatetimeIndex):
