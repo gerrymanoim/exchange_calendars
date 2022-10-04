@@ -91,8 +91,6 @@ class XTAEExchangeCalendar(ExchangeCalendar):
     of the year.
     """  # noqa
 
-    start_date = pd.Timestamp("2019-01-01", tz=UTC)
-
     name = "XTAE"
 
     tz = timezone("Asia/Tel_Aviv")
@@ -103,7 +101,7 @@ class XTAEExchangeCalendar(ExchangeCalendar):
 
     regular_early_close = time(14, 15)
 
-    sunday_close = time(15,39)
+    sunday_close = time(15,40)
 
     @property
     def regular_holidays(self):
