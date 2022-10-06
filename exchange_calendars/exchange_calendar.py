@@ -2307,7 +2307,6 @@ class ExchangeCalendar(ABC):
         end: Date | Minute,
         period: pd.Timedelta | str,
         intervals: bool = True,
-        align: pd.Timedelta | str | None = None,
         closed: Literal["left", "right", "both", "neither"] = "left",
         force_close: bool = False,
         force_break_close: bool = False,
@@ -2315,6 +2314,7 @@ class ExchangeCalendar(ABC):
         curtail_overlaps: bool = False,
         ignore_breaks: bool = False,
         parse: bool = True,
+        align: pd.Timedelta | str | None = None,
     ) -> pd.DatetimeIndex | pd.IntervalIndex:
         """Create a trading index.
 
@@ -2408,11 +2408,6 @@ class ExchangeCalendar(ABC):
 
             If `period` is '1d' then trading index will be returned as a
             pd.DatetimeIndex.
-
-        align : default: None
-            If set, aligns start of first interval to nearest fraction of
-            specified hour. Value must be a factor of 60m, e.g. 5m.
-            Same type as `period`
 
         closed : {"left", "right", "both", "neither"}
             (ignored if `period` is '1d'.)
@@ -2511,6 +2506,11 @@ class ExchangeCalendar(ABC):
             component then can pass `parse` as False to save around
             500µs on the execution.
 
+        align : default: None
+            If set, aligns start of first interval to nearest fraction of
+            specified hour. Value must be a factor of 60m, e.g. 5m.
+            Same type as `period`
+
         Returns
         -------
         pd.IntervalIndex or pd.DatetimeIndex
@@ -2580,7 +2580,7 @@ class ExchangeCalendar(ABC):
                 raise ValueError(msg) from None
 
             td_1h = pd.Timedelta('1H')
-            if (align >= td_1h) or (td_1h % align) != pd.Timedelta(0):
+            if (align > td_1h) or (td_1h % align) != pd.Timedelta(0):
                 raise ValueError(
                     f"`align` must be factor of 1H but received '{align}'."
                 )
@@ -2594,12 +2594,12 @@ class ExchangeCalendar(ABC):
             start,
             end,
             period,
-            align,
             closed,
             force_close,
             force_break_close,
             curtail_overlaps,
             ignore_breaks,
+            align,
         )
 
         if not intervals:

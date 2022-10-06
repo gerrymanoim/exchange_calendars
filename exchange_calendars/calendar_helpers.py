@@ -451,13 +451,13 @@ class _TradingIndex:
         start_: Date | Minute,
         end_: Date | Minute,
         period: pd.Timedelta,
-        align: pd.Timedelta | None,
         # TODO Literal["left", "right", "both", "neither"] when min python 3.8...
         closed: str,
         force_close: bool,
         force_break_close: bool,
         curtail_overlaps: bool,
         ignore_breaks: bool,
+        align: pd.Timedelta | None = None,
     ):
         self.closed = closed
         self.force_break_close = False if ignore_breaks else force_break_close
@@ -488,7 +488,7 @@ class _TradingIndex:
         if align is not None:
             o = calendar.opens[slce]
             shift_back = o - o.dt.floor(align)
-            self.opens -= shift_back.values.astype(np.int64)
+            self.opens = self.opens - shift_back.values.astype(np.int64)
 
         if ignore_breaks:
             self.has_break = False
