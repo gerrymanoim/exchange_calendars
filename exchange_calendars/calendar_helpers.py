@@ -457,6 +457,7 @@ class _TradingIndex:
         force_break_close: bool,
         curtail_overlaps: bool,
         ignore_breaks: bool,
+        align: pd.Timedelta | None,
     ):
         self.closed = closed
         self.force_break_close = False if ignore_breaks else force_break_close
@@ -481,8 +482,15 @@ class _TradingIndex:
         self.interval_nanos = period.value
         self.dtype = np.int64 if self.interval_nanos < 3000000000 else np.int32
 
-        self.opens = calendar.opens_nanos[slce]
         self.closes = calendar.closes_nanos[slce]
+
+        if align is not None and align:
+            opens = calendar.opens[slce]
+            f = opens.dt.floor if align < pd.Timedelta(0) else opens.dt.ceil
+            opens = f(abs(align))
+            self.opens = opens.values.astype(np.int64)
+        else:
+            self.opens = calendar.opens_nanos[slce]
 
         if ignore_breaks:
             self.has_break = False

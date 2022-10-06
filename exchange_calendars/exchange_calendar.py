@@ -2342,6 +2342,7 @@ class ExchangeCalendar(ABC):
         force: bool | None = None,
         curtail_overlaps: bool = False,
         ignore_breaks: bool = False,
+        align: pd.Timedelta | str | None = None,
         parse: bool = True,
     ) -> pd.DatetimeIndex | pd.IntervalIndex:
         """Create a trading index.
@@ -2534,6 +2535,13 @@ class ExchangeCalendar(ABC):
             component then can pass `parse` as False to save around
             500µs on the execution.
 
+        align : default: None
+            If set, shifts intervals so first of each day
+            aligns with nearest fraction of specified hour.
+            +ve = shift forward, -ve = shift backward
+            Value must be a factor of 60m e.g. 5m.
+            Type same as `period`.
+
         Returns
         -------
         pd.IntervalIndex or pd.DatetimeIndex
@@ -2590,6 +2598,24 @@ class ExchangeCalendar(ABC):
                 f"If `intervals` is True then `closed` cannot be '{closed}'."
             )
 
+        if align is not None:
+            try:
+                align = pd.Timedelta(align)
+            except ValueError:
+                msg = (
+                    f"`align` receieved as '{align}' although takes type"
+                    " 'pd.Timedelta' or a type 'str' that is valid as a single input"
+                    " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T'),"
+                    " '15min', '15T'."
+                )
+                raise ValueError(msg) from None
+
+            td_1h = pd.Timedelta('1H')
+            if align > td_1h or align < -td_1h or (td_1h % align) != pd.Timedelta(0):
+                raise ValueError(
+                    f"`align` must be factor of 1H but received '{align}'."
+                )
+
         if force is not None:
             force_close = force_break_close = force
 
@@ -2604,6 +2630,7 @@ class ExchangeCalendar(ABC):
             force_break_close,
             curtail_overlaps,
             ignore_breaks,
+            align,
         )
 
         if not intervals:
