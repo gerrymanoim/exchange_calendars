@@ -40,20 +40,20 @@ def _memorial_day(year):
     """
     Return the Hebrew date for Memorial Day in the given Hebrew year.
 
-    If either Memorial Day (MD) or Independence Day (ID) were to interfere with Sabbat, 
-	including night before, then they are shifted forward or backward to avoid Sabbat.
+    If either Memorial Day (MD) or Independence Day (ID) were to interfere with Sabbat,
+    including night before, then they are shifted forward or backward to avoid Sabbat.
     ID always celebrated day after MD.
     Wiki: https://en.wikipedia.org/wiki/Yom_HaZikaron#Timing
     Better explanation: https://ph.yhb.org.il/en/05-04-09
     """
     d = dates.HebrewDate(year.year, 2, 4)
-    if d.weekday()==1:
+    if d.weekday() == 1:
         # MD on Sunday => shift forward to Monday
         d = dates.HebrewDate(year.year, 2, 5)
-    elif d.weekday()==6:
+    elif d.weekday() == 6:
         # MD on Friday => ID on Sabbat => shift back 2 days
         d = dates.HebrewDate(year.year, 2, 2)
-    elif d.weekday()==5:
+    elif d.weekday() == 5:
         # MD on Thursday => ID night before Sabbat => shift back 1 day
         d = dates.HebrewDate(year.year, 2, 3)
 
