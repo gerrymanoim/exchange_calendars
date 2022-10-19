@@ -1137,8 +1137,8 @@ class TestTradingIndex:
                 rtrn = cal.trading_index(start, end, period, intervals=True, align=align)
 
                 # Select first interval of each day:
-                days = set(rtrn.left.date)
-                grp = rtrn.groupby(rtrn.left.date)
+                days = rtrn.left.tz_convert("Asia/Jerusalem").date
+                grp = rtrn.groupby(days)
                 day_start_times = np.array([grp[d][0].left.time() for d in days])
 
                 assert (day_start_times == expected_start_time).all()
