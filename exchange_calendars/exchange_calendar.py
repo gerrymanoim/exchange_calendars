@@ -2517,7 +2517,7 @@ class ExchangeCalendar(ABC):
         align : default: None
             If set, shifts intervals backwards so first of each day
             aligns with nearest fraction of specified hour.
-            Value must be a factor of 60m e.g. 5m. 
+            Value must be a factor of 60m e.g. 5m.
             Type same as `period`.
 
         Returns

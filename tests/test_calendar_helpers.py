@@ -1119,11 +1119,11 @@ class TestTradingIndex:
 
         # Map alignment factor -> aligned start time
         expected_start_times = {}
-        expected_start_times["5m"] = datetime.time(7,55)
-        expected_start_times["15m"] = datetime.time(7,45)
-        expected_start_times["20m"] = datetime.time(7,40)
-        expected_start_times["30m"] = datetime.time(7,30)
-        expected_start_times["60m"] = datetime.time(7,0)
+        expected_start_times["5m"] = datetime.time(7, 55)
+        expected_start_times["15m"] = datetime.time(7, 45)
+        expected_start_times["20m"] = datetime.time(7, 40)
+        expected_start_times["30m"] = datetime.time(7, 30)
+        expected_start_times["60m"] = datetime.time(7, 0)
 
         # Define fixed parameters
         start = pd.Timestamp("2021-12-06")
@@ -1136,12 +1136,12 @@ class TestTradingIndex:
             for period in periods:
                 rtrn = cal.trading_index(start, end, period, intervals=True, align=align)
 
-                ## Select first interval of each day:
+                # Select first interval of each day:
                 days = set(rtrn.left.date)
                 grp = rtrn.groupby(rtrn.left.date)
                 day_start_times = np.array([grp[d][0].left.time() for d in days])
 
-                assert (day_start_times==expected_start_time).all() == True
+                assert (day_start_times == expected_start_time).all()
 
     def test_start_end_times(self, one_min, calendars):
         """Test effect of passing start and/or end as a time.
