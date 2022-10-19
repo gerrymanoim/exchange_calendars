@@ -63,6 +63,14 @@ NANOS_IN_MINUTE = 60000000000
 MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
 WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
 WEEKENDS = (SATURDAY, SUNDAY)
+DAY_TO_STR = {}
+DAY_TO_STR[0] = "Monday"
+DAY_TO_STR[1] = "Tuesday"
+DAY_TO_STR[2] = "Wednesday"
+DAY_TO_STR[3] = "Thursday"
+DAY_TO_STR[4] = "Friday"
+DAY_TO_STR[5] = "Saturday"
+DAY_TO_STR[6] = "Sunday"
 
 
 def selection(
@@ -2617,7 +2625,7 @@ class ExchangeCalendar(ABC):
 
     def _special_dates(
         self,
-        regular_dates: list[tuple[datetime.time, HolidayCalendar]],
+        regular_dates: list[tuple[datetime.time, HolidayCalendar | int]],
         ad_hoc_dates: list[tuple[datetime.time, pd.DatetimeIndex]],
         start_date: pd.Timestamp,
         end_date: pd.Timestamp,
@@ -2627,7 +2635,7 @@ class ExchangeCalendar(ABC):
         Parameters
         ----------
         regular_dates
-            Regular non-standard times and corresponding HolidayCalendars.
+            Regular non-standard times and corresponding HolidayCalendars or Int day-of-week.
 
         ad_hoc_dates
             Adhoc non-standard times and corresponding sessions.
@@ -2811,7 +2819,7 @@ def _check_breaks_match(break_starts_nanos: np.ndarray, break_ends_nanos: np.nda
 
 
 def scheduled_special_times(
-    calendar: HolidayCalendar,
+    calendar: HolidayCalendar | int,
     start: pd.Timestamp,
     end: pd.Timestamp,
     time: datetime.time,
@@ -2828,7 +2836,13 @@ def scheduled_special_times(
         Index is timezone naive.
         dtype is datetime64[ns, UTC].
     """
-    days = calendar.holidays(start, end)
+    if isinstance(calendar, int):
+        if calendar not in DAY_TO_STR:
+            raise Exception("Int {} is not a valid weekday".format(calendar))
+        day_str = "W-" + DAY_TO_STR[calendar].upper()[0:3]
+        days = pd.date_range(start, end, freq=day_str)
+    else:
+        days = calendar.holidays(start, end)
     if not isinstance(days, pd.DatetimeIndex):
         # days will be pd.Index if empty
         days = pd.DatetimeIndex(days)
