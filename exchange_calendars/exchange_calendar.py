@@ -2507,9 +2507,10 @@ class ExchangeCalendar(ABC):
             500µs on the execution.
 
         align : default: None
-            If set, aligns start of first interval to nearest fraction of
-            specified hour. Value must be a factor of 60m, e.g. 5m.
-            Same type as `period`
+            If set, shifts intervals backwards so first of each day
+            aligns with nearest fraction of specified hour.
+            Value must be a factor of 60m e.g. 5m. 
+            Type same as `period`.
 
         Returns
         -------
@@ -2578,6 +2579,11 @@ class ExchangeCalendar(ABC):
                     " '15min', '15T'."
                 )
                 raise ValueError(msg) from None
+
+            if align <= pd.Timedelta(0):
+                raise ValueError(
+                    f"`align` must be positive but received '{align}'."
+                )
 
             td_1h = pd.Timedelta('1H')
             if (align > td_1h) or (td_1h % align) != pd.Timedelta(0):
