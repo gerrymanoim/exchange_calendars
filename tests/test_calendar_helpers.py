@@ -399,10 +399,11 @@ class TestTradingIndex:
     of concrete cases (options as default values).
     """
 
-    calendar_names = ["XLON", "XHKG", "CMES", "24/7"]
+    calendar_names = ["XLON", "XHKG", "XTAE", "CMES", "24/7"]
     """Selection of calendars with a particular behaviour:
     "XLON" - calendars without breaks.
     "XHKG" - calendars with breaks.
+    "XTAE" - opens at 9:59am, useful for testing trading_index(align)
     "CMES" - 24 hour calendar, not 7 days a week.
     "24/7" - 24 hour calendar.
     """
