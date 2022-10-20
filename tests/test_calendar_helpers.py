@@ -1119,10 +1119,10 @@ class TestTradingIndex:
 
         # Map alignment factor -> aligned start time
         expected_start_times = {}
-        # expected_start_times["5m"] = datetime.time(9, 55)
-        # expected_start_times["15m"] = datetime.time(9, 45)
-        # expected_start_times["20m"] = datetime.time(9, 40)
-        # expected_start_times["30m"] = datetime.time(9, 30)
+        expected_start_times["5m"] = datetime.time(9, 55)
+        expected_start_times["15m"] = datetime.time(9, 45)
+        expected_start_times["20m"] = datetime.time(9, 40)
+        expected_start_times["30m"] = datetime.time(9, 30)
         expected_start_times["60m"] = datetime.time(9, 0)
 
         # Define fixed parameters
@@ -1138,16 +1138,9 @@ class TestTradingIndex:
 
                 # Select first interval of each day:
                 left = rtrn.left.tz_convert("Asia/Jerusalem")
-                print("left:")
-                print(left)
                 days = pd.to_datetime(left.date)
-                print("days:")
-                print(days)
                 grp = left.groupby(days)
-                print("grp:")
-                print(grp)
-                days_unique = sorted(list(set(days)))
-                day_start_times = np.array([grp[d][0].time() for d in days_unique])
+                day_start_times = np.array([grp[d][0].time() for d in set(days)])
 
                 assert (day_start_times == expected_start_time).all()
 
