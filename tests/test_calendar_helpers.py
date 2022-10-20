@@ -1140,13 +1140,14 @@ class TestTradingIndex:
                 left = rtrn.left.tz_convert("Asia/Jerusalem")
                 print("left:")
                 print(left)
-                days = left.date
+                days = pd.to_datetime(left.date)
                 print("days:")
                 print(days)
                 grp = left.groupby(days)
                 print("grp:")
                 print(grp)
-                day_start_times = np.array([grp[d][0].time() for d in days])
+                days_unique = sorted(list(set(days)))
+                day_start_times = np.array([grp[d][0].time() for d in days_unique])
 
                 assert (day_start_times == expected_start_time).all()
 
