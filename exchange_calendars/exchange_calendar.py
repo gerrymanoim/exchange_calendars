@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from calendar import day_name
 import collections
 from collections.abc import Sequence, Callable
 import datetime
@@ -63,14 +64,6 @@ NANOS_IN_MINUTE = 60000000000
 MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
 WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
 WEEKENDS = (SATURDAY, SUNDAY)
-DAY_TO_STR = {}
-DAY_TO_STR[0] = "Monday"
-DAY_TO_STR[1] = "Tuesday"
-DAY_TO_STR[2] = "Wednesday"
-DAY_TO_STR[3] = "Thursday"
-DAY_TO_STR[4] = "Friday"
-DAY_TO_STR[5] = "Saturday"
-DAY_TO_STR[6] = "Sunday"
 
 
 def selection(
@@ -581,20 +574,34 @@ class ExchangeCalendar(ABC):
         return []
 
     @property
-    def special_opens(self) -> list[tuple[datetime.time, HolidayCalendar]]:
+    def special_opens(self) -> list[tuple[datetime.time, HolidayCalendar] | int]:
         """Regular non-standard open times.
 
         Example of what would be defined as a special open:
             "EVERY YEAR on national lie-in day the exchange opens
             at 13:00 rather than the standard 09:00".
 
+            "Every Monday the exchange opens late, at 10:30 rather than
+            the standard 09:00".
+
         Returns
         -------
-        list[tuple[datetime.time, HolidayCalendar]]:
-            list of tuples each describing a regular non-standard open
-            time:
+        list[tuple[datetime.time, HolidayCalendar | int]]:
+            list of tuples each describing a regular non-standard open:
                 [0] datetime.time: regular non-standard open time.
-                [1] HolidayCalendar: holiday calendar describing occurence.
+
+                [1] Describes dates with regular non-standard open time
+                as [0]. As either:
+                    HolidayCalendar: defines annual dates by rules.
+
+                    int : integer defines a weekday with a regular
+                    non-standard open (0 - Monday, ..., 6 - Sunday).
+
+            The same date may be described by more than one tuple, for
+            example, if a late open on an annual holiday coincides with
+            a weekday late open. In this case the time assigned to the
+            date will be that defined by the tuple with the lowest index
+            in the returned list.
         """
         return []
 
@@ -623,20 +630,34 @@ class ExchangeCalendar(ABC):
         return []
 
     @property
-    def special_closes(self) -> list[tuple[datetime.time, HolidayCalendar]]:
+    def special_closes(self) -> list[tuple[datetime.time, HolidayCalendar | int]]:
         """Regular non-standard close times.
 
-        Example of what would be defined as a special close:
+        Examples of what would be defined as a special close:
             "On christmas eve the exchange closes at 14:00 rather than
+            the standard 17:00".
+
+            "Every Friday the exchange closes early, at 14:00 rather than
             the standard 17:00".
 
         Returns
         -------
-        list[tuple[datetime.time, HolidayCalendar]]:
-            list of tuples each describing a regular non-standard close
-            time:
+        list[tuple[datetime.time, HolidayCalendar | int]]:
+            list of tuples each describing a regular non-standard close:
                 [0] datetime.time: regular non-standard close time.
-                [1] HolidayCalendar: holiday calendar describing occurence.
+
+                [1] Describes dates with regular non-standard close time
+                as [0]. As either:
+                    HolidayCalendar: defines annual dates by rules.
+
+                    int : integer defines a weekday with a regular
+                    non-standard close (0 - Monday, ..., 6 - Sunday).
+
+            The same date may be described by more than one tuple, for
+            example, if an early close on an annual holiday coincides with
+            a weekday early close. In this case the time assigned to the
+            date will be that defined by the tuple with the lowest index
+            in the returned list.
         """
         return []
 
@@ -2638,23 +2659,23 @@ class ExchangeCalendar(ABC):
         ]
 
         # List of Series for ad-hoc times.
-        ad_hoc = [
-            pd.Series(
-                index=datetimes,
-                data=days_at_time(datetimes, time_, self.tz, 0),
-            )
-            for time_, datetimes in ad_hoc_dates
-        ]
+        ad_hoc = []
+        for time_, dti in ad_hoc_dates:
+            dti = dti[(dti >= start_date) & (dti <= end_date)]
+            srs = pd.Series(index=dti, data=days_at_time(dti, time_, self.tz, 0))
+            ad_hoc.append(srs)
 
-        merged = regular + ad_hoc
+        merged = ad_hoc + regular
         if not merged:
             # Concat barfs if the input has length 0.
             return pd.Series(
                 [], index=pd.DatetimeIndex([]), dtype="datetime64[ns, UTC]"
             )
 
-        result = pd.concat(merged).sort_index()
-        result = result.loc[(result.index >= start_date) & (result.index <= end_date)]
+        result = pd.concat(merged)
+        # where there are multiple occurrences of the same date, keep only the first
+        result = result[~result.index.duplicated(keep="first")]
+        result = result.sort_index()
         # exclude any special date that coincides with a holiday
         adhoc_holidays = pd.DatetimeIndex(self.adhoc_holidays)
         result = result[~result.index.isin(adhoc_holidays)]
@@ -2788,30 +2809,49 @@ def _check_breaks_match(break_starts_nanos: np.ndarray, break_ends_nanos: np.nda
 
 
 def scheduled_special_times(
-    calendar: HolidayCalendar | int,
+    special_days: HolidayCalendar | int,
     start: pd.Timestamp,
     end: pd.Timestamp,
     time: datetime.time,
     tz: pytz.tzinfo.BaseTzInfo,
 ) -> pd.Series:
-    """Return map of calendar 'holidays' to special times.
+    """Return map of dates to special times.
+
+    Parameters
+    ----------
+    special_days
+        Describes dates with a special time. Pass as either:
+            HolidayCalendar : calendar with rules describing the dates on
+            which special times apply
+
+            int : integer describing a weekday with a regular special
+            time (0 - Monday, ..., 6 - Sunday).
+
+    start
+        Date from which to evaluate mapping (inclusive of `start`).
+
+    end
+        Date to which to evaluate mapping (inclusive of `end`).
+
+    time
+        Special time for dates described by `special_days`.
+
+    tz
+        The timezone in which to interpret `time`.
 
     Returns
     -------
     pd.Series
-        Series mapping each 'holiday' of `calendar` from `start` through
-        `end` with corresponding special time.
+        Series mapping dates to special times.
 
         Index is timezone naive.
         dtype is datetime64[ns, UTC].
     """
-    if isinstance(calendar, int):
-        if calendar not in DAY_TO_STR:
-            raise Exception("Int {} is not a valid weekday".format(calendar))
-        day_str = "W-" + DAY_TO_STR[calendar].upper()[0:3]
+    if isinstance(special_days, int):
+        day_str = "W-" + day_name[special_days].upper()[0:3]
         days = pd.date_range(start, end, freq=day_str)
     else:
-        days = calendar.holidays(start, end)
+        days = special_days.holidays(start, end)
     if not isinstance(days, pd.DatetimeIndex):
         # days will be pd.Index if empty
         days = pd.DatetimeIndex(days)

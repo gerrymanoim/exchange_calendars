@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 
 from exchange_calendars.exchange_calendar_xtae import XTAEExchangeCalendar
@@ -37,3 +38,60 @@ class TestXTAECalendar(ExchangeCalendarTestBase):
             "2019-10-20",  # Rejoicing of the Law (Simchat Tora) Eve
             "2019-10-21",  # Rejoicing of the Law
         ]
+
+    @pytest.fixture
+    def early_closes_sample(self):
+        yield [
+            # Passover interim days
+            # 2019
+            "2019-04-21",
+            "2019-04-22",
+            "2019-04-23",
+            "2019-04-24",
+            # 2020
+            "2020-04-12",  # another Sunday (see 2022 comment...)
+            # 2022
+            # '2022-04-17' is a Sunday. Including here checks holiday early
+            # close takes precedence over sunday early close
+            "2022-04-17",
+            "2022-04-18",
+            "2022-04-19",
+            "2022-04-20",
+            # 2023
+            "2023-04-09",
+            "2023-04-10",
+        ]
+
+    @pytest.fixture
+    def early_closes_sample_time(self):
+        yield pd.Timedelta(hours=14, minutes=15)
+
+    @pytest.fixture
+    def early_closes_weekdays(self):
+        return (6,)
+
+    @pytest.fixture
+    def early_closes_weekdays_sample(self):
+        yield [
+            "2022-08-21",  # a sunday of a standard week
+        ]
+
+    @pytest.fixture
+    def early_closes_weekdays_sample_time(self):
+        yield pd.Timedelta(hours=15, minutes=40)
+
+    @pytest.fixture
+    def non_early_closes_sample(self):
+        yield [
+            # check standard week
+            # 2022-08-21 is a regular early close sunday
+            # check all other days have regular closes
+            "2022-08-17",
+            "2022-08-18",
+            "2022-08-22",
+            "2022-08-23",
+        ]
+
+    @pytest.fixture
+    def non_early_closes_sample_time(self):
+        yield pd.Timedelta(hours=17, minutes=15)

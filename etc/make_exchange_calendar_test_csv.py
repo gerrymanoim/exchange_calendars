@@ -1,6 +1,4 @@
 """
-Requires exchange_calendars 3.3+.
-
 This script can be used to generate the CSV files used in the exchange calendar
 tests. The CSVs include a calendar's sessions, open times, close times,
 break_start times and break_end times.
