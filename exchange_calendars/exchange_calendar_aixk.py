@@ -134,6 +134,7 @@ IndependenceDayHoliday = Holiday(
     end_date="2022"
 )
 
+
 class AIXKExchangeCalendar(ExchangeCalendar):
     """
     Exchange calendar for the Astana International Exchange (XIST).
@@ -203,7 +204,7 @@ class AIXKExchangeCalendar(ExchangeCalendar):
                 RepublicDay,
                 FirstPresidentDay,
                 IndependenceDay,
-                IndependenceDayHoliday
+                IndependenceDayHoliday,
             ]
         )
 
