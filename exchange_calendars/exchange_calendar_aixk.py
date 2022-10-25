@@ -97,18 +97,18 @@ ConstitutionDay = Holiday(
 
 RepublicDayHoliday = Holiday(
     "Republic Day Holiday",
-    month = 10,
-    day = 24,
-    observance = next_monday,
-    start_date = pd.Timestamp("2022-01-01")
+    month=10,
+    day=24,
+    observance=next_monday,
+    start_date=pd.Timestamp("2022-01-01"),
 )
 
 RepublicDay = Holiday(
     "Republic Day",
-    month = 10,
-    day = 25,
-    observance = next_monday,
-    start_date = pd.Timestamp("2022-01-01")
+    month=10,
+    day=25,
+    observance=next_monday,
+    start_date=pd.Timestamp("2022-01-01"),
 )
 
 FirstPresidentDay = Holiday(
@@ -127,11 +127,7 @@ IndependenceDay = Holiday(
 )
 
 IndependenceDayHoliday = Holiday(
-    "Independence Day",
-    month=12,
-    day=17,
-    observance=next_monday,
-    end_date="2022"
+    "Independence Day", month=12, day=17, observance=next_monday, end_date="2022"
 )
 
 
@@ -160,7 +156,7 @@ class AIXKExchangeCalendar(ExchangeCalendar):
       - Republic Day
       - First President Day
       - Independence Day
-    
+
     Holidays No Longer Observed:
       - Independence Day Holiday (until 2021, inclusive)
 
