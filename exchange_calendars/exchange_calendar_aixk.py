@@ -95,6 +95,20 @@ ConstitutionDay = Holiday(
     observance=next_monday,
 )
 
+RepublicDayHoliday = Holiday(
+    "Republic Day Holiday",
+    month = 10,
+    day = 24,
+    observance = next_monday
+)
+
+RepublicDay = Holiday(
+    "Republic Day",
+    month = 10,
+    day = 25,
+    observance = next_monday
+)
+
 FirstPresidentDay = Holiday(
     "First President Day",
     month=12,
@@ -109,14 +123,6 @@ IndependenceDay = Holiday(
     day=16,
     observance=next_monday,
 )
-
-IndependenceDayHoliday = Holiday(
-    "Independence Day",
-    month=12,
-    day=17,
-    observance=next_monday,
-)
-
 
 class AIXKExchangeCalendar(ExchangeCalendar):
     """
@@ -139,9 +145,10 @@ class AIXKExchangeCalendar(ExchangeCalendar):
       - Capital City Day
       - Kurban Ait Holiday (Eid-al-Adha)
       - Constitution Day
+      - Republic Day Holiday
+      - Republic Day
       - First President Day
       - Independence Day
-      - Independence Day Holiday
     Early Closes:
       - None
     """
@@ -178,9 +185,10 @@ class AIXKExchangeCalendar(ExchangeCalendar):
                 VictoryDayHoliday,
                 CapitalCityDay,
                 ConstitutionDay,
+                RepublicDayHoliday,
+                RepublicDay,
                 FirstPresidentDay,
                 IndependenceDay,
-                IndependenceDayHoliday,
             ]
         )
 
