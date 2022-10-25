@@ -127,7 +127,7 @@ IndependenceDay = Holiday(
 )
 
 IndependenceDayHoliday = Holiday(
-    "Independence Day", month=12, day=17, observance=next_monday, end_date="2022"
+    "Independence Day", month=12, day=17, observance=next_monday, end_date="2022",
 )
 
 
