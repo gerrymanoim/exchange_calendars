@@ -61,7 +61,8 @@ from .exchange_calendar_xwbo import XWBOExchangeCalendar
 from .us_futures_calendar import QuantopianUSFuturesCalendar
 from .weekday_calendar import WeekdayCalendar
 
-import appdirs
+from .appdirs_clone import _user_cache_dir
+
 import os
 import pickle
 import datetime as _dt
@@ -182,7 +183,7 @@ class ExchangeCalendarDispatcher(object):
 
     def _get_cal_cache_fp(self, name):
         cache_fn = "calendar-" + name + ".pkl"
-        cache_dp = os.path.join(appdirs.user_cache_dir(), "py-exchange_calendars")
+        cache_dp = os.path.join(_user_cache_dir(), "py-exchange_calendars")
         return os.path.join(cache_dp, cache_fn)
 
     def _send_cal_to_cache(self, calendar, name: str, cache: bool, **kwargs):
@@ -217,14 +218,20 @@ class ExchangeCalendarDispatcher(object):
         Return None if `name` not in cache or `name` in cache although
         calendar got with kwargs other than `**kwargs`.
         """
+
+        if cache:
+            cache_fp = self._get_cal_cache_fp(name)
+
         # First check memory cache:
         calendar, calendar_kwargs = self._factory_output_cache.get(name, (None, None))
         if calendar is not None and calendar_kwargs == kwargs:
+            if cache and not os.path.isfile(cache_fp):
+                # Quickly send to cache
+                self._send_cal_to_cache(calendar, name, cache, **kwargs)
             return calendar
 
         if cache:
             # Next check local file cache:
-            cache_fp = self._get_cal_cache_fp(name)
             if os.path.isfile(cache_fp):
                 moddt = _dt.datetime.fromtimestamp(os.path.getmtime(cache_fp))
                 # Additional condition that file created in last 24 hours

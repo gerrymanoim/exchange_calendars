@@ -27,7 +27,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "appdirs",
     "numpy",
     "pandas >= 1.1",
     "pyluach",

@@ -18,7 +18,8 @@ import re
 import typing
 from typing import Literal
 from collections import abc
-from datetime import time
+from datetime import time, datetime, date, timedelta
+import os
 
 import numpy as np
 import pandas as pd
@@ -33,6 +34,7 @@ from exchange_calendars.calendar_utils import (
     _default_calendar_aliases,
     _default_calendar_factories,
 )
+from exchange_calendars.appdirs_clone import _user_cache_dir
 from exchange_calendars.exchange_calendar import ExchangeCalendar, days_at_time
 from exchange_calendars.utils import pandas_utils
 
@@ -126,6 +128,79 @@ def test_default_calendars():
         assert cal.first_session >= cal_cls.default_start()
         assert cal.last_session <= cal_cls.default_end()
         dispatcher.deregister_calendar(name)
+
+
+def test_calendar_cache():
+    dispatcher = ExchangeCalendarDispatcher(
+        calendars={},
+        calendar_factories=_default_calendar_factories,
+        aliases=_default_calendar_aliases,
+    )
+
+    alias = "NYSE"
+    name = _default_calendar_aliases[alias]
+
+    ad = _user_cache_dir()
+    cache_fp = ad + "/py-exchange_calendars/calendar-" + name + ".pkl"
+
+    # Reset file-cache
+    if os.path.isfile(cache_fp):
+        os.remove(cache_fp)
+
+    # Not file-cached if not requested
+    cal = dispatcher.get_calendar(alias, cache=False)
+    assert not os.path.isfile(cache_fp)
+
+    # File-cached if requested
+    cal = dispatcher.get_calendar(alias, cache=True)
+    assert os.path.isfile(cache_fp)
+
+    # Now in file-cache, another get() should not modify file-cache
+    # - reset dispatcher
+    dispatcher = ExchangeCalendarDispatcher(
+        calendars={},
+        calendar_factories=_default_calendar_factories,
+        aliases=_default_calendar_aliases,
+    )
+    # - test
+    moddt = datetime.fromtimestamp(os.path.getmtime(cache_fp))
+    cal = dispatcher.get_calendar(alias, cache=True)
+    moddt2 = datetime.fromtimestamp(os.path.getmtime(cache_fp))
+    assert moddt == moddt2
+
+    # Confirm that dispatcher is truly returning file-cached calendar
+    # - clear the in-memory cache
+    del dispatcher._factory_output_cache[name]
+    # - access cache directly
+    kwargs = {"start": None, "end": None}
+    cal2 = dispatcher._get_cached_factory_output(name, True, **kwargs)
+    assert cal.schedule.equals(cal2.schedule)
+
+    # If in file-cache and get() a different date range,
+    # returns a new calendar and that overwrites file-cache
+    cal = dispatcher.get_calendar(alias, cache=True)
+    cal2 = dispatcher.get_calendar(alias, start="2020", cache=True)
+    assert cal.schedule.shape != cal2.schedule.shape
+    moddt2 = datetime.fromtimestamp(os.path.getmtime(cache_fp))
+    assert moddt != moddt2
+
+    # Test 24-hour expiry
+    # - reset dispatcher
+    dispatcher = ExchangeCalendarDispatcher(
+        calendars={},
+        calendar_factories=_default_calendar_factories,
+        aliases=_default_calendar_aliases,
+    )
+    # - modify modification time to yesterday
+    moddt = datetime.fromtimestamp(os.path.getmtime(cache_fp))
+    moddt -= timedelta(days=1)
+    os.utime(cache_fp, (moddt.timestamp(), moddt.timestamp()))
+    moddt = datetime.fromtimestamp(os.path.getmtime(cache_fp))
+    assert moddt.date() == (date.today() - timedelta(days=1))
+    # - test
+    cal = dispatcher.get_calendar(alias, cache=True)
+    moddt = datetime.fromtimestamp(os.path.getmtime(cache_fp))
+    assert moddt.date() == date.today()
 
 
 @pytest.mark.parametrize(
@@ -2266,9 +2341,9 @@ class ExchangeCalendarTestBase:
             d[pd.Timestamp.min] = d.pop(None)
             open_times = pd.Series(d)
 
-            for date in daylight_savings_dates:
+            for dt in daylight_savings_dates:
                 # where `next day` is first session of new daylight savings regime
-                next_day = cal.date_to_session(T(date), "next")
+                next_day = cal.date_to_session(T(dt), "next")
                 open_date = next_day + pd.Timedelta(days=cal.open_offset)
 
                 the_open = cal.schedule.loc[next_day].open
@@ -2279,7 +2354,7 @@ class ExchangeCalendarTestBase:
                 assert open_date.month == localized_open.month
                 assert open_date.day == localized_open.day
 
-                open_ix = open_times.index.searchsorted(date, side="right")
+                open_ix = open_times.index.searchsorted(dt, side="right")
                 if open_ix == len(open_times):
                     open_ix -= 1
 
@@ -2467,20 +2542,20 @@ class ExchangeCalendarTestBase:
     def test_non_holidays_sample(self, default_calendar, non_holidays_sample):
         """Test that calendar-specific sample of non-holidays are sessions."""
         if non_holidays_sample:
-            for date in non_holidays_sample:
-                assert T(date) in default_calendar.sessions
+            for dt in non_holidays_sample:
+                assert T(dt) in default_calendar.sessions
 
     def test_late_opens_sample(self, default_calendar, late_opens_sample):
         """Test calendar-specific sample of sessions are included to late opens."""
         if late_opens_sample:
-            for date in late_opens_sample:
-                assert T(date) in default_calendar.late_opens
+            for dt in late_opens_sample:
+                assert T(dt) in default_calendar.late_opens
 
     def test_early_closes_sample(self, default_calendar, early_closes_sample):
         """Test calendar-specific sample of sessions are included to early closes."""
         if early_closes_sample:
-            for date in early_closes_sample:
-                assert T(date) in default_calendar.early_closes
+            for dt in early_closes_sample:
+                assert T(dt) in default_calendar.early_closes
 
     def test_early_closes_sample_time(
         self, default_calendar, early_closes_sample, early_closes_sample_time
@@ -2495,16 +2570,16 @@ class ExchangeCalendarTestBase:
         if early_closes_sample_time is not None:
             cal, tz = default_calendar, default_calendar.tz
             offset = pd.Timedelta(cal.close_offset, "D") + early_closes_sample_time
-            for date in early_closes_sample:
-                early_close = cal.closes[date].tz_convert(tz)
-                expected = pd.Timestamp(date, tz=tz) + offset
+            for dt in early_closes_sample:
+                early_close = cal.closes[dt].tz_convert(tz)
+                expected = pd.Timestamp(dt, tz=tz) + offset
                 assert early_close == expected
 
     def test_non_early_closes_sample(self, default_calendar, non_early_closes_sample):
         """Test calendar-specific sample of sessions are not early closes."""
         if non_early_closes_sample:
-            for date in non_early_closes_sample:
-                assert T(date) not in default_calendar.early_closes
+            for dt in non_early_closes_sample:
+                assert T(dt) not in default_calendar.early_closes
 
     def test_non_early_closes_sample_time(
         self, default_calendar, non_early_closes_sample, non_early_closes_sample_time
@@ -2519,9 +2594,9 @@ class ExchangeCalendarTestBase:
         if non_early_closes_sample_time is not None:
             cal, tz = default_calendar, default_calendar.tz
             offset = pd.Timedelta(cal.close_offset, "D") + non_early_closes_sample_time
-            for date in non_early_closes_sample:
-                close = cal.closes[date].tz_convert(tz)
-                expected_close = pd.Timestamp(date, tz=tz) + offset
+            for dt in non_early_closes_sample:
+                close = cal.closes[dt].tz_convert(tz)
+                expected_close = pd.Timestamp(dt, tz=tz) + offset
                 assert close == expected_close
 
     def test_late_opens(self, default_calendar, late_opens):
@@ -2722,22 +2797,22 @@ class ExchangeCalendarTestBase:
         date_is_session = dates.isin(sessions)
 
         last_session = None
-        for date, is_session in zip(dates, date_is_session):
-            session_label = f(date, "previous")
+        for dt, is_session in zip(dates, date_is_session):
+            session_label = f(dt, "previous")
             if is_session:
-                assert session_label == date
+                assert session_label == dt
                 last_session = session_label
             else:
                 assert session_label == last_session
 
         # direction as "next"
         last_session = None
-        for date, is_session in zip(
+        for dt, is_session in zip(
             dates.sort_values(ascending=False), date_is_session[::-1]
         ):
-            session_label = f(date, "next")
-            if date in sessions:
-                assert session_label == date
+            session_label = f(dt, "next")
+            if dt in sessions:
+                assert session_label == dt
                 last_session = session_label
             else:
                 assert session_label == last_session
