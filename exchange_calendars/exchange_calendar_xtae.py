@@ -131,17 +131,16 @@ class XTAEExchangeCalendar(ExchangeCalendar):
     @property
     def adhoc_holidays(self):
         return [
-            # 2019
-            # Election Day
+            # Election days:
+            # - 2019
             pd.Timestamp("2019-04-09"),
-            # Election Day
             pd.Timestamp("2019-09-17"),
-            # 2020
-            # Election Day
+            # - 2020
             pd.Timestamp("2020-03-02"),
-            # 2021
-            # Election Day
+            # - 2021
             pd.Timestamp("2021-03-23"),
+            # - 2022
+            pd.Timestamp("2022-11-01"),
         ]
 
     @property
