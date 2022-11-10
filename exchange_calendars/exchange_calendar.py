@@ -20,7 +20,7 @@ from collections.abc import Sequence, Callable
 import datetime
 import functools
 import operator
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Any
 import warnings
 
 import numpy as np
@@ -2343,6 +2343,7 @@ class ExchangeCalendar(ABC):
         curtail_overlaps: bool = False,
         ignore_breaks: bool = False,
         align: pd.Timedelta | str | None = None,
+        align_pm: pd.Timedelta | bool = True,
         parse: bool = True,
     ) -> pd.DatetimeIndex | pd.IntervalIndex:
         """Create a trading index.
@@ -2518,7 +2519,7 @@ class ExchangeCalendar(ABC):
                 If False, will raise IntervalsOverlapError.
 
         ignore_breaks : default: False
-            (ignored if `period` is '1d'.)
+            (ignored if `period` is '1d')
             (irrelevant if no session has a break)
 
             Defines whether trading index should respect session breaks.
@@ -2536,11 +2537,47 @@ class ExchangeCalendar(ABC):
             500µs on the execution.
 
         align : default: None
-            If set, shifts intervals so first of each day
-            aligns with nearest fraction of specified hour.
-            +ve = shift forward, -ve = shift backward
-            Value must be a factor of 60m e.g. 5m.
-            Type same as `period`.
+            Shift indices forwards or backwards to align with a specific
+            fraction of an hour.
+
+            Pass as a pd.Timedelta or a str that's acceptable as a single
+            input to pd.Timedelta. Pass +ve values to shift indices
+            forwards, -ve values to shift indices backwards.
+
+            Valid values are (or equivalent):
+                "2T", "4T", "5T", "6T", "10T", "12T", "15T", "20T", "30T",
+                "-2T", "-4T", "-5T", "-6T", "-10T", "-12T", "-15T", "-20T",
+                "-30T"
+
+            For example, if `intervals` is True and `period` is '5T' then
+            the first interval of a session with open time as 07:59 would
+            be:
+                07:59 - 08:04 if `align` is None
+                08:00 - 08:05 if `align` is '5T'
+                07:55 - 08:00 if `align` is '-5T'
+
+            Subsequent indices will be similarly shifted.
+
+            Note: Indices will not be shifted if they already align with
+            `align`. For example, if the open time were 08:00 then the
+            first interval will always have a left side as 08:00 regardless
+            of `align`. (The maximum distance that indices can be shifted
+            is one minute less than `align`.)
+
+        align_pm : default: True
+            (ignored if `ignore_break` is True)
+            (irrelevant if no session has a break)
+
+            Shift post-break indices forwards or backwards to align with
+            the nearest occurence of a specific fraction of an hour.
+
+                True: (default) Treat as `align`.
+
+                False: Do not shift post-break indices.
+
+                pd.Timedelta or str: Align post-break indices to the
+                nearest occurence of this fraction of an hour. Valid values
+                as for `align`.
 
         Returns
         -------
@@ -2576,7 +2613,7 @@ class ExchangeCalendar(ABC):
             except ValueError:
                 msg = (
                     f"`period` receieved as '{period}' although takes type"
-                    " 'pd.Timedelta' or a type 'str' that is valid as a single input"
+                    " 'pd.Timedelta' or a 'str' that is valid as a single input"
                     " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T'),"
                     " '15min', '15T', '1H', '4h', '1d', '5s', 500ms'."
                 )
@@ -2598,23 +2635,46 @@ class ExchangeCalendar(ABC):
                 f"If `intervals` is True then `closed` cannot be '{closed}'."
             )
 
-        if align is not None:
+        def get_align(name: Literal["align", "align_pm"], value: Any) -> pd.Timedelta:
+            """Convert value received for an align parameter to Timestamp.
+
+            Raises `ValueError` if value is invalid or not of a valid type.
+
+            Parameters
+            ----------
+            name
+                Parameter name.
+
+            value
+                Value assigned to parameter.
+            """
             try:
-                align = pd.Timedelta(align)
+                value = pd.Timedelta(value)
             except ValueError:
+                insert = " bool," if name == "align_pm" else ""
                 msg = (
-                    f"`align` receieved as '{align}' although takes type"
-                    " 'pd.Timedelta' or a type 'str' that is valid as a single input"
-                    " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T'),"
-                    " '15min', '15T'."
+                    f"`{name}` receieved as '{value}' although takes type{insert}"
+                    f" 'pd.Timedelta' or a 'str' that is valid as a single input"
+                    " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('5T'),"
+                    " '5min', '5T', pd.Timedelta('-5T'), '-5min', '-5T'."
                 )
                 raise ValueError(msg) from None
 
-            td_1h = pd.Timedelta('1H')
-            if align > td_1h or align < -td_1h or (td_1h % align) != pd.Timedelta(0):
+            ONE_HOUR = pd.Timedelta("1H")
+            if value > ONE_HOUR or value < -ONE_HOUR or (ONE_HOUR % value):
                 raise ValueError(
-                    f"`align` must be factor of 1H but received '{align}'."
+                    f"`{name}` must be factor of 1H although received '{value}'."
                 )
+
+            return value
+
+        if align is not None:
+            align = get_align("align", align)
+
+        if align_pm:
+            align_pm = align if align_pm is True else get_align("align_pm", align_pm)
+        else:
+            align_pm = None
 
         if force is not None:
             force_close = force_break_close = force
@@ -2631,6 +2691,7 @@ class ExchangeCalendar(ABC):
             curtail_overlaps,
             ignore_breaks,
             align,
+            align_pm,
         )
 
         if not intervals:

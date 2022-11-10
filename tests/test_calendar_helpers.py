@@ -710,7 +710,8 @@ class TestTradingIndex:
             force_break_close,
             curtail_overlaps=False,
             ignore_breaks=False,
-            align=None
+            align=None,
+            align_pm=None,
         )
         index = ti.trading_index()
 
@@ -800,7 +801,8 @@ class TestTradingIndex:
             force_break_close,
             curtail,
             ignore_breaks=False,
-            align=None
+            align=None,
+            align_pm=None,
         )
         index = ti.trading_index_intervals()
 
@@ -846,7 +848,9 @@ class TestTradingIndex:
         closed = "neither"
         forces = [False, False]
 
-        ti = m._TradingIndex(cal, start, end, period, closed, *forces, False, False, None)
+        ti = m._TradingIndex(
+            cal, start, end, period, closed, *forces, False, False, None, None
+        )
         index = ti.trading_index()
         assert index.empty
 
@@ -878,7 +882,7 @@ class TestTradingIndex:
 
         start, end = data.draw(self.st_start_end(ans))
         period = pd.Timedelta(1, "D")
-        forces_and_curtails = [force_close, force_break_close, curtail_overlaps]
+        forces_and_curtails = [force_close, force_break_close, None, curtail_overlaps]
 
         index = cal.trading_index(
             start, end, period, intervals, closed, *forces_and_curtails, parse=False
@@ -942,7 +946,8 @@ class TestTradingIndex:
             force_break_close=False,
             curtail_overlaps=False,
             ignore_breaks=False,
-            align=None
+            align=None,
+            align_pm=None,
         )
         with pytest.raises(errors.IndicesOverlapError):
             ti.trading_index()
@@ -990,7 +995,8 @@ class TestTradingIndex:
             force_break_close=False,
             curtail_overlaps=curtail_all,
             ignore_breaks=False,
-            align=None
+            align=None,
+            align_pm=None,
         )
 
     def test_overlaps(self, ti_for_overlap, answers):
@@ -1039,7 +1045,8 @@ class TestTradingIndex:
             force_break_close=False,
             curtail_overlaps=curtail_all,
             ignore_breaks=True,
-            align=None
+            align=None,
+            align_pm=None,
         )
 
     def test_overlaps_2(self, ti_for_overlap_error_negative_case):
@@ -1119,6 +1126,7 @@ class TestTradingIndex:
         Only useful for exchanges with unusual start times, like
         XTAE with start time 7:59am UTC (9:59am local).
         """
+        # TODO REVIEW...
 
         cal = calendars["XTAE"]
 
@@ -1140,21 +1148,25 @@ class TestTradingIndex:
         end = pd.Timestamp("2020-12-20")
         periods = list(aligned_start_times.keys())
         for i in range(len(periods)):
-            if periods[i][0] == '-':
+            if periods[i][0] == "-":
                 periods[i] = periods[i][1:]
 
         for alignment in aligned_start_times.keys():
             aligned_start_time = aligned_start_times[alignment]
 
             for period in periods:
-                rtrn = cal.trading_index(start, end, period=period, intervals=True, align=alignment)
+                rtrn = cal.trading_index(
+                    start, end, period=period, intervals=True, align=alignment
+                )
 
                 # Select first interval of each day:
                 left = rtrn.left.tz_convert("Asia/Jerusalem")
                 days = pd.to_datetime(left.date)
                 left_grp = left.groupby(days)
 
-                first_interval_start_times = np.array([left_grp[d][0].time() for d in set(days)])
+                first_interval_start_times = np.array(
+                    [left_grp[d][0].time() for d in set(days)]
+                )
                 assert (first_interval_start_times == aligned_start_time).all()
 
     def test_start_end_times(self, one_min, calendars):
@@ -1487,18 +1499,26 @@ class TestTradingIndex:
         ):
             cal.trading_index(start, end, "1D")
 
+        # TODO REVISE, changes to error message
         period_bad = "X"
-        error_msg = "`period` receieved as '{}' although takes type" \
-            " 'pd.Timedelta' or a type 'str' that is valid as a single input" \
-            " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T')," \
+        error_msg = (
+            "`period` receieved as '{}' although takes type"
+            " 'pd.Timedelta' or a type 'str' that is valid as a single input"
+            " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T'),"
             " '15min', '15T', '1H', '4h', '1d', '5s', 500ms'.".format(period_bad)
+        )
         with pytest.raises(ValueError, match=re.escape(error_msg)):
             cal.trading_index(start=start, end=end, period=period_bad)
 
+        # TODO REVISE, changes to error message
+        # TODO REVISE to cover both align and align_pm
+        # TODO ADD test for valid type but invalid value
         align_bad = "X"
-        error_msg = "`align` receieved as '{}' although takes type" \
-            " 'pd.Timedelta' or a type 'str' that is valid as a single input" \
-            " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T')," \
+        error_msg = (
+            "`align` receieved as '{}' although takes type"
+            " 'pd.Timedelta' or a type 'str' that is valid as a single input"
+            " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T'),"
             " '15min', '15T'.".format(align_bad)
+        )
         with pytest.raises(ValueError, match=re.escape(error_msg)):
             cal.trading_index(start=start, end=end, period="1h", align=align_bad)
