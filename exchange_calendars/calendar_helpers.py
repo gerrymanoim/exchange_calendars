@@ -460,8 +460,8 @@ class _TradingIndex:
         force_break_close: bool,
         curtail_overlaps: bool,
         ignore_breaks: bool,
-        align: pd.Timedelta | None,
-        align_pm: pd.Timedelta | None,
+        align: pd.Timedelta,
+        align_pm: pd.Timedelta,
     ):
         self.closed = closed
         self.force_break_close = False if ignore_breaks else force_break_close
@@ -490,11 +490,10 @@ class _TradingIndex:
 
         def align_opens(opens: pd.Series, align: pd.Timedelta) -> np.ndarray:
             """Return opens as nanos shifted for alignment."""
-            f = opens.dt.floor if align < pd.Timedelta(0) else opens.dt.ceil
-            opens = f(abs(align))
+            opens = opens.dt.ceil(align)
             return opens.values.astype(np.int64)
 
-        if align is not None and align:
+        if align != pd.Timedelta(1, "T"):
             self.opens = align_opens(calendar.opens[slce], align)
         else:
             self.opens = calendar.opens_nanos[slce]
@@ -504,7 +503,7 @@ class _TradingIndex:
         else:
             self.break_starts = calendar.break_starts_nanos[slce]
 
-            if align_pm is not None and align_pm:
+            if align_pm != pd.Timedelta(1, "T"):
                 self.break_ends = align_opens(calendar.break_ends[slce], align_pm)
             else:
                 self.break_ends = calendar.break_ends_nanos[slce]

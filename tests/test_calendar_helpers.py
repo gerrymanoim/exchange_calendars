@@ -382,6 +382,13 @@ def test_parse_trading_minute(
         m.parse_trading_minute(calendar, minute_too_late, param_name)
 
 
+def st_align() -> st.SearchStrategy[pd.Timedelta]:
+    """SearchStrategy for a validalignment."""
+    sample_pos = [pd.Timedelta(i, "T") for i in range(1, 31) if not 60 % i]
+    sample_neg = [-td for td in sample_pos]
+    return st.sampled_from(sample_pos + sample_neg)
+
+
 class TestTradingIndex:
     """Tests for _TradingIndex.
 
@@ -391,7 +398,7 @@ class TestTradingIndex:
 
     Also includes:
         - concrete tests to verify overlap handling.
-        - conceret test to verify passing start and/or end as a time.
+        - concrete test to verify passing start and/or end as a time.
         - parsing tests for ExchangeCalendar.trading_index.
 
     NOTE: `_TradingIndex` is also tested via
@@ -399,11 +406,11 @@ class TestTradingIndex:
     of concrete cases (options as default values).
     """
 
-    calendar_names = ["XLON", "XHKG", "XTAE", "CMES", "24/7"]
+    CALENDAR_NAMES = ["XLON", "XHKG", "XTAE", "CMES", "24/7"]
     """Selection of calendars with a particular behaviour:
     "XLON" - calendars without breaks.
     "XHKG" - calendars with breaks.
-    "XTAE" - opens at 9:59am, useful for testing trading_index(align)
+    "XTAE" - opens at 9:59am, useful for testing `align`
     "CMES" - 24 hour calendar, not 7 days a week.
     "24/7" - 24 hour calendar.
     """
@@ -414,7 +421,7 @@ class TestTradingIndex:
     def answers(self) -> abc.Iterator[dict[str, Answers]]:
         """Dict of answers for tested calendars, key as name, value as Answers."""
         d = {}
-        for name in self.calendar_names:
+        for name in self.CALENDAR_NAMES:
             d[name] = Answers(name, side="left")
         return d
 
@@ -427,7 +434,7 @@ class TestTradingIndex:
             d[name] = cls(start=ans.first_session, end=ans.last_session)
         return d
 
-    @pytest.fixture(scope="class", params=calendar_names)
+    @pytest.fixture(scope="class", params=CALENDAR_NAMES)
     def calendars_with_answers(
         self, request, calendars, answers
     ) -> abc.Iterator[tuple[ExchangeCalendar, Answers]]:
@@ -539,6 +546,8 @@ class TestTradingIndex:
         closed: str | None,
         force_break_close: bool,
         force_close: bool,
+        align: pd.Timedelta,
+        align_pm: pd.Timedelta,
         curtail: bool = False,
     ) -> tuple[pd.Series, pd.Series]:
         """First and last trading indice of each session/subsession.
@@ -553,7 +562,7 @@ class TestTradingIndex:
         closes = ans.closes[slc]
         has_break = ans.break_starts[slc].notna().any()
 
-        def bounds(start: pd.Series, end: pd.Series, force: bool):
+        def bounds(start: pd.Series, end: pd.Series, force: bool, align: pd.Timedelta):
             """Evaluate bounds of trading index by session/subsession.
 
             Parameters
@@ -568,6 +577,7 @@ class TestTradingIndex:
             end
                 As for `start` albeit indicating end times.
             """
+            start = start.dt.ceil(align) if align else start
             lower_bounds = start if closed_left else start + period
             if force and closed_right:
                 if (lower_bounds > end).any():
@@ -597,15 +607,19 @@ class TestTradingIndex:
 
             # am sessions bounds
             am_lower, am_upper = bounds(
-                opens[mask], break_starts[mask], force_break_close
+                opens[mask], break_starts[mask], force_break_close, align
             )
 
             # pm sessions bounds
-            pm_lower, pm_upper = bounds(break_ends[mask], closes[mask], force_close)
+            pm_lower, pm_upper = bounds(
+                break_ends[mask], closes[mask], force_close, align_pm
+            )
 
             # sessions without breaks
             if (~mask).any():
-                day_lower, day_upper = bounds(opens[~mask], closes[~mask], force_close)
+                day_lower, day_upper = bounds(
+                    opens[~mask], closes[~mask], force_close, align
+                )
             else:
                 day_upper = day_lower = pd.Series([], dtype="datetime64[ns, UTC]")
 
@@ -613,7 +627,7 @@ class TestTradingIndex:
             upper_bounds = pd.concat((am_upper, pm_upper, day_upper))
 
         else:
-            lower_bounds, upper_bounds = bounds(opens, closes, force_close)
+            lower_bounds, upper_bounds = bounds(opens, closes, force_close, align)
 
         if curtail and not (force_close and force_break_close):
             indices = lower_bounds.argsort()
@@ -631,6 +645,8 @@ class TestTradingIndex:
         data=st.data(),
         force_close=st.booleans(),
         force_break_close=st.booleans(),
+        align=st_align(),
+        align_pm=st_align(),
     )
     @settings(deadline=None)
     def test_indices_fuzz(
@@ -639,6 +655,8 @@ class TestTradingIndex:
         calendars_with_answers,
         force_close: bool,
         force_break_close: bool,
+        align,
+        align_pm,
         one_min,
     ):
         """Fuzz for unexpected errors and options behaviour.
@@ -710,8 +728,8 @@ class TestTradingIndex:
             force_break_close,
             curtail_overlaps=False,
             ignore_breaks=False,
-            align=None,
-            align_pm=None,
+            align=align,
+            align_pm=align_pm,
         )
         index = ti.trading_index()
 
@@ -721,7 +739,7 @@ class TestTradingIndex:
         assert not index.empty
 
         lower_bounds, upper_bounds = self.sessions_bounds(
-            ans, slc, period, closed, force_break_close, force_close, False
+            ans, slc, period, closed, force_break_close, force_close, align, align_pm
         )
 
         assert lower_bounds.isin(index).all()
@@ -737,6 +755,8 @@ class TestTradingIndex:
         data=st.data(),
         force_break_close=st.booleans(),
         curtail=st.booleans(),
+        align=st_align(),
+        align_pm=st_align(),
     )
     @settings(deadline=None)
     def test_intervals_fuzz(
@@ -745,6 +765,8 @@ class TestTradingIndex:
         calendars_with_answers,
         force_break_close: bool,
         curtail: bool,
+        align: pd.Timedelta,
+        align_pm: pd.Timedelta,
         one_min,
     ):
         """Fuzz for unexpected errors and options behaviour.
@@ -801,8 +823,8 @@ class TestTradingIndex:
             force_break_close,
             curtail,
             ignore_breaks=False,
-            align=None,
-            align_pm=None,
+            align=align,
+            align_pm=align_pm,
         )
         index = ti.trading_index_intervals()
 
@@ -812,7 +834,15 @@ class TestTradingIndex:
         assert not index.empty
 
         lower_bounds, upper_bounds = self.sessions_bounds(
-            ans, slc, period, None, force_break_close, force_close, curtail
+            ans,
+            slc,
+            period,
+            None,
+            force_break_close,
+            force_close,
+            align,
+            align_pm,
+            curtail,
         )
 
         assert lower_bounds.isin(index.left).all()
@@ -825,7 +855,9 @@ class TestTradingIndex:
 
     @given(data=st.data(), calendar_name=st.sampled_from(["XLON", "XHKG"]))
     @settings(deadline=None)
-    def test_for_empty_with_neither_fuzz(self, data, calendars, answers, calendar_name):
+    def test_for_empty_with_neither_fuzz(
+        self, data, calendars, answers, calendar_name, one_min
+    ):
         """Fuzz for specific condition that returns empty DatetimeIndex.
 
         Fuzz for expected empty DatetimeIndex when closed "neither" and
@@ -849,7 +881,7 @@ class TestTradingIndex:
         forces = [False, False]
 
         ti = m._TradingIndex(
-            cal, start, end, period, closed, *forces, False, False, None, None
+            cal, start, end, period, closed, *forces, False, False, one_min, one_min
         )
         index = ti.trading_index()
         assert index.empty
@@ -946,8 +978,8 @@ class TestTradingIndex:
             force_break_close=False,
             curtail_overlaps=False,
             ignore_breaks=False,
-            align=None,
-            align_pm=None,
+            align=one_min,
+            align_pm=one_min,
         )
         with pytest.raises(errors.IndicesOverlapError):
             ti.trading_index()
@@ -974,7 +1006,7 @@ class TestTradingIndex:
 
     @pytest.fixture(params=itertools.product(("105T", "106T"), ("right", "both")))
     def ti_for_overlap(
-        self, request, cal_start_end, curtail_all
+        self, request, cal_start_end, curtail_all, one_min
     ) -> abc.Iterator[m._TradingIndex]:
         """_TradingIndex fixture against which to test for overlaps.
 
@@ -995,8 +1027,8 @@ class TestTradingIndex:
             force_break_close=False,
             curtail_overlaps=curtail_all,
             ignore_breaks=False,
-            align=None,
-            align_pm=None,
+            align=one_min,
+            align_pm=one_min,
         )
 
     def test_overlaps(self, ti_for_overlap, answers):
@@ -1027,7 +1059,7 @@ class TestTradingIndex:
 
     @pytest.fixture(params=("right", "both"))
     def ti_for_overlap_error_negative_case(
-        self, request, cal_start_end, curtail_all
+        self, request, cal_start_end, curtail_all, one_min
     ) -> abc.Iterator[m._TradingIndex]:
         """_TradingIndex fixture against which to test for no overlaps.
 
@@ -1045,8 +1077,8 @@ class TestTradingIndex:
             force_break_close=False,
             curtail_overlaps=curtail_all,
             ignore_breaks=True,
-            align=None,
-            align_pm=None,
+            align=one_min,
+            align_pm=one_min,
         )
 
     def test_overlaps_2(self, ti_for_overlap_error_negative_case):
@@ -1166,9 +1198,20 @@ class TestTradingIndex:
                 period_td = pd.Timedelta(period)
 
                 for force_close in [False, True]:
-                    tidx = cal.trading_index(start, end, period=period, intervals=True, force_close=force_close)
+                    tidx = cal.trading_index(
+                        start,
+                        end,
+                        period=period,
+                        intervals=True,
+                        force_close=force_close,
+                    )
                     tidx_aligned = cal.trading_index(
-                        start, end, period=period, intervals=True, align=alignment, force_close=force_close
+                        start,
+                        end,
+                        period=period,
+                        intervals=True,
+                        align=alignment,
+                        force_close=force_close,
                     )
 
                     nd = len(set(tidx.left.date))
@@ -1179,7 +1222,7 @@ class TestTradingIndex:
                     tidx_aligned_left = tidx_aligned.left.tz_convert("Asia/Jerusalem")
                     tidx_aligned_right = tidx_aligned.right.tz_convert("Asia/Jerusalem")
 
-                    assert (set(tidx_left.date) == set(tidx_aligned_left.date))
+                    assert set(tidx_left.date) == set(tidx_aligned_left.date)
 
                     days_unique = sorted(list(set(pd.to_datetime(tidx_left.date))))
 
@@ -1203,18 +1246,19 @@ class TestTradingIndex:
 
                     # Get first and last UNaligned interval of each day:
                     days = pd.to_datetime(tidx_left.date)
-                    tidx_left_grp = tidx_left.groupby(days)
-                    first_interval_start_times = np.array(
-                        [tidx_left_grp[d][0].time() for d in days_unique]
-                    )
-                    last_interval_start_times = np.array(
-                        [tidx_left_grp[d][-1].time() for d in days_unique]
-                    )
-                    #
+                    # Unused Variables
+                    # tidx_left_grp = tidx_left.groupby(days)
+                    # first_interval_start_times = np.array(
+                    #     [tidx_left_grp[d][0].time() for d in days_unique]
+                    # )
+                    # last_interval_start_times = np.array(
+                    #     [tidx_left_grp[d][-1].time() for d in days_unique]
+                    # )
                     tidx_right_grp = tidx_right.groupby(days)
-                    first_interval_close_times = np.array(
-                        [tidx_right_grp[d][0].time() for d in days_unique]
-                    )
+                    # Unused variable
+                    # first_interval_close_times = np.array(
+                    #     [tidx_right_grp[d][0].time() for d in days_unique]
+                    # )
                     last_interval_close_times = np.array(
                         [tidx_right_grp[d][-1].time() for d in days_unique]
                     )
@@ -1223,44 +1267,91 @@ class TestTradingIndex:
                     # First set of tests carefully test the first and last intervals of each day
                     ################
                     # First-interval-of-each-day open should be aligned:
-                    assert (first_aligned_interval_start_times == aligned_start_time).all()
+                    assert (
+                        first_aligned_interval_start_times == aligned_start_time
+                    ).all()
 
                     # First-interval-of-each-day close should == open + period
-                    first_aligned_interval_start_datetimes = pd.to_datetime([pd.Timestamp.combine(days_unique[i], first_aligned_interval_start_times[i]) for i in range(nd)]).tz_localize("Asia/Jerusalem")
-                    first_aligned_interval_close_datetimes = pd.to_datetime([pd.Timestamp.combine(days_unique[i], first_aligned_interval_close_times[i]) for i in range(nd)]).tz_localize("Asia/Jerusalem")
-                    assert (first_aligned_interval_start_datetimes + period_td == first_aligned_interval_close_datetimes).all()
+                    first_aligned_interval_start_datetimes = pd.to_datetime(
+                        [
+                            pd.Timestamp.combine(
+                                days_unique[i], first_aligned_interval_start_times[i]
+                            )
+                            for i in range(nd)
+                        ]
+                    ).tz_localize("Asia/Jerusalem")
+                    first_aligned_interval_close_datetimes = pd.to_datetime(
+                        [
+                            pd.Timestamp.combine(
+                                days_unique[i], first_aligned_interval_close_times[i]
+                            )
+                            for i in range(nd)
+                        ]
+                    ).tz_localize("Asia/Jerusalem")
+                    assert (
+                        first_aligned_interval_start_datetimes + period_td
+                        == first_aligned_interval_close_datetimes
+                    ).all()
 
                     # Examine last interval close time
                     if force_close:
                         # Equal to session close
-                        assert (last_aligned_interval_close_times == last_interval_close_times).all()
+                        assert (
+                            last_aligned_interval_close_times
+                            == last_interval_close_times
+                        ).all()
                     else:
-                        last_aligned_interval_start_datetimes = pd.to_datetime([pd.Timestamp.combine(days_unique[i], last_aligned_interval_start_times[i]) for i in range(nd)]).tz_localize("Asia/Jerusalem")
-                        last_aligned_interval_close_datetimes = pd.to_datetime([pd.Timestamp.combine(days_unique[i], last_aligned_interval_close_times[i]) for i in range(nd)]).tz_localize("Asia/Jerusalem")
+                        last_aligned_interval_start_datetimes = pd.to_datetime(
+                            [
+                                pd.Timestamp.combine(
+                                    days_unique[i], last_aligned_interval_start_times[i]
+                                )
+                                for i in range(nd)
+                            ]
+                        ).tz_localize("Asia/Jerusalem")
+                        last_aligned_interval_close_datetimes = pd.to_datetime(
+                            [
+                                pd.Timestamp.combine(
+                                    days_unique[i], last_aligned_interval_close_times[i]
+                                )
+                                for i in range(nd)
+                            ]
+                        ).tz_localize("Asia/Jerusalem")
 
                         # >= session close
-                        assert (last_aligned_interval_close_datetimes >= sched["close"]).all()
+                        assert (
+                            last_aligned_interval_close_datetimes >= sched["close"]
+                        ).all()
 
                         # within period of close
-                        assert ((last_aligned_interval_close_datetimes - sched["close"]) <= period_td).all()
+                        assert (
+                            (last_aligned_interval_close_datetimes - sched["close"])
+                            <= period_td
+                        ).all()
 
                         # interval length == period
-                        assert ((last_aligned_interval_close_datetimes - last_aligned_interval_start_datetimes) == period_td).all()
+                        assert (
+                            (
+                                last_aligned_interval_close_datetimes
+                                - last_aligned_interval_start_datetimes
+                            )
+                            == period_td
+                        ).all()
 
                     ################
                     # Then test intermediate intervals, simply that offsets/deltas match expectations
                     ################
-                    offset = tidx_aligned_left[0] - tidx_left[0]
+                    # Unused Variable
+                    # offset = tidx_aligned_left[0] - tidx_left[0]
                     for d in days_unique:
                         lefts = tidx_aligned_left_grp[d]
                         assert (np.diff(lefts) == period_td).all()
 
                         rights = tidx_aligned_left_grp[d]
-                        # Exclude last close of day because affected by session close, 
+                        # Exclude last close of day because affected by session close,
                         # which was tested above
-                        rights = rights[:len(rights)-1]
+                        rights = rights[: len(rights) - 1]
                         assert (np.diff(rights) == period_td).all()
-
 
     def test_start_end_times(self, one_min, calendars):
         """Test effect of passing start and/or end as a time.
@@ -1271,11 +1362,10 @@ class TestTradingIndex:
         as sessions.
 
         Tests return with `intervals` as True (IntervalIndex) and False
-        (DatetimeIndex). With `intervals` as False test for all `closed`
+        (DatetimeIndex). With `intervals` as False tests for all `closed`
         options.
         """
         cal = calendars["XHKG"]
-        one_min = one_min
 
         # Define a start session and end session as sessions of standard length
         start_s = pd.Timestamp("2021-12-06")
@@ -1390,7 +1480,7 @@ class TestTradingIndex:
 
         force, ignore_breaks = False, True
 
-        period = pd.Timedelta(1, "T")
+        period = one_min
         delta = period * 22
 
         starts = [
@@ -1559,7 +1649,7 @@ class TestTradingIndex:
 
     # PARSING TESTS
 
-    def test_parsing_errors(self, cal_start_end, one_min, one_day):
+    def test_parsing_errors(self, cal_start_end):
         cal, start, end = cal_start_end
         error_msg = (
             "`period` cannot be greater than one day although received as"
@@ -1592,26 +1682,67 @@ class TestTradingIndex:
         ):
             cal.trading_index(start, end, "1D")
 
-        # TODO REVISE, changes to error message
-        period_bad = "X"
+        # verify raises wtih invalid values for `period`
+        invalid_str = "X"
         error_msg = (
-            "`period` receieved as '{}' although takes type"
-            " 'pd.Timedelta' or a type 'str' that is valid as a single input"
+            f"`period` receieved as '{invalid_str}' although takes type"
+            " 'pd.Timedelta' or a 'str' that is valid as a single input"
             " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T'),"
-            " '15min', '15T', '1H', '4h', '1d', '5s', 500ms'.".format(period_bad)
+            " '15min', '15T', '1H', '4h', '1d', '5s', 500ms'."
         )
         with pytest.raises(ValueError, match=re.escape(error_msg)):
-            cal.trading_index(start=start, end=end, period=period_bad)
+            cal.trading_index(start, end, invalid_str)
 
-        # TODO REVISE, changes to error message
-        # TODO REVISE to cover both align and align_pm
-        # TODO ADD test for valid type but invalid value
-        align_bad = "X"
+        invalid_value = pd.Timedelta(1441, "T")
+        error_msg = re.escape(
+            "`period` cannot be greater than one day although received as"
+            f" '{invalid_value}'."
+        )
+        with pytest.raises(ValueError, match=error_msg):
+            cal.trading_index(start, end, invalid_value)
+
+        # verify raises wtih invalid values for `align` and `align_pm`
         error_msg = (
-            "`align` receieved as '{}' although takes type"
-            " 'pd.Timedelta' or a type 'str' that is valid as a single input"
-            " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T'),"
-            " '15min', '15T'.".format(align_bad)
+            f"`align` receieved as '{invalid_str}' although takes type"
+            f" 'pd.Timedelta' or a 'str' that is valid as a single input"
+            " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('5T'),"
+            " '5min', '5T', pd.Timedelta('-5T'), '-5min', '-5T'."
         )
         with pytest.raises(ValueError, match=re.escape(error_msg)):
-            cal.trading_index(start=start, end=end, period="1h", align=align_bad)
+            cal.trading_index(start, end, "1h", align=invalid_str)
+
+        error_msg = (
+            f"`align_pm` receieved as '{invalid_str}' although takes type bool,"
+            f" 'pd.Timedelta' or a 'str' that is valid as a single input"
+            " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('5T'),"
+            " '5min', '5T', pd.Timedelta('-5T'), '-5min', '-5T'."
+        )
+        with pytest.raises(ValueError, match=re.escape(error_msg)):
+            cal.trading_index(start, end, "1H", align="5T", align_pm=invalid_str)
+
+        invalid_values = [pd.Timedelta(7, "T"), pd.Timedelta(0), "0T"]
+        for value in invalid_values:
+            error_msg_end = (
+                f" must be factor of 1H although received '{pd.Timedelta(value)}'."
+            )
+            with pytest.raises(ValueError, match=re.escape("`align`" + error_msg_end)):
+                cal.trading_index(start, end, "1H", align=value)
+
+            with pytest.raises(
+                ValueError, match=re.escape("`align_pm`" + error_msg_end)
+            ):
+                cal.trading_index(start, end, "1H", align="5T", align_pm=value)
+
+        invalid_minute_fractions = [3, pd.Timedelta(3600, "ms"), 3.6, "3s"]
+        for value in invalid_minute_fractions:
+            error_msg_end = (
+                " cannot include a fraction of a minute although received "
+                f"'{pd.Timedelta(value)}'."
+            )
+            with pytest.raises(ValueError, match=re.escape("`align`" + error_msg_end)):
+                cal.trading_index(start, end, "1H", align=value)
+
+            with pytest.raises(
+                ValueError, match=re.escape("`align_pm`" + error_msg_end)
+            ):
+                cal.trading_index(start, end, "1H", align="5T", align_pm=value)
