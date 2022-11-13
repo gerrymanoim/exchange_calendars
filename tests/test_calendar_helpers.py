@@ -1152,7 +1152,10 @@ class TestTradingIndex:
         rtrn = cal_amended.trading_index(**kwargs, ignore_breaks=False)
         assert_index_equal(rtrn, index_true)
 
-    def test_align(self, one_min, calendars):
+    @pytest.mark.parametrize("name", ["XTAE"])
+    @given(data=st.data(), force_close=st.booleans())
+    @settings(deadline=None)
+    def test_align(self, data, name, calendars, answers, force_close):
         """Test align function.
 
         Only useful for exchanges with unusual start times, like
@@ -1160,7 +1163,7 @@ class TestTradingIndex:
         """
         # TODO REVIEW...
 
-        cal = calendars["XTAE"]
+        cal, ans = calendars[name], answers[name]
 
         # Expected outputs:
         aligned_start_times = {}
@@ -1175,183 +1178,159 @@ class TestTradingIndex:
         aligned_start_times["30m"] = datetime.time(10, 0)
         aligned_start_times["60m"] = datetime.time(10, 0)
 
-        # Define fixed parameters
-        start_str = "2020-12-06"
-        # end_str = "2020-12-06"
-        # end_str = "2020-12-07"
-        end_str = "2020-12-19"
-        start = pd.Timestamp(start_str)
-        end = pd.Timestamp(end_str)
-        periods = list(aligned_start_times.keys())
-        for i in range(len(periods)):
-            if periods[i][0] == "-":
-                periods[i] = periods[i][1:]
+        start, end = data.draw(self.st_start_end(ans))
 
-        sched = cal.schedule.loc[start_str:end_str].copy()
+        periods = [data.draw(self.st_periods(minimum=pd.Timedelta("5T"), maximum=pd.Timedelta("1H")))]
+
+        slc = ans.sessions.slice_indexer(start, end)
+        sched = {"open": ans.opens[slc].copy(), "close": ans.closes[slc].copy()}
         sched["open"] = sched["open"].dt.tz_convert("Asia/Jerusalem")
         sched["close"] = sched["close"].dt.tz_convert("Asia/Jerusalem")
 
-        for alignment in aligned_start_times.keys():
-            aligned_start_time = aligned_start_times[alignment]
-
+        for alignment, aligned_start_time in aligned_start_times.items():
             for period in periods:
                 period_td = pd.Timedelta(period)
 
-                for force_close in [False, True]:
-                    tidx = cal.trading_index(
-                        start,
-                        end,
-                        period=period,
-                        intervals=True,
-                        force_close=force_close,
-                    )
-                    tidx_aligned = cal.trading_index(
-                        start,
-                        end,
-                        period=period,
-                        intervals=True,
-                        align=alignment,
-                        force_close=force_close,
-                    )
+                tidx = cal.trading_index(
+                    start,
+                    end,
+                    period=period,
+                    intervals=True,
+                    force_close=force_close,
+                )
+                tidx_aligned = cal.trading_index(
+                    start,
+                    end,
+                    period=period,
+                    intervals=True,
+                    align=alignment,
+                    force_close=force_close,
+                )
 
-                    nd = len(set(tidx.left.date))
+                nd = len(set(tidx.left.date))
 
-                    # Localize timezone, easier to debug
-                    tidx_left = tidx.left.tz_convert("Asia/Jerusalem")
-                    tidx_right = tidx.right.tz_convert("Asia/Jerusalem")
-                    tidx_aligned_left = tidx_aligned.left.tz_convert("Asia/Jerusalem")
-                    tidx_aligned_right = tidx_aligned.right.tz_convert("Asia/Jerusalem")
+                # Localize timezone, easier to debug
+                tidx_left = tidx.left.tz_convert("Asia/Jerusalem")
+                tidx_right = tidx.right.tz_convert("Asia/Jerusalem")
+                tidx_aligned_left = tidx_aligned.left.tz_convert("Asia/Jerusalem")
+                tidx_aligned_right = tidx_aligned.right.tz_convert("Asia/Jerusalem")
 
-                    assert set(tidx_left.date) == set(tidx_aligned_left.date)
+                assert set(tidx_left.date) == set(tidx_aligned_left.date)
 
-                    days_unique = sorted(list(set(pd.to_datetime(tidx_left.date))))
+                days_unique = sorted(list(set(pd.to_datetime(tidx_left.date))))
 
-                    # Get first and last aligned interval of each day:
-                    days = pd.to_datetime(tidx_aligned_left.date)
-                    tidx_aligned_left_grp = tidx_aligned_left.groupby(days)
-                    first_aligned_interval_start_times = np.array(
-                        [tidx_aligned_left_grp[d][0].time() for d in days_unique]
-                    )
-                    last_aligned_interval_start_times = np.array(
-                        [tidx_aligned_left_grp[d][-1].time() for d in days_unique]
-                    )
-                    #
-                    tidx_aligned_right_grp = tidx_aligned_right.groupby(days)
-                    first_aligned_interval_close_times = np.array(
-                        [tidx_aligned_right_grp[d][0].time() for d in days_unique]
-                    )
-                    last_aligned_interval_close_times = np.array(
-                        [tidx_aligned_right_grp[d][-1].time() for d in days_unique]
-                    )
+                # Get first and last aligned interval of each day:
+                days = pd.to_datetime(tidx_aligned_left.date)
+                tidx_aligned_left_grp = tidx_aligned_left.groupby(days)
+                first_aligned_interval_start_times = np.array(
+                    [tidx_aligned_left_grp[d][0].time() for d in days_unique]
+                )
+                last_aligned_interval_start_times = np.array(
+                    [tidx_aligned_left_grp[d][-1].time() for d in days_unique]
+                )
+                #
+                tidx_aligned_right_grp = tidx_aligned_right.groupby(days)
+                first_aligned_interval_close_times = np.array(
+                    [tidx_aligned_right_grp[d][0].time() for d in days_unique]
+                )
+                last_aligned_interval_close_times = np.array(
+                    [tidx_aligned_right_grp[d][-1].time() for d in days_unique]
+                )
 
-                    # Get first and last UNaligned interval of each day:
-                    days = pd.to_datetime(tidx_left.date)
-                    # Unused Variables
-                    # tidx_left_grp = tidx_left.groupby(days)
-                    # first_interval_start_times = np.array(
-                    #     [tidx_left_grp[d][0].time() for d in days_unique]
-                    # )
-                    # last_interval_start_times = np.array(
-                    #     [tidx_left_grp[d][-1].time() for d in days_unique]
-                    # )
-                    tidx_right_grp = tidx_right.groupby(days)
-                    # Unused variable
-                    # first_interval_close_times = np.array(
-                    #     [tidx_right_grp[d][0].time() for d in days_unique]
-                    # )
-                    last_interval_close_times = np.array(
-                        [tidx_right_grp[d][-1].time() for d in days_unique]
-                    )
+                # Get last UNaligned interval of each day:
+                days = pd.to_datetime(tidx_left.date)
+                tidx_right_grp = tidx_right.groupby(days)
+                last_interval_close_times = np.array(
+                    [tidx_right_grp[d][-1].time() for d in days_unique]
+                )
 
-                    ################
-                    # First set of tests carefully test the first and last intervals of each day
-                    ################
-                    # First-interval-of-each-day open should be aligned:
+                ################
+                # First set of tests carefully test the first and last intervals of each day
+                ################
+                # First-interval-of-each-day open should be aligned:
+                assert (
+                    first_aligned_interval_start_times == aligned_start_time
+                ).all()
+
+                # First-interval-of-each-day close should == open + period
+                first_aligned_interval_start_datetimes = pd.to_datetime(
+                    [
+                        pd.Timestamp.combine(
+                            days_unique[i], first_aligned_interval_start_times[i]
+                        )
+                        for i in range(nd)
+                    ]
+                ).tz_localize("Asia/Jerusalem")
+                first_aligned_interval_close_datetimes = pd.to_datetime(
+                    [
+                        pd.Timestamp.combine(
+                            days_unique[i], first_aligned_interval_close_times[i]
+                        )
+                        for i in range(nd)
+                    ]
+                ).tz_localize("Asia/Jerusalem")
+                assert (
+                    first_aligned_interval_start_datetimes + period_td
+                    == first_aligned_interval_close_datetimes
+                ).all()
+
+                # Examine last interval close time
+                if force_close:
+                    # Equal to session close
                     assert (
-                        first_aligned_interval_start_times == aligned_start_time
+                        last_aligned_interval_close_times
+                        == last_interval_close_times
                     ).all()
-
-                    # First-interval-of-each-day close should == open + period
-                    first_aligned_interval_start_datetimes = pd.to_datetime(
+                else:
+                    last_aligned_interval_start_datetimes = pd.to_datetime(
                         [
                             pd.Timestamp.combine(
-                                days_unique[i], first_aligned_interval_start_times[i]
+                                days_unique[i], last_aligned_interval_start_times[i]
                             )
                             for i in range(nd)
                         ]
                     ).tz_localize("Asia/Jerusalem")
-                    first_aligned_interval_close_datetimes = pd.to_datetime(
+                    last_aligned_interval_close_datetimes = pd.to_datetime(
                         [
                             pd.Timestamp.combine(
-                                days_unique[i], first_aligned_interval_close_times[i]
+                                days_unique[i], last_aligned_interval_close_times[i]
                             )
                             for i in range(nd)
                         ]
                     ).tz_localize("Asia/Jerusalem")
+
+                    # >= session close
                     assert (
-                        first_aligned_interval_start_datetimes + period_td
-                        == first_aligned_interval_close_datetimes
+                        last_aligned_interval_close_datetimes >= sched["close"]
                     ).all()
 
-                    # Examine last interval close time
-                    if force_close:
-                        # Equal to session close
-                        assert (
-                            last_aligned_interval_close_times
-                            == last_interval_close_times
-                        ).all()
-                    else:
-                        last_aligned_interval_start_datetimes = pd.to_datetime(
-                            [
-                                pd.Timestamp.combine(
-                                    days_unique[i], last_aligned_interval_start_times[i]
-                                )
-                                for i in range(nd)
-                            ]
-                        ).tz_localize("Asia/Jerusalem")
-                        last_aligned_interval_close_datetimes = pd.to_datetime(
-                            [
-                                pd.Timestamp.combine(
-                                    days_unique[i], last_aligned_interval_close_times[i]
-                                )
-                                for i in range(nd)
-                            ]
-                        ).tz_localize("Asia/Jerusalem")
+                    # within period of close
+                    assert (
+                        (last_aligned_interval_close_datetimes - sched["close"])
+                        <= period_td
+                    ).all()
 
-                        # >= session close
-                        assert (
-                            last_aligned_interval_close_datetimes >= sched["close"]
-                        ).all()
+                    # interval length == period
+                    assert (
+                        (
+                            last_aligned_interval_close_datetimes
+                            - last_aligned_interval_start_datetimes
+                        )
+                        == period_td
+                    ).all()
 
-                        # within period of close
-                        assert (
-                            (last_aligned_interval_close_datetimes - sched["close"])
-                            <= period_td
-                        ).all()
+                ################
+                # Then test intermediate intervals, simply that offsets/deltas match expectations
+                ################
+                for d in days_unique:
+                    lefts = tidx_aligned_left_grp[d]
+                    assert (np.diff(lefts) == period_td).all()
 
-                        # interval length == period
-                        assert (
-                            (
-                                last_aligned_interval_close_datetimes
-                                - last_aligned_interval_start_datetimes
-                            )
-                            == period_td
-                        ).all()
-
-                    ################
-                    # Then test intermediate intervals, simply that offsets/deltas match expectations
-                    ################
-                    # Unused Variable
-                    # offset = tidx_aligned_left[0] - tidx_left[0]
-                    for d in days_unique:
-                        lefts = tidx_aligned_left_grp[d]
-                        assert (np.diff(lefts) == period_td).all()
-
-                        rights = tidx_aligned_left_grp[d]
-                        # Exclude last close of day because affected by session close,
-                        # which was tested above
-                        rights = rights[: len(rights) - 1]
-                        assert (np.diff(rights) == period_td).all()
+                    rights = tidx_aligned_left_grp[d]
+                    # Exclude last close of day because affected by session close,
+                    # which was tested above
+                    rights = rights[: len(rights) - 1]
+                    assert (np.diff(rights) == period_td).all()
 
     def test_start_end_times(self, one_min, calendars):
         """Test effect of passing start and/or end as a time.
