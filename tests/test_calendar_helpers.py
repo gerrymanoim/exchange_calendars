@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import datetime
+from datetime import time
 import itertools
 import operator
 import re
@@ -11,7 +13,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import pytz
-import datetime
 from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 from pandas.testing import assert_index_equal
@@ -19,6 +20,7 @@ from pandas.testing import assert_index_equal
 from exchange_calendars import ExchangeCalendar
 from exchange_calendars import calendar_helpers as m
 from exchange_calendars import calendar_utils, errors
+from exchange_calendars.calendar_utils import XTAEExchangeCalendar
 
 from .test_exchange_calendar import Answers
 
@@ -383,7 +385,7 @@ def test_parse_trading_minute(
 
 
 def st_align() -> st.SearchStrategy[pd.Timedelta]:
-    """SearchStrategy for a validalignment."""
+    """SearchStrategy for a valid alignment."""
     sample_pos = [pd.Timedelta(i, "T") for i in range(1, 31) if not 60 % i]
     sample_neg = [-td for td in sample_pos]
     return st.sampled_from(sample_pos + sample_neg)
@@ -1152,185 +1154,255 @@ class TestTradingIndex:
         rtrn = cal_amended.trading_index(**kwargs, ignore_breaks=False)
         assert_index_equal(rtrn, index_true)
 
-    @pytest.mark.parametrize("name", ["XTAE"])
-    @given(data=st.data(), force_close=st.booleans())
-    @settings(deadline=None)
-    def test_align(self, data, name, calendars, answers, force_close):
-        """Test align function.
+    @pytest.fixture(scope="class")
+    def cal_with_ans_align(self) -> abc.Iterator[tuple[ExchangeCalendar, Answers]]:
+        """Calendar with open and break_end times to test align options."""
+        cal_name = "TEST"
 
-        Only useful for exchanges with unusual start times, like
-        XTAE with start time 7:59am UTC (9:59am local).
+        # NOTE Changing the timings of this test calendar class also requires
+        # changing the corresponding test.csv answers file in the resources dir.
+        class TESTCal(XTAEExchangeCalendar):
+            name = cal_name
+            break_start_times = ((None, time(15, 58)),)
+            break_end_times = ((None, time(17, 28)),)
+            close_times = ((None, time(19, 15)),)
+
+        ans = Answers(cal_name, "left")
+        cal = TESTCal(start=ans.first_session, end=ans.last_session)
+        yield cal, ans
+
+    @pytest.fixture(scope="class")
+    def dates_align(
+        self, cal_with_ans_align
+    ) -> abc.Iterator[tuple[pd.Timestamp, pd.Timestamp]]:
+        """Sessions over which to test effect of align parameters.
+
+        Two contiguous sessions with times as asserted.
         """
-        # TODO REVIEW...
+        _, ans = cal_with_ans_align
+        from_, to = pd.Timestamp("2020-12-10"), pd.Timestamp("2020-12-13")
+        # assert assumed open / close times
+        assert ans.opens[from_].time() == time(7, 59)
+        assert ans.break_starts[from_].time() == time(13, 58)
+        assert ans.break_ends[from_].time() == time(15, 28)
+        assert ans.closes[from_].time() == time(17, 15)
+        assert ans.opens[to].time() == time(7, 59)
+        assert ans.break_starts[to] is ans.break_ends[to] is pd.NaT
+        assert ans.closes[to].time() == time(13, 40)
+        yield from_, to
 
-        cal, ans = calendars[name], answers[name]
+    @given(
+        data=st.data(),
+        force_close=st.booleans(),
+        force_break_close=st.booleans(),
+        closed=st.sampled_from(["left", "right", "both", "neither"]),
+        ignore_breaks=st.booleans(),
+    )
+    def test_align(
+        self,
+        data,
+        cal_with_ans_align,
+        dates_align,
+        closed,
+        force_close,
+        force_break_close,
+        ignore_breaks,
+        one_min,
+    ):
+        """Test `align` option.
 
-        # Expected outputs:
-        aligned_start_times = {}
-        aligned_start_times["-5m"] = datetime.time(9, 55)
-        aligned_start_times["-15m"] = datetime.time(9, 45)
-        aligned_start_times["-20m"] = datetime.time(9, 40)
-        aligned_start_times["-30m"] = datetime.time(9, 30)
-        aligned_start_times["-60m"] = datetime.time(9, 0)
-        aligned_start_times["5m"] = datetime.time(10, 0)
-        aligned_start_times["15m"] = datetime.time(10, 0)
-        aligned_start_times["20m"] = datetime.time(10, 0)
-        aligned_start_times["30m"] = datetime.time(10, 0)
-        aligned_start_times["60m"] = datetime.time(10, 0)
+        Additional concrete test to verify effect of `align` and `align_pm' on
+        'alignable' calendar. (Effect of these options is principally tested
+        by `test_indices_fuzz` and `test_intervals_fuzz`.)
+        """
+        cal, ans = cal_with_ans_align
+        from_, to = dates_align
+        aligned_start_times = {
+            "-1T": (time(7, 59), time(15, 28)),
+            "-2T": (time(7, 58), time(15, 28)),
+            "-3T": (time(7, 57), time(15, 27)),
+            "-5T": (time(7, 55), time(15, 25)),
+            "-15T": (time(7, 45), time(15, 15)),
+            "-20T": (time(7, 40), time(15, 20)),
+            "-30T": (time(7, 30), time(15)),
+            "-60T": (time(7), time(15)),
+            "1T": (time(7, 59), time(15, 28)),
+            "2T": (time(8), time(15, 28)),
+            "3T": (time(8), time(15, 30)),
+            "5T": (time(8), time(15, 30)),
+            "15T": (time(8), time(15, 30)),
+            "20T": (time(8), time(15, 40)),
+            "30T": (time(8), time(15, 30)),
+            "60T": (time(8), time(16)),
+        }
+        alignments = list(aligned_start_times.keys())
+        align = data.draw(st.sampled_from(alignments))
+        align_pm = data.draw(st.one_of([st.sampled_from(alignments), st.booleans()]))
+        period = data.draw(self.st_periods(maximum=pd.Timedelta(1, "H")))
 
-        start, end = data.draw(self.st_start_end(ans))
+        open_pm = ans.break_ends[from_]
+        closes = (ans.break_starts[from_], ans.closes[from_], ans.closes[to])
+        closes_ignore_breaks = (ans.closes[from_], ans.closes[to])
 
-        periods = [data.draw(self.st_periods(minimum=pd.Timedelta("5T"), maximum=pd.Timedelta("1H")))]
+        closed_left = closed in ["left", "both"]
+        closed_right = closed in ["right", "both"]
+        tz = pytz.UTC
 
-        slc = ans.sessions.slice_indexer(start, end)
-        sched = {"open": ans.opens[slc].copy(), "close": ans.closes[slc].copy()}
-        sched["open"] = sched["open"].dt.tz_convert("Asia/Jerusalem")
-        sched["close"] = sched["close"].dt.tz_convert("Asia/Jerusalem")
+        def create_expected(
+            starts: list[pd.Timestamp],
+            ends: list[pd.Timestamp],
+            period: pd.Timedelta,
+            forces: list[bool],
+        ) -> pd.DatetimeIndex:
+            index_ = pd.DatetimeIndex([], tz=tz)
+            for start, end, force in zip(starts, ends, forces):
+                index = pd.date_range(start, end, freq=period, tz=tz)
+                if not closed_left:
+                    index = index[1:]
+                if closed_right and end != index[-1]:
+                    index = index.insert(len(index), index[-1] + period)
+                if not closed_right and end == index[-1]:
+                    index = index[:-1]
+                if force and index[-1] > end:
+                    index = index[:-1].insert(len(index) - 1, end)
+                index_ = index_.union(index)
+            return index_
 
-        for alignment, aligned_start_time in aligned_start_times.items():
-            for period in periods:
-                period_td = pd.Timedelta(period)
+        def create_expected_intervals(
+            starts: list[pd.Timestamp],
+            ends: list[pd.Timestamp],
+            period: pd.Timedelta,
+            forces: list[bool],
+        ) -> pd.DatetimeIndex:
+            left_ = pd.DatetimeIndex([], tz=tz)
+            right_ = pd.DatetimeIndex([], tz=tz)
+            for start, end, force in zip(starts, ends, forces):
+                left = pd.date_range(start, end - one_min, freq=period, tz=tz)
+                right = left + period
+                if force and right[-1] > end:
+                    right = right[:-1].insert(len(right) - 1, end)
+                left_ = left_.union(left)
+                right_ = right_.union(right)
+            return pd.IntervalIndex.from_arrays(left_, right_, closed)
 
-                tidx = cal.trading_index(
-                    start,
-                    end,
-                    period=period,
-                    intervals=True,
-                    force_close=force_close,
-                )
-                tidx_aligned = cal.trading_index(
-                    start,
-                    end,
-                    period=period,
-                    intervals=True,
-                    align=alignment,
-                    force_close=force_close,
-                )
+        combine = datetime.datetime.combine
 
-                nd = len(set(tidx.left.date))
+        def get_start(date: pd.Timestamp, tm: time):
+            return pd.Timestamp(combine(date.date(), tm), tz=pytz.UTC)
 
-                # Localize timezone, easier to debug
-                tidx_left = tidx.left.tz_convert("Asia/Jerusalem")
-                tidx_right = tidx.right.tz_convert("Asia/Jerusalem")
-                tidx_aligned_left = tidx_aligned.left.tz_convert("Asia/Jerusalem")
-                tidx_aligned_right = tidx_aligned.right.tz_convert("Asia/Jerusalem")
+        aligned_time_am, _ = aligned_start_times[align]
+        starts = [get_start(from_, aligned_time_am)]
+        if not ignore_breaks:
+            if align_pm:
+                alignment_pm = align if align_pm is True else align_pm
+                _, aligned_time_pm = aligned_start_times[alignment_pm]
+                start = get_start(from_, aligned_time_pm)
+            else:
+                start = open_pm
+            starts.append(start)
+        starts.append(get_start(to, aligned_time_am))
+        ends = closes_ignore_breaks if ignore_breaks else closes
+        forces = (
+            [force_close, force_close]
+            if ignore_breaks
+            else [force_break_close, force_close, force_close]
+        )
 
-                assert set(tidx_left.date) == set(tidx_aligned_left.date)
+        args = (from_, to, period)
+        kwargs = dict(
+            closed=closed,
+            align=align,
+            align_pm=align_pm,
+            ignore_breaks=ignore_breaks,
+            force_close=force_close,
+            force_break_close=force_break_close,
+        )
 
-                days_unique = sorted(list(set(pd.to_datetime(tidx_left.date))))
+        intervals = False
+        expected = create_expected(starts, ends, period, forces)
+        rtrn = cal.trading_index(*args, intervals=intervals, **kwargs)
+        assert_index_equal(rtrn, expected)
+        # test passing start and end as times as opposed to sessions...
+        alt_args = (expected[0] + one_min, expected[-1] - one_min, period)
+        rtrn = cal.trading_index(*alt_args, intervals=intervals, **kwargs)
+        assert_index_equal(rtrn, expected[1:-1])
 
-                # Get first and last aligned interval of each day:
-                days = pd.to_datetime(tidx_aligned_left.date)
-                tidx_aligned_left_grp = tidx_aligned_left.groupby(days)
-                first_aligned_interval_start_times = np.array(
-                    [tidx_aligned_left_grp[d][0].time() for d in days_unique]
-                )
-                last_aligned_interval_start_times = np.array(
-                    [tidx_aligned_left_grp[d][-1].time() for d in days_unique]
-                )
-                #
-                tidx_aligned_right_grp = tidx_aligned_right.groupby(days)
-                first_aligned_interval_close_times = np.array(
-                    [tidx_aligned_right_grp[d][0].time() for d in days_unique]
-                )
-                last_aligned_interval_close_times = np.array(
-                    [tidx_aligned_right_grp[d][-1].time() for d in days_unique]
-                )
+        intervals = True
+        if closed not in ["left", "right"]:
+            return
+        expected = create_expected_intervals(starts, ends, period, forces)
+        rtrn = cal.trading_index(*args, intervals=intervals, **kwargs)
+        # test passing start and end as times as opposed to sessions...
+        alt_args = (expected[0].left + one_min, expected[-1].right - one_min, period)
+        rtrn = cal.trading_index(*alt_args, intervals=intervals, **kwargs)
+        assert_index_equal(rtrn, expected[1:-1])
 
-                # Get last UNaligned interval of each day:
-                days = pd.to_datetime(tidx_left.date)
-                tidx_right_grp = tidx_right.groupby(days)
-                last_interval_close_times = np.array(
-                    [tidx_right_grp[d][-1].time() for d in days_unique]
-                )
+    def test_align_overlap(self, cal_with_ans_align, dates_align, one_min):
+        """Test align options can cause overlap error.
 
-                ################
-                # First set of tests carefully test the first and last intervals of each day
-                ################
-                # First-interval-of-each-day open should be aligned:
-                assert (
-                    first_aligned_interval_start_times == aligned_start_time
-                ).all()
+        Tests concrete case raises overlap errors due to alignment
+        regardless that period is shorter than the break.
+        """
+        cal, _ = cal_with_ans_align
 
-                # First-interval-of-each-day close should == open + period
-                first_aligned_interval_start_datetimes = pd.to_datetime(
-                    [
-                        pd.Timestamp.combine(
-                            days_unique[i], first_aligned_interval_start_times[i]
-                        )
-                        for i in range(nd)
-                    ]
-                ).tz_localize("Asia/Jerusalem")
-                first_aligned_interval_close_datetimes = pd.to_datetime(
-                    [
-                        pd.Timestamp.combine(
-                            days_unique[i], first_aligned_interval_close_times[i]
-                        )
-                        for i in range(nd)
-                    ]
-                ).tz_localize("Asia/Jerusalem")
-                assert (
-                    first_aligned_interval_start_datetimes + period_td
-                    == first_aligned_interval_close_datetimes
-                ).all()
+        kwargs = dict(closed="right", align="-5T")
+        align_pm = "-1H"
 
-                # Examine last interval close time
-                if force_close:
-                    # Equal to session close
-                    assert (
-                        last_aligned_interval_close_times
-                        == last_interval_close_times
-                    ).all()
-                else:
-                    last_aligned_interval_start_datetimes = pd.to_datetime(
-                        [
-                            pd.Timestamp.combine(
-                                days_unique[i], last_aligned_interval_start_times[i]
-                            )
-                            for i in range(nd)
-                        ]
-                    ).tz_localize("Asia/Jerusalem")
-                    last_aligned_interval_close_datetimes = pd.to_datetime(
-                        [
-                            pd.Timestamp.combine(
-                                days_unique[i], last_aligned_interval_close_times[i]
-                            )
-                            for i in range(nd)
-                        ]
-                    ).tz_localize("Asia/Jerusalem")
+        intervals = True
+        # assert returns at edge
+        period = pd.Timedelta(85, "T")
+        rtrn = cal.trading_index(
+            *dates_align, period, intervals=intervals, align_pm=align_pm, **kwargs
+        )
+        limit = pd.Timestamp(
+            datetime.datetime.combine(dates_align[0], time(15)), tz=pytz.UTC
+        )
+        assert limit in rtrn.right
 
-                    # >= session close
-                    assert (
-                        last_aligned_interval_close_datetimes >= sched["close"]
-                    ).all()
+        # assert raises beyond edge
+        period += one_min
+        with pytest.raises(errors.IntervalsOverlapError):
+            cal.trading_index(
+                *dates_align, period, intervals=intervals, align_pm=align_pm, **kwargs
+            )
 
-                    # within period of close
-                    assert (
-                        (last_aligned_interval_close_datetimes - sched["close"])
-                        <= period_td
-                    ).all()
+        # assert returns beyond edge if curtail
+        rtrn = cal.trading_index(
+            *dates_align,
+            period,
+            intervals=intervals,
+            align_pm=align_pm,
+            curtail_overlaps=True,
+            **kwargs,
+        )
+        assert not rtrn.empty
 
-                    # interval length == period
-                    assert (
-                        (
-                            last_aligned_interval_close_datetimes
-                            - last_aligned_interval_start_datetimes
-                        )
-                        == period_td
-                    ).all()
+        # assert returns beyond edge if no pm alignment
+        rtrn = cal.trading_index(
+            *dates_align, period, intervals=intervals, align_pm=False, **kwargs
+        )
+        assert not rtrn.empty
 
-                ################
-                # Then test intermediate intervals, simply that offsets/deltas match expectations
-                ################
-                for d in days_unique:
-                    lefts = tidx_aligned_left_grp[d]
-                    assert (np.diff(lefts) == period_td).all()
+        intervals = False
+        # assert returns at edge
+        period = pd.Timedelta(85, "T")
+        rtrn = cal.trading_index(
+            *dates_align, period, intervals=intervals, align_pm=align_pm, **kwargs
+        )
+        assert not rtrn.empty
 
-                    rights = tidx_aligned_left_grp[d]
-                    # Exclude last close of day because affected by session close,
-                    # which was tested above
-                    rights = rights[: len(rights) - 1]
-                    assert (np.diff(rights) == period_td).all()
+        # assert raises beyond edge
+        period += one_min
+        with pytest.raises(errors.IndicesOverlapError):
+            cal.trading_index(
+                *dates_align, period, intervals=intervals, align_pm=align_pm, **kwargs
+            )
+
+        # assert returns beyond edge if no pm alignment
+        rtrn = cal.trading_index(
+            *dates_align, period, intervals=intervals, align_pm=False, **kwargs
+        )
+        assert not rtrn.empty
 
     def test_start_end_times(self, one_min, calendars):
         """Test effect of passing start and/or end as a time.
