@@ -217,7 +217,7 @@ Yes please! The workflow can be found [here](.github/pull_request_template.md).
 
 ### **`<calendar>` is missing a holiday, has a wrong time, should have a break etc...**
 
-**All** of the exchange calendars are maintained by user contributions. If a calendar you care about needs revising, please open a [PR](https://github.com/gerrymanoim/exchange_calendars/pulls) - that's how this thing works!
+**All** of the exchange calendars are maintained by user contributions. If a calendar you care about needs revising, please open a [PR](https://github.com/gerrymanoim/exchange_calendars/pulls) - that's how this thing works! (Never contributed to a project before and it all seems a bit daunting? Check [this out](https://github.com/firstcontributions/first-contributions/blob/main/README.md) and don't look back!)
 
 You'll find the workflow to modify an existing calendar [here](.github/pull_request_template.md).
 
