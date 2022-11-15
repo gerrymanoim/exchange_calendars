@@ -2537,8 +2537,8 @@ class ExchangeCalendar(ABC):
             500µs on the execution.
 
         align : default: pd.Timedelta(1, "T")
-            Shift indices forwards or backwards to align with a specific
-            fraction of an hour.
+            Anchor the first indice of each session such that it aligns
+            with the nearest occurrence of a specific fraction of an hour.
 
             Pass as a pd.Timedelta or a str that's acceptable as a single
             input to pd.Timedelta. Pass +ve values to shift indices
@@ -2558,18 +2558,18 @@ class ExchangeCalendar(ABC):
 
             Subsequent indices will be similarly shifted.
 
-            Note: Indices will not be shifted if they already align with
-            `align`. For example, if the open time were 08:00 then the
-            first interval will always have a left side as 08:00 regardless
-            of `align`. (The maximum distance that indices can be shifted
-            is one minute less than `align`.)
+            Note: A session's indices will not be shifted if the session
+            open already aligns with `align`. For example, if the open time
+            were 08:00 then the first interval will always have a left side
+            as 08:00 regardless of `align`.
 
         align_pm : default: True
             (ignored if `ignore_break` is True)
             (irrelevant if no session has a break)
 
-            Shift post-break indices forwards or backwards to align with
-            the nearest occurence of a specific fraction of an hour.
+            Anchor the first indice of each afternoon subsession such that
+            it aligns with the nearest occurrence of a specific fraction of
+            an hour.
 
                 True: (default) Treat as `align`.
 
