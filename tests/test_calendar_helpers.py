@@ -503,7 +503,13 @@ class TestTradingIndex:
     # Helper methods
 
     @staticmethod
-    def could_overlap(ans: Answers, slc: slice, has_break) -> bool:
+    def could_overlap(
+        ans: Answers,
+        slc: slice,
+        has_break: bool,
+        align: pd.Timedelta,
+        align_pm: pd.Timedelta,
+    ) -> bool:
         """Query if there's at least one period at which intervals overlap.
 
         Can right side of last interval of any session/subsession of a
@@ -512,12 +518,12 @@ class TestTradingIndex:
         """
         can_overlap = False
         if has_break:
-            duration = ans.break_starts[slc] - ans.opens[slc]
-            gap = ans.break_ends[slc] - ans.break_starts[slc]
+            duration = ans.break_starts[slc] - ans.opens[slc].dt.ceil(align)
+            gap = ans.break_ends[slc].dt.ceil(align_pm) - ans.break_starts[slc]
             can_overlap = (gap < duration).any()
         if not can_overlap:
-            duration = ans.closes[slc] - ans.opens[slc]
-            gap = ans.opens.shift(-1)[slc] - ans.closes[slc]
+            duration = ans.closes[slc] - ans.opens[slc].dt.ceil(align)
+            gap = ans.opens.shift(-1)[slc].dt.ceil(align) - ans.closes[slc]
             can_overlap = (gap < duration).any()
         return can_overlap
 
@@ -686,7 +692,7 @@ class TestTradingIndex:
 
         params_allow_overlap = closed_right and not (force_break_close and force_close)
         if params_allow_overlap:
-            can_overlap = self.could_overlap(ans, slc, has_break)
+            can_overlap = self.could_overlap(ans, slc, has_break, align, align_pm)
         else:
             can_overlap = False
 
@@ -712,12 +718,17 @@ class TestTradingIndex:
             if has_break:
                 mask = ans.break_starts[slc].notna()
                 overrun = self.evaluate_overrun(
-                    ans.opens[slc][mask], ans.break_starts[slc][mask], period
+                    ans.opens[slc][mask].dt.ceil(align),
+                    ans.break_starts[slc][mask],
+                    period,
                 )
-                break_duration = (ans.break_ends[slc] - ans.break_starts[slc]).dropna()
+                break_ends_aligned = ans.break_ends[slc].dt.ceil(align_pm)
+                break_duration = (break_ends_aligned - ans.break_starts[slc]).dropna()
                 assume(not op(overrun, break_duration).any())
-            overrun = self.evaluate_overrun(ans.opens[slc], ans.closes[slc], period)
-            sessions_gap = ans.opens[slc].shift(-1) - ans.closes[slc]
+            overrun = self.evaluate_overrun(
+                ans.opens[slc].dt.ceil(align), ans.closes[slc], period
+            )
+            sessions_gap = ans.opens[slc].shift(-1).dt.ceil(align) - ans.closes[slc]
             assume(not op(overrun, sessions_gap).any())
 
         ti = m._TradingIndex(
@@ -792,7 +803,7 @@ class TestTradingIndex:
 
         params_allow_overlap = not curtail and not (force_break_close and force_close)
         if params_allow_overlap:
-            can_overlap = self.could_overlap(ans, slc, has_break)
+            can_overlap = self.could_overlap(ans, slc, has_break, align, align_pm)
         else:
             can_overlap = False
 
@@ -807,12 +818,17 @@ class TestTradingIndex:
             if has_break:
                 mask = ans.break_starts[slc].notna()
                 overrun = self.evaluate_overrun(
-                    ans.opens[slc][mask], ans.break_starts[slc][mask], period
+                    ans.opens[slc][mask].dt.ceil(align),
+                    ans.break_starts[slc][mask],
+                    period,
                 )
-                break_duration = (ans.break_ends[slc] - ans.break_starts[slc]).dropna()
+                break_ends_aligned = ans.break_ends[slc].dt.ceil(align_pm)
+                break_duration = (break_ends_aligned - ans.break_starts[slc]).dropna()
                 assume(not (overrun > break_duration).any())
-            overrun = self.evaluate_overrun(ans.opens[slc], ans.closes[slc], period)
-            sessions_gap = ans.opens[slc].shift(-1) - ans.closes[slc]
+            overrun = self.evaluate_overrun(
+                ans.opens[slc].dt.ceil(align), ans.closes[slc], period
+            )
+            sessions_gap = ans.opens[slc].shift(-1).dt.ceil(align) - ans.closes[slc]
             assume(not (overrun > sessions_gap).any())
 
         ti = m._TradingIndex(
@@ -1198,6 +1214,7 @@ class TestTradingIndex:
         closed=st.sampled_from(["left", "right", "both", "neither"]),
         ignore_breaks=st.booleans(),
     )
+    @settings(deadline=None)
     def test_align(
         self,
         data,
