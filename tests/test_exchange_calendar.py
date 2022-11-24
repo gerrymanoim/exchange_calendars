@@ -20,6 +20,7 @@ from typing import Literal
 from collections import abc
 from datetime import time, datetime, date, timedelta
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -33,6 +34,7 @@ from exchange_calendars.calendar_utils import (
     ExchangeCalendarDispatcher,
     _default_calendar_aliases,
     _default_calendar_factories,
+    _xcal_version
 )
 from exchange_calendars.appdirs_clone import _user_cache_dir
 from exchange_calendars.exchange_calendar import ExchangeCalendar, days_at_time
@@ -201,6 +203,12 @@ def test_calendar_cache():
     cal = dispatcher.get_calendar(alias, cache=True)
     moddt = datetime.fromtimestamp(os.path.getmtime(cache_fp))
     assert moddt.date() == date.today()
+
+    # Test cached calendar has version
+    with open(cache_fp, 'rb') as f:
+        pkl_data = pickle.load(f)
+        assert "version" in pkl_data
+        assert pkl_data["version"] == _xcal_version()
 
 
 @pytest.mark.parametrize(

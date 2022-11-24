@@ -157,6 +157,28 @@ _default_calendar_aliases = {
 default_calendar_names = sorted(_default_calendar_factories.keys())
 
 
+def _xcal_version():
+    from importlib.metadata import version
+
+    v = None
+    try:
+        # get version from installed package
+        v = version("exchange_calendars")
+    except ImportError:
+        pass
+
+    if v is None:
+        try:
+            # if package not installed, get version as set when package built
+            from ._version import version
+        except Exception:
+            # If package not installed and not built, leave v as None
+            pass
+        else:
+            v = version
+    return v
+
+
 class ExchangeCalendarDispatcher(object):
     """
     A class for dispatching and caching exchange calendars.
@@ -193,6 +215,7 @@ class ExchangeCalendarDispatcher(object):
             pkl_data = {}
             pkl_data["calendar"] = calendar
             pkl_data["kwargs"] = kwargs
+            pkl_data["version"] = _xcal_version()
             cache_fp = self._get_cal_cache_fp(name)
             cache_dp = os.path.dirname(cache_fp)
             if not os.path.isdir(cache_dp):
@@ -239,7 +262,10 @@ class ExchangeCalendarDispatcher(object):
                     try:
                         with open(cache_fp, 'rb') as f:
                             pkl_data = pickle.load(f)
-                            if pkl_data["kwargs"] == kwargs:
+                            if "version" not in pkl_data or pkl_data["version"] != _xcal_version():
+                                # Out-of-date, don't return
+                                pass
+                            elif pkl_data["kwargs"] == kwargs:
                                 calendar = pkl_data["calendar"]
                                 if name not in self._factory_output_cache:
                                     self._factory_output_cache[name] = (calendar, kwargs)
