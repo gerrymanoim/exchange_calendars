@@ -116,7 +116,7 @@ FirstPresidentDay = Holiday(
     month=12,
     day=1,
     observance=next_monday,
-    start_date=pd.Timestamp("2013-01-01"),
+    end_date="2022",
 )
 
 IndependenceDay = Holiday(
@@ -163,6 +163,7 @@ class AIXKExchangeCalendar(ExchangeCalendar):
 
     Holidays No Longer Observed:
       - Independence Day Holiday (until 2021, inclusive)
+      - First President Day (until 2021, inclusive)
 
     Early Closes:
       - None
