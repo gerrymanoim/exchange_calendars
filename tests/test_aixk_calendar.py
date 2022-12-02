@@ -21,6 +21,8 @@ class TestAIXKCalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def regular_holidays_sample(self):
         yield [
+            # 2013
+            "2013-12-01",  # First President Day
             # 2021
             "2021-01-01",  # New Year’s Day
             "2021-01-07",  # Orthodox Christmas Day
@@ -67,4 +69,10 @@ class TestAIXKCalendar(ExchangeCalendarTestBase):
             "2020-12-18",  # between Independence day - Weekend
             "2021-06-05",  # between Weekend - Capital City day
             "2022-03-07",  # between Weekend - Women's day
+        ]
+
+    @pytest.fixture
+    def non_holidays_sample(self):
+        yield [
+            "2022-12-01",  # First President Day
         ]
