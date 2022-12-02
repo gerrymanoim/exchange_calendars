@@ -116,6 +116,7 @@ FirstPresidentDay = Holiday(
     month=12,
     day=1,
     observance=next_monday,
+    start_date=pd.Timestamp("2013-01-01"),
     end_date="2022",
 )
 
