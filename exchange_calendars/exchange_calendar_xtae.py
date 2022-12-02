@@ -48,6 +48,9 @@ from .exchange_calendar import HolidayCalendar, ExchangeCalendar, SUNDAY
 # All holidays are defined as ad-hoc holidays for each year since there is
 # currently no support for Hebrew calendar holiday rules in pandas.
 
+HOLIDAY_EARLY_CLOSE = time(14, 15)
+SUNDAY_CLOSE = time(15, 40)
+
 
 class XTAEExchangeCalendar(ExchangeCalendar):
     """
@@ -99,10 +102,6 @@ class XTAEExchangeCalendar(ExchangeCalendar):
 
     close_times = ((None, time(17, 15)),)
 
-    regular_early_close = time(14, 15)
-
-    sunday_close = time(15, 40)
-
     @property
     def regular_holidays(self):
         return HolidayCalendar(
@@ -132,24 +131,23 @@ class XTAEExchangeCalendar(ExchangeCalendar):
     @property
     def adhoc_holidays(self):
         return [
-            # 2019
-            # Election Day
+            # Election days:
+            # - 2019
             pd.Timestamp("2019-04-09"),
-            # Election Day
             pd.Timestamp("2019-09-17"),
-            # 2020
-            # Election Day
+            # - 2020
             pd.Timestamp("2020-03-02"),
-            # 2021
-            # Election Day
+            # - 2021
             pd.Timestamp("2021-03-23"),
+            # - 2022
+            pd.Timestamp("2022-11-01"),
         ]
 
     @property
     def special_closes(self):
         return [
             (
-                self.regular_early_close,
+                HOLIDAY_EARLY_CLOSE,
                 HolidayCalendar(
                     [
                         PassoverInterimDay1,
@@ -157,12 +155,9 @@ class XTAEExchangeCalendar(ExchangeCalendar):
                         PassoverInterimDay3,
                         PassoverInterimDay4,
                     ]
-                )
-            ) ,
-            (
-                self.sunday_close,
-                SUNDAY
-            )
+                ),
+            ),
+            (SUNDAY_CLOSE, SUNDAY),
         ]
 
     @property

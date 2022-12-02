@@ -1784,17 +1784,18 @@ class ExchangeCalendarTestBase:
 
     @pytest.fixture
     def late_opens_sample(self) -> abc.Iterator[list[str]]:
-        """Sample of known calendar sessions with late opens.
+        """Sample of dates representing sessions with late opens.
 
         `test_late_opens_sample` will check that each date represents a
         session with a late open.
 
         Typical test cases:
-            - All regular late opens over a year.
-            - First observance of a regular late open that started being
+            - All regular annual late opens over a year.
+            - First observance of an annual late open that started being
                 observed from a specific year.
-            - Last observance of a regular late open that ceased to be
+            - Last observance of an annual late open that ceased to be
                 observed from a specific year.
+            - Any adhoc late opens.
 
         Example returns:
             ["2022-01-03", "2022-04-22", ...]
@@ -1803,16 +1804,16 @@ class ExchangeCalendarTestBase:
 
     @pytest.fixture
     def early_closes_sample(self) -> abc.Iterator[list[str]]:
-        """Sample of known calendar sessions with early closes.
+        """Sample of dates representing sessions with early closes.
 
         `test_early_closes_sample` will check that each date represents a
         session with an early close.
 
         Typical test cases:
-            - All regular early opens over a year.
-            - First observance of a regular early close that started being
+            - All regular annual early closes over a year.
+            - First observance of an annual early close that started being
                 observed from a specific year.
-            - Last observance of a regular early close that ceased to be
+            - Last observance of an annual early close that ceased to be
                 observed from a specific year.
             - Any adhoc early closes.
 
@@ -1835,6 +1836,55 @@ class ExchangeCalendarTestBase:
                 different local close times then the subclass should
                 instead check close times with a test defined on the
                 subclass).
+
+        Example returns:
+            pd.Timedelta(14, "H")  # 14:00 local time
+            pd.Timedelta(hours=13, minutes=15)  # 13:15 local time
+        """
+        yield None
+
+    @pytest.fixture
+    def early_closes_weekdays(self) -> abc.Iterator[tuple(int)]:
+        """Weekdays with non-standard close times.
+
+        `test_early_closes_weekdays` will check that all sessions on these
+        weekdays have early closes.
+
+        Example return:
+            (2, 3)  # Thursday and Friday sessions have an early close.
+            (6,)  # Sunday sessions have an early close
+        """
+        yield tuple()
+
+    @pytest.fixture
+    def early_closes_weekdays_sample(self):
+        """Sample of dates representing sessions with early closes due to weekday.
+
+        `test_early_closes_weekdays_time` will check that each of these
+        dates represents a session that closes at the time returned by the
+        fixture `early_closes_weekdays_sample_time`.
+
+        If the `early_closes_weekdays` fixture has length > 1 and the early
+        close time is different for the different weekdays then this sample
+        should be limited to dates representing sessions that all have
+        the same close time. (Dates representing sessions with other close
+        times should checked with a test defined on the subclass.)
+
+        Example returns:
+            ["2022-08-21", "2022-08-28", ...]
+        """
+        yield []
+
+    @pytest.fixture
+    def early_closes_weekdays_sample_time(self) -> abc.Iterator[pd.Timedelta | None]:
+        """Local close time of dates returned by `early_closes_weekdays_sample` fixture.
+
+        `test_early_closes_weekdays_time` will check that each date of
+        `early_closes_weekdays_sample` fixture represents a session that
+        closes at this time.
+
+        Only override fixture if `early_closes_weekdays_sample` is
+        overriden by subclass.
 
         Example returns:
             pd.Timedelta(14, "H")  # 14:00 local time
@@ -2499,6 +2549,42 @@ class ExchangeCalendarTestBase:
                 early_close = cal.closes[date].tz_convert(tz)
                 expected = pd.Timestamp(date, tz=tz) + offset
                 assert early_close == expected
+
+    def test_early_closes_weekdays(
+        self, default_calendar_with_answers, early_closes_weekdays
+    ):
+        """Test weekday sessions with early closes are included to early closes."""
+        if not early_closes_weekdays:
+            return
+        cal, ans = default_calendar_with_answers
+        bv = ans.sessions.weekday.isin(early_closes_weekdays)
+        expected = ans.sessions[bv]
+        assert expected.difference(cal.early_closes).empty
+
+    def test_early_closes_weekdays_time(
+        self,
+        default_calendar,
+        early_closes_weekdays_sample,
+        early_closes_weekdays_sample_time,
+    ):
+        """Test weekday early close time of calendar-specific sample of sessions.
+
+        Notes
+        -----
+        TEST RELIES ON ACCURACY OF CALENDAR PROPERTIES `closes`, `tz` and
+        `close_offset`.
+        """
+        if (
+            not early_closes_weekdays_sample
+            and early_closes_weekdays_sample_time is None
+        ):
+            return
+        cal, tz = default_calendar, default_calendar.tz
+        offset = pd.Timedelta(cal.close_offset, "D") + early_closes_weekdays_sample_time
+        for date in early_closes_weekdays_sample:
+            early_close = cal.closes[date].tz_convert(tz)
+            expected = pd.Timestamp(date, tz=tz) + offset
+            assert early_close == expected
 
     def test_non_early_closes_sample(self, default_calendar, non_early_closes_sample):
         """Test calendar-specific sample of sessions are not early closes."""

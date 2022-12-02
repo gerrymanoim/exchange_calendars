@@ -14,12 +14,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from calendar import day_name
 import collections
 from collections.abc import Sequence, Callable
 import datetime
 import functools
 import operator
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Any
 import warnings
 
 import numpy as np
@@ -63,14 +64,6 @@ NANOS_IN_MINUTE = 60000000000
 MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
 WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
 WEEKENDS = (SATURDAY, SUNDAY)
-DAY_TO_STR = {}
-DAY_TO_STR[0] = "Monday"
-DAY_TO_STR[1] = "Tuesday"
-DAY_TO_STR[2] = "Wednesday"
-DAY_TO_STR[3] = "Thursday"
-DAY_TO_STR[4] = "Friday"
-DAY_TO_STR[5] = "Saturday"
-DAY_TO_STR[6] = "Sunday"
 
 
 def selection(
@@ -581,20 +574,34 @@ class ExchangeCalendar(ABC):
         return []
 
     @property
-    def special_opens(self) -> list[tuple[datetime.time, HolidayCalendar]]:
+    def special_opens(self) -> list[tuple[datetime.time, HolidayCalendar] | int]:
         """Regular non-standard open times.
 
         Example of what would be defined as a special open:
             "EVERY YEAR on national lie-in day the exchange opens
             at 13:00 rather than the standard 09:00".
 
+            "Every Monday the exchange opens late, at 10:30 rather than
+            the standard 09:00".
+
         Returns
         -------
-        list[tuple[datetime.time, HolidayCalendar]]:
-            list of tuples each describing a regular non-standard open
-            time:
+        list[tuple[datetime.time, HolidayCalendar | int]]:
+            list of tuples each describing a regular non-standard open:
                 [0] datetime.time: regular non-standard open time.
-                [1] HolidayCalendar: holiday calendar describing occurence.
+
+                [1] Describes dates with regular non-standard open time
+                as [0]. As either:
+                    HolidayCalendar: defines annual dates by rules.
+
+                    int : integer defines a weekday with a regular
+                    non-standard open (0 - Monday, ..., 6 - Sunday).
+
+            The same date may be described by more than one tuple, for
+            example, if a late open on an annual holiday coincides with
+            a weekday late open. In this case the time assigned to the
+            date will be that defined by the tuple with the lowest index
+            in the returned list.
         """
         return []
 
@@ -623,20 +630,34 @@ class ExchangeCalendar(ABC):
         return []
 
     @property
-    def special_closes(self) -> list[tuple[datetime.time, HolidayCalendar]]:
+    def special_closes(self) -> list[tuple[datetime.time, HolidayCalendar | int]]:
         """Regular non-standard close times.
 
-        Example of what would be defined as a special close:
+        Examples of what would be defined as a special close:
             "On christmas eve the exchange closes at 14:00 rather than
+            the standard 17:00".
+
+            "Every Friday the exchange closes early, at 14:00 rather than
             the standard 17:00".
 
         Returns
         -------
-        list[tuple[datetime.time, HolidayCalendar]]:
-            list of tuples each describing a regular non-standard close
-            time:
+        list[tuple[datetime.time, HolidayCalendar | int]]:
+            list of tuples each describing a regular non-standard close:
                 [0] datetime.time: regular non-standard close time.
-                [1] HolidayCalendar: holiday calendar describing occurence.
+
+                [1] Describes dates with regular non-standard close time
+                as [0]. As either:
+                    HolidayCalendar: defines annual dates by rules.
+
+                    int : integer defines a weekday with a regular
+                    non-standard close (0 - Monday, ..., 6 - Sunday).
+
+            The same date may be described by more than one tuple, for
+            example, if an early close on an annual holiday coincides with
+            a weekday early close. In this case the time assigned to the
+            date will be that defined by the tuple with the lowest index
+            in the returned list.
         """
         return []
 
@@ -2321,6 +2342,8 @@ class ExchangeCalendar(ABC):
         force: bool | None = None,
         curtail_overlaps: bool = False,
         ignore_breaks: bool = False,
+        align: pd.Timedelta | str = pd.Timedelta(1, "T"),
+        align_pm: pd.Timedelta | bool = True,
         parse: bool = True,
     ) -> pd.DatetimeIndex | pd.IntervalIndex:
         """Create a trading index.
@@ -2496,7 +2519,7 @@ class ExchangeCalendar(ABC):
                 If False, will raise IntervalsOverlapError.
 
         ignore_breaks : default: False
-            (ignored if `period` is '1d'.)
+            (ignored if `period` is '1d')
             (irrelevant if no session has a break)
 
             Defines whether trading index should respect session breaks.
@@ -2512,6 +2535,49 @@ class ExchangeCalendar(ABC):
             arguments are passed as tz-naive pd.Timestamp with no time
             component then can pass `parse` as False to save around
             500µs on the execution.
+
+        align : default: pd.Timedelta(1, "T")
+            Anchor the first indice of each session such that it aligns
+            with the nearest occurrence of a specific fraction of an hour.
+
+            Pass as a pd.Timedelta or a str that's acceptable as a single
+            input to pd.Timedelta. Pass +ve values to shift indices
+            forwards, -ve values to shift indices backwards.
+
+            Valid values are (or equivalent):
+                "2T", "3T", "4T", "5T", "6T", "10T", "12T", "15T", "20T",
+                "30T", "-2T", "-4T", "-5T", "-6T", "-10T", "-12T", "-15T",
+                "-20T", "-30T"
+
+            For example, if `intervals` is True and `period` is '5T' then
+            the first interval of a session with open time as 07:59 would
+            be:
+                07:59 - 08:04 if `align` is pd.Timedelta(1, "T")  (default)
+                08:00 - 08:05 if `align` is '5T'
+                07:55 - 08:00 if `align` is '-5T'
+
+            Subsequent indices will be similarly shifted.
+
+            Note: A session's indices will not be shifted if the session
+            open already aligns with `align`. For example, if the open time
+            were 08:00 then the first interval will always have a left side
+            as 08:00 regardless of `align`.
+
+        align_pm : default: True
+            (ignored if `ignore_break` is True)
+            (irrelevant if no session has a break)
+
+            Anchor the first indice of each afternoon subsession such that
+            it aligns with the nearest occurrence of a specific fraction of
+            an hour.
+
+                True: (default) Treat as `align`.
+
+                False: Do not shift post-break indices.
+
+                pd.Timedelta or str: Align post-break indices to the
+                nearest occurence of this fraction of an hour. Valid values
+                as for `align`.
 
         Returns
         -------
@@ -2547,7 +2613,7 @@ class ExchangeCalendar(ABC):
             except ValueError:
                 msg = (
                     f"`period` receieved as '{period}' although takes type"
-                    " 'pd.Timedelta' or a type 'str' that is valid as a single input"
+                    " 'pd.Timedelta' or a 'str' that is valid as a single input"
                     " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T'),"
                     " '15min', '15T', '1H', '4h', '1d', '5s', 500ms'."
                 )
@@ -2569,6 +2635,51 @@ class ExchangeCalendar(ABC):
                 f"If `intervals` is True then `closed` cannot be '{closed}'."
             )
 
+        def get_align(name: Literal["align", "align_pm"], value: Any) -> pd.Timedelta:
+            """Convert value received for an align parameter to Timestamp.
+
+            Raises `ValueError` if value is invalid or not of a valid type.
+
+            Parameters
+            ----------
+            name
+                Parameter name.
+
+            value
+                Value assigned to parameter.
+            """
+            try:
+                value = pd.Timedelta(value)
+            except ValueError:
+                insert = " bool," if name == "align_pm" else ""
+                msg = (
+                    f"`{name}` receieved as '{value}' although takes type{insert}"
+                    f" 'pd.Timedelta' or a 'str' that is valid as a single input"
+                    " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('5T'),"
+                    " '5min', '5T', pd.Timedelta('-5T'), '-5min', '-5T'."
+                )
+                raise ValueError(msg) from None
+
+            ONE_HOUR = pd.Timedelta("1H")
+            if value > ONE_HOUR or value < -ONE_HOUR or not value or (ONE_HOUR % value):
+                raise ValueError(
+                    f"`{name}` must be factor of 1H although received '{value}'."
+                )
+
+            if value % pd.Timedelta(1, "T"):
+                raise ValueError(
+                    f"`{name}` cannot include a fraction of a minute although received"
+                    f" '{value}'."
+                )
+            return value
+
+        align = get_align("align", align)
+
+        if align_pm is False:
+            align_pm = pd.Timedelta(1, "T")
+        else:
+            align_pm = align if align_pm is True else get_align("align_pm", align_pm)
+
         if force is not None:
             force_close = force_break_close = force
 
@@ -2583,6 +2694,8 @@ class ExchangeCalendar(ABC):
             force_break_close,
             curtail_overlaps,
             ignore_breaks,
+            align,
+            align_pm,
         )
 
         if not intervals:
@@ -2638,23 +2751,23 @@ class ExchangeCalendar(ABC):
         ]
 
         # List of Series for ad-hoc times.
-        ad_hoc = [
-            pd.Series(
-                index=datetimes,
-                data=days_at_time(datetimes, time_, self.tz, 0),
-            )
-            for time_, datetimes in ad_hoc_dates
-        ]
+        ad_hoc = []
+        for time_, dti in ad_hoc_dates:
+            dti = dti[(dti >= start_date) & (dti <= end_date)]
+            srs = pd.Series(index=dti, data=days_at_time(dti, time_, self.tz, 0))
+            ad_hoc.append(srs)
 
-        merged = regular + ad_hoc
+        merged = ad_hoc + regular
         if not merged:
             # Concat barfs if the input has length 0.
             return pd.Series(
                 [], index=pd.DatetimeIndex([]), dtype="datetime64[ns, UTC]"
             )
 
-        result = pd.concat(merged).sort_index()
-        result = result.loc[(result.index >= start_date) & (result.index <= end_date)]
+        result = pd.concat(merged)
+        # where there are multiple occurrences of the same date, keep only the first
+        result = result[~result.index.duplicated(keep="first")]
+        result = result.sort_index()
         # exclude any special date that coincides with a holiday
         adhoc_holidays = pd.DatetimeIndex(self.adhoc_holidays)
         result = result[~result.index.isin(adhoc_holidays)]
@@ -2788,30 +2901,49 @@ def _check_breaks_match(break_starts_nanos: np.ndarray, break_ends_nanos: np.nda
 
 
 def scheduled_special_times(
-    calendar: HolidayCalendar | int,
+    special_days: HolidayCalendar | int,
     start: pd.Timestamp,
     end: pd.Timestamp,
     time: datetime.time,
     tz: pytz.tzinfo.BaseTzInfo,
 ) -> pd.Series:
-    """Return map of calendar 'holidays' to special times.
+    """Return map of dates to special times.
+
+    Parameters
+    ----------
+    special_days
+        Describes dates with a special time. Pass as either:
+            HolidayCalendar : calendar with rules describing the dates on
+            which special times apply
+
+            int : integer describing a weekday with a regular special
+            time (0 - Monday, ..., 6 - Sunday).
+
+    start
+        Date from which to evaluate mapping (inclusive of `start`).
+
+    end
+        Date to which to evaluate mapping (inclusive of `end`).
+
+    time
+        Special time for dates described by `special_days`.
+
+    tz
+        The timezone in which to interpret `time`.
 
     Returns
     -------
     pd.Series
-        Series mapping each 'holiday' of `calendar` from `start` through
-        `end` with corresponding special time.
+        Series mapping dates to special times.
 
         Index is timezone naive.
         dtype is datetime64[ns, UTC].
     """
-    if isinstance(calendar, int):
-        if calendar not in DAY_TO_STR:
-            raise Exception("Int {} is not a valid weekday".format(calendar))
-        day_str = "W-" + DAY_TO_STR[calendar].upper()[0:3]
+    if isinstance(special_days, int):
+        day_str = "W-" + day_name[special_days].upper()[0:3]
         days = pd.date_range(start, end, freq=day_str)
     else:
-        days = calendar.holidays(start, end)
+        days = special_days.holidays(start, end)
     if not isinstance(days, pd.DatetimeIndex):
         # days will be pd.Index if empty
         days = pd.DatetimeIndex(days)

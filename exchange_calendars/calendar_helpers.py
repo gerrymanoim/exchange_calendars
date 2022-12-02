@@ -442,7 +442,11 @@ class _TradingIndex:
 
     Parameters
     ----------
-    All parameters as ExchangeCalendar.trading_index
+    All parameters as ExchangeCalendar.trading_index except:
+
+    align_pm
+        As 'align' parameter of `ExchangeCalendar.trading_index` although
+        applied exclusively to the post-break subsessions.
     """
 
     def __init__(
@@ -451,12 +455,13 @@ class _TradingIndex:
         start_: Date | Minute,
         end_: Date | Minute,
         period: pd.Timedelta,
-        # TODO Literal["left", "right", "both", "neither"] when min python 3.8...
-        closed: str,
+        closed: Literal["left", "right", "both", "neither"],
         force_close: bool,
         force_break_close: bool,
         curtail_overlaps: bool,
         ignore_breaks: bool,
+        align: pd.Timedelta,
+        align_pm: pd.Timedelta,
     ):
         self.closed = closed
         self.force_break_close = False if ignore_breaks else force_break_close
@@ -481,14 +486,27 @@ class _TradingIndex:
         self.interval_nanos = period.value
         self.dtype = np.int64 if self.interval_nanos < 3000000000 else np.int32
 
-        self.opens = calendar.opens_nanos[slce]
         self.closes = calendar.closes_nanos[slce]
+
+        def align_opens(opens: pd.Series, align: pd.Timedelta) -> np.ndarray:
+            """Return opens as nanos shifted for alignment."""
+            opens = opens.dt.ceil(align)
+            return opens.values.astype(np.int64)
+
+        if align != pd.Timedelta(1, "T"):
+            self.opens = align_opens(calendar.opens[slce], align)
+        else:
+            self.opens = calendar.opens_nanos[slce]
 
         if ignore_breaks:
             self.has_break = False
         else:
             self.break_starts = calendar.break_starts_nanos[slce]
-            self.break_ends = calendar.break_ends_nanos[slce]
+
+            if align_pm != pd.Timedelta(1, "T"):
+                self.break_ends = align_opens(calendar.break_ends[slce], align_pm)
+            else:
+                self.break_ends = calendar.break_ends_nanos[slce]
 
             self.mask = self.break_starts != pd.NaT.value  # break mask
             self.has_break = self.mask.any()

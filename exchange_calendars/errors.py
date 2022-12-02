@@ -317,9 +317,9 @@ class IntervalsOverlapError(IndexOverlapError):
             "Unable to create trading index as intervals would overlap."
             " This can occur when the frequency is longer than a break or"
             " the gap between one session's close and the next session's"
-            " open. To shorten intervals that would otherwise overlap"
-            " either pass `curtail_overlaps` as True or pass"
-            " `force_close` and/or `force_break_close` as True."
+            " open (as reduced by any alignment). To shorten intervals"
+            " that would otherwise overlap either pass `curtail_overlaps`"
+            " as True or pass `force_close` and/or `force_break_close` as True."
         )
 
 
@@ -331,9 +331,8 @@ class IndicesOverlapError(IndexOverlapError):
         return (
             "Unable to create trading index as an indice would fall to the"
             " right of (later than) the subsequent indice. This can occur"
-            " when the frequency is longer than a break or the frequency"
-            " is longer than the gap between one session's close and the"
-            " next session's open. Consider  passing `closed` as `left`"
-            " or passing `force_close` and/or `force_break_close`"
-            " as True."
+            " when the frequency is longer than a break or the gap between"
+            " one session's close and the next session's open (as reduced"
+            " by any alignment). Consider  passing `closed` as `left` or"
+            " passing `force_close` and/or `force_break_close` as True."
         )
