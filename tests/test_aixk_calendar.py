@@ -74,5 +74,6 @@ class TestAIXKCalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def non_holidays_sample(self):
         yield [
+            "2012-12-03",  # First President Day
             "2022-12-01",  # First President Day
         ]
