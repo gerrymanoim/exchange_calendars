@@ -354,6 +354,29 @@ SimchatTorahEve = Holiday(
 )
 SimchatTorah = Holiday("Simchat Torah", month=1, day=1, offset=[_SimchatTorah()])
 
+# Sukkoth interim days - the 3 days following Sukkoth
+SukkothInterimDay1 = Holiday(
+    "Sukkoth Interim Day",
+    month=1,
+    day=1,
+    offset=[_Sukkoth(), Day(1)],
+    days_of_week=(0, 1, 2, 3, 6)
+)
+SukkothInterimDay2 = Holiday(
+    "Sukkoth Interim Day",
+    month=1,
+    day=1,
+    offset=[_Sukkoth(), Day(2)],
+    days_of_week=(0, 1, 2, 3, 6)
+)
+SukkothInterimDay3 = Holiday(
+    "Sukkoth Interim Day",
+    month=1,
+    day=1,
+    offset=[_Sukkoth(), Day(3)],
+    days_of_week=(0, 1, 2, 3, 6)
+)
+
 # Passover interim days are the days between beginning and end of passover. Any otherwise regular business day in that
 # period becomes an early close day.
 PassoverInterimDay1 = Holiday(
