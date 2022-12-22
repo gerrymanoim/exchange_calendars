@@ -23,7 +23,7 @@ jobs:
       run: |
         pytest etc/bench.py --benchmark-json output.json
     - name: Download previous benchmark data
-      uses: actions/cache@v3.0.11
+      uses: actions/cache@v3.2.0
       with:
         path: ./cache
         key: ${{ runner.os }}-benchmark
