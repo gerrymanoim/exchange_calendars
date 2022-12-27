@@ -8,7 +8,7 @@
 #
 #    pip-compile --upgrade --upgrade-package pandas==1.1 --extra=dev --output-file=etc/requirements_minpandas.txt pyproject.toml
 #
-attrs==22.1.0
+attrs==22.2.0
     # via
     #   hypothesis
     #   pytest
@@ -21,15 +21,15 @@ colorama==0.4.6
     #   build
     #   click
     #   pytest
-exceptiongroup==1.0.3
+exceptiongroup==1.1.0
     # via
     #   hypothesis
     #   pytest
 execnet==1.9.0
     # via pytest-xdist
-flake8==5.0.4
+flake8==6.0.0
     # via exchange-calendars (pyproject.toml)
-hypothesis==6.57.1
+hypothesis==6.61.0
     # via exchange-calendars (pyproject.toml)
 iniconfig==1.1.1
     # via pytest
@@ -37,11 +37,11 @@ korean-lunar-calendar==0.3.1
     # via exchange-calendars (pyproject.toml)
 mccabe==0.7.0
     # via flake8
-numpy==1.23.4
+numpy==1.24.1
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
-packaging==21.3
+packaging==22.0
     # via
     #   build
     #   pytest
@@ -49,20 +49,18 @@ pandas==1.1.0
     # via exchange-calendars (pyproject.toml)
 pep517==0.13.0
     # via build
-pip-tools==6.10.0
+pip-tools==6.12.1
     # via exchange-calendars (pyproject.toml)
 pluggy==1.0.0
     # via pytest
 py-cpuinfo==9.0.0
     # via pytest-benchmark
-pycodestyle==2.9.1
+pycodestyle==2.10.0
     # via flake8
-pyflakes==2.5.0
+pyflakes==3.0.1
     # via flake8
 pyluach==2.0.2
     # via exchange-calendars (pyproject.toml)
-pyparsing==3.0.9
-    # via packaging
 pytest==7.2.0
     # via
     #   exchange-calendars (pyproject.toml)
@@ -70,13 +68,13 @@ pytest==7.2.0
     #   pytest-xdist
 pytest-benchmark==4.0.0
     # via exchange-calendars (pyproject.toml)
-pytest-xdist==3.0.2
+pytest-xdist==3.1.0
     # via exchange-calendars (pyproject.toml)
 python-dateutil==2.8.2
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
-pytz==2022.6
+pytz==2022.7
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas

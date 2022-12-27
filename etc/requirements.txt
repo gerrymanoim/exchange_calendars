@@ -6,11 +6,11 @@
 #
 korean-lunar-calendar==0.3.1
     # via exchange-calendars (pyproject.toml)
-numpy==1.23.4
+numpy==1.24.1
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
-pandas==1.5.1
+pandas==1.5.2
     # via exchange-calendars (pyproject.toml)
 pyluach==2.0.2
     # via exchange-calendars (pyproject.toml)
@@ -18,7 +18,7 @@ python-dateutil==2.8.2
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
-pytz==2022.6
+pytz==2022.7
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
