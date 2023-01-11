@@ -16,7 +16,7 @@ class TestXBOMCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def end_bound(self):
-        yield T("2022-12-31")
+        yield T("2023-12-31")
 
     @pytest.fixture
     def max_session_hours(self):
