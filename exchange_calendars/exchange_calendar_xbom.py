@@ -430,7 +430,7 @@ class XBOMExchangeCalendar(PrecomputedExchangeCalendar):
     Close Time: 3:30 PM, Asia/Calcutta
 
     Due to the complexity around the BSE holidays, we are hardcoding a list
-    of holidays back to 1997, and forward through 2021.  There are no known
+    of holidays back to 1997, and forward through 2023.  There are no known
     early closes or late opens.
     """
 
