@@ -103,11 +103,14 @@ QueensBirthday = Holiday(
     offset=[DateOffset(weekday=MO(2))],
 )
 
+# This was half-day until Christmas 2022 when was full-day.
+# As of 2023-01-15, ASX claim 2023 will also be full-days.
 LastTradingDayBeforeChristmas = Holiday(
     "Last Trading Day Before Christmas",
     month=12,
     day=24,
     start_date="2010",
+    end_date="2022",
     observance=previous_friday,
 )
 Christmas = christmas()
@@ -115,11 +118,14 @@ WeekendChristmas = weekend_christmas()
 BoxingDay = boxing_day()
 WeekendBoxingDay = weekend_boxing_day()
 
+# This was half-day until Christmas 2022 when was full-day.
+# As of 2023-01-15, ASX claim 2023 will also be full-days.
 LastTradingDayOfCalendarYear = Holiday(
     "Last Trading Day Of Calendar Year",
     month=12,
     day=31,
     start_date="2010",
+    end_date="2022",
     observance=previous_friday,
 )
 
