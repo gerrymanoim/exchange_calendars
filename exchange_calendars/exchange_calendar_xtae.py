@@ -34,6 +34,8 @@ from .tase_holidays import (
     SukkothInterimDay1,
     SukkothInterimDay2,
     SukkothInterimDay3,
+    SukkothInterimDay4,
+    SukkothInterimDay5,
     Passover2Eve,
     PassoverEve,
     Pentecost,
@@ -160,6 +162,8 @@ class XTAEExchangeCalendar(ExchangeCalendar):
                         SukkothInterimDay1,
                         SukkothInterimDay2,
                         SukkothInterimDay3,
+                        SukkothInterimDay4,
+                        SukkothInterimDay5,
                     ]
                 ),
             ),
