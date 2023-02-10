@@ -151,6 +151,11 @@ class XISTExchangeCalendar(ExchangeCalendar):
             pd.Timestamp("2004-12-30"),  # Closure for redenomination
             pd.Timestamp("2004-12-31"),  # Closure for redenomination
             pd.Timestamp("2006-01-13"),  # Eid al Adha extra holiday
+            pd.Timestamp("2023-02-08"),  # Trade suspension after earthquake
+            pd.Timestamp("2023-02-09"),  # Trade suspension after earthquake
+            pd.Timestamp("2023-02-10"),  # Trade suspension after earthquake
+            pd.Timestamp("2023-02-13"),  # Trade suspension after earthquake
+            pd.Timestamp("2023-02-14"),  # Trade suspension after earthquake
         ]
 
         return list(

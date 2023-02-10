@@ -48,6 +48,11 @@ class TestXISTCalendar(ExchangeCalendarTestBase):
             "2003-11-24",  # Eid al Fitr extra holiday
             "2003-11-28",  # Eid al Fitr extra holiday
             "2006-01-13",  # Eid al Adha extra holiday
+            "2023-02-08",  # Trade suspension after earthquake
+            "2023-02-09",  # Trade suspension after earthquake
+            "2023-02-10",  # Trade suspension after earthquake
+            "2023-02-13",  # Trade suspension after earthquake
+            "2023-02-14",  # Trade suspension after earthquake
         ]
 
     @pytest.fixture
