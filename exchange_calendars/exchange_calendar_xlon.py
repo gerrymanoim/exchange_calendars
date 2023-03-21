@@ -236,6 +236,8 @@ class XLONExchangeCalendar(ExchangeCalendar):
             pd.Timestamp("2022-06-03"),
             # Queen Elizabeth II Funeral
             pd.Timestamp("2022-09-19"),
+            # Coronation of King Charles III
+            pd.Timestamp("2023-05-08"),
             # Royal Weddings
             # Wedding Day of Princess Anne and Mark Phillips
             pd.Timestamp("1973-11-14"),

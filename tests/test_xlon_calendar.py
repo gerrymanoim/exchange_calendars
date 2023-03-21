@@ -37,6 +37,7 @@ class TestXLONCalendar(ExchangeCalendarTestBase):
             "2012-06-05",  # Diamond Jubilee
             "2020-05-08",  # VE Day
             "2022-09-19",  # Queen Elizabeth Funeral
+            "2023-05-08",  # Coronation of King Charles III
         ]
 
     @pytest.fixture
