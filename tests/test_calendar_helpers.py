@@ -639,7 +639,7 @@ class TestTradingIndex:
 
         if curtail and not (force_close and force_break_close):
             indices = lower_bounds.argsort()
-            lower_bounds.sort_values(inplace=True)
+            lower_bounds = lower_bounds.sort_values()
             upper_bounds = upper_bounds[indices]
             curtail_mask = upper_bounds > lower_bounds.shift(-1)
             if curtail_mask.any():

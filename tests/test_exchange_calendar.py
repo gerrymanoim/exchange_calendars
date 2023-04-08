@@ -11,6 +11,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import datetime
 import functools
 import itertools
 import pathlib
@@ -181,7 +182,6 @@ def get_csv(name: str) -> pd.DataFrame:
         path,
         index_col=0,
         parse_dates=[0, 1, 2, 3, 4],
-        infer_datetime_format=True,
     )
     # Necessary for csv saved prior to v4.0
     if df.index.tz is not None:
@@ -190,6 +190,8 @@ def get_csv(name: str) -> pd.DataFrame:
     for col in df:
         if df[col].dt.tz is None:
             df[col] = df[col].dt.tz_localize(UTC)
+        elif df[col].dt.tz is datetime.timezone.utc:
+            df[col] = df[col].dt.tz_convert(UTC)
     return df
 
 
@@ -2146,7 +2148,7 @@ class ExchangeCalendarTestBase:
         date_to = pd.Timestamp.max
         dtis: list[pd.DatetimeIndex] = []
         # For each period over which a distinct open time prevails...
-        for date_from, time_ in s.iteritems():
+        for date_from, time_ in s.items():
             opens = ans.opens[date_from:date_to]
             sessions = opens.index
             td = pd.Timedelta(hours=time_.hour, minutes=time_.minute)
@@ -2186,7 +2188,7 @@ class ExchangeCalendarTestBase:
 
         date_to = pd.Timestamp.max
         dtis: list[pd.DatetimeIndex] = []
-        for date_from, time_ in s.iteritems():
+        for date_from, time_ in s.items():
             closes = ans.closes[date_from:date_to]  # index to tz-naive
             sessions = closes.index
             td = pd.Timedelta(hours=time_.hour, minutes=time_.minute)
@@ -3837,14 +3839,18 @@ class ExchangeCalendarTestBase:
                         else:
                             ends = ans.closes
                         # index for a 'left' calendar, add end so evaluated as if 'both'
-                        index = index.append(pd.DatetimeIndex([ends[session]]))
+                        index = index.append(
+                            pd.DatetimeIndex([ends[session]], tz=pytz.UTC)
+                        )
 
                         index = index[::mins]  # only want every period
                         if not index[-1] == ends[session]:
                             # if period doesn't coincide with end, add right side of
                             # last interval which lies beyond end.
                             last_indice = index[-1] + period
-                            index = index.append(pd.DatetimeIndex([last_indice]))
+                            index = index.append(
+                                pd.DatetimeIndex([last_indice], tz=pytz.UTC)
+                            )
                         dtis.append(index)
 
                 both_index = unite(dtis)

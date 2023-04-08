@@ -680,7 +680,7 @@ class _TradingIndex:
         index = self._trading_index()
         if self.has_break:
             index.sort()
-        index = pd.DatetimeIndex(index, tz="UTC")
+        index = pd.DatetimeIndex(index, tz=pytz.UTC)
         return self.curtail_for_times(index)
 
     @contextlib.contextmanager
@@ -718,7 +718,7 @@ class _TradingIndex:
             else:
                 raise errors.IntervalsOverlapError()
 
-        left = pd.DatetimeIndex(left, tz="UTC")
-        right = pd.DatetimeIndex(right, tz="UTC")
+        left = pd.DatetimeIndex(left, tz=pytz.UTC)
+        right = pd.DatetimeIndex(right, tz=pytz.UTC)
         index = pd.IntervalIndex.from_arrays(left, right, self.closed)
         return self.curtail_for_times(index)

@@ -149,7 +149,7 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
             bday, interval = self._custom_business_day_for(
                 other, remaining, with_interval=True
             )
-            result = bday.apply(other)
+            result = bday + other
             while not interval.left <= result <= interval.right:
                 previous_other = other
                 if result < interval.left:
