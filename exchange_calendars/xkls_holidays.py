@@ -251,7 +251,7 @@ malaysia_eid_al_fitr_first_day = pd.to_datetime(
         "2020-05-24",
         "2021-05-13",
         "2022-05-03",
-        "2023-04-24", # 2023's Hari Raya holiday is from 22 Apr (Sat) to 24 Apr (Mon) https://www.bursamalaysia.com/about_bursa/about_us/calendar
+        "2023-04-22", # 2023's Hari Raya holiday is from 22 Apr (Sat) to 24 Apr (Mon) https://www.bursamalaysia.com/about_bursa/about_us/calendar
         "2024-04-10",
         "2025-03-30",
         "2026-03-20",
