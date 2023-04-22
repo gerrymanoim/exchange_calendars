@@ -175,7 +175,7 @@ muhammad_birthday = pd.to_datetime(
         "2020-10-29",
         "2021-10-19",
         "2022-10-09",
-        "2023-09-28", # Prophet Muhammad's Birthday : https://publicholidays.com.my/2023-dates/
+        "2023-09-28",
         "2024-09-15",
         "2025-09-04",
         "2026-08-25",
@@ -251,7 +251,7 @@ malaysia_eid_al_fitr_first_day = pd.to_datetime(
         "2020-05-24",
         "2021-05-13",
         "2022-05-03",
-        "2023-04-22", # 2023's Hari Raya holiday is from 22 Apr (Sat) to 24 Apr (Mon) https://www.bursamalaysia.com/about_bursa/about_us/calendar
+        "2023-04-22",
         "2024-04-10",
         "2025-03-30",
         "2026-03-20",
@@ -328,7 +328,7 @@ malaysia_eid_al_adha = pd.to_datetime(
         "2020-07-31",
         "2021-07-20",
         "2022-07-10",
-        "2023-06-29", # Hari Raya Haji (Eid-ul-Adha), but date is subject to change : https://www.bursamalaysia.com/about_bursa/about_us/calendar
+        "2023-06-29",
         "2024-06-16",
         "2025-06-06",
         "2026-05-27",
@@ -380,7 +380,7 @@ deepavali = pd.to_datetime(
         "2020-11-14",
         "2021-11-04",
         "2022-10-24",
-        "2023-11-13", # Deepavali Holiday: https://publicholidays.com.my/2023-dates/
+        "2023-11-13",
         "2024-10-31",
     ]
 )
