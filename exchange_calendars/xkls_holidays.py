@@ -438,7 +438,7 @@ misc_adhoc = pd.to_datetime(
     [
         "2024-06-03",  # Yang di-Pertuan Agong's Birthday
         "2023-06-05",  # Yang di-Pertuan Agong's Birthday
-        "2023-04-21",  # Special Public Holiday's announced by Anwar: https://www.bursamalaysia.com/about_bursa/about_us/calendar
+        "2023-04-21",  # Special Public Holiday's announced by Anwar
         "2022-06-06",  # Yang di-Pertuan Agong's Birthday
         "2021-06-07",  # Yang di-Pertuan Agong's Birthday
         "2020-06-08",  # Yang di-Pertuan Agong's Birthday
