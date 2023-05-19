@@ -23,7 +23,4 @@ class TestXASUCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def regular_holidays_sample(self):
-        yield [
-            "2023-02-22",
-            "2023-09-23"
-        ]
+        yield ["2023-02-22", "2023-09-23"]

@@ -7,17 +7,9 @@ from pandas.tseries.holiday import Holiday
 
 from exchange_calendars.exchange_calendar import ExchangeCalendar, HolidayCalendar
 
-SaudiFoundingDay = Holiday(
-    "Saudi Founding Day",
-    month=2,
-    day=22
-)
+SaudiFoundingDay = Holiday("Saudi Founding Day", month=2, day=22)
 
-NationalDayOfSaudiArabia = Holiday(
-    "National Day of Saudi Arabia",
-    month=9,
-    day=23
-)
+NationalDayOfSaudiArabia = Holiday("National Day of Saudi Arabia", month=9, day=23)
 
 EidAlAdhaHoliday = pd.to_datetime(
     [
@@ -93,7 +85,10 @@ class XSAUExchangeCalendar(ExchangeCalendar):
 
     def _bound_min_error_msg(self, start: pd.Timestamp) -> str:
         msg = super()._bound_min_error_msg(start)
-        return msg + f"(The exchange {self.name} does not have complete holidays prior to 2021.)"
+        return (
+            msg
+            + f"(The exchange {self.name} does not have complete holidays prior to 2021.)"
+        )
 
     @classmethod
     def bound_max(cls) -> pd.Timestamp:
@@ -101,14 +96,14 @@ class XSAUExchangeCalendar(ExchangeCalendar):
 
     def _bound_max_error_msg(self, end: pd.Timestamp) -> str:
         msg = super()._bound_min_error_msg(end)
-        return msg + f"(The exchange {self.name} does not have complete holidays beyond 2023.)"
+        return (
+            msg
+            + f"(The exchange {self.name} does not have complete holidays beyond 2023.)"
+        )
 
     @property
     def regular_holidays(self):
-        return HolidayCalendar([
-            SaudiFoundingDay,
-            NationalDayOfSaudiArabia
-        ])
+        return HolidayCalendar([SaudiFoundingDay, NationalDayOfSaudiArabia])
 
     @property
     def weekmask(self):
