@@ -230,7 +230,7 @@ See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanat
 ## Calendars
 
 | Exchange                        | ISO Code | Country        | Version Added | Exchange Website (English)                                   |
-| ------------------------------- | -------- | -------------- | ------------- | ------------------------------------------------------------ |
+|---------------------------------|----------| -------------- |---------------| ------------------------------------------------------------ |
 | New York Stock Exchange         | XNYS     | USA            | 1.0           | https://www.nyse.com/index                                   |
 | CBOE Futures                    | XCBF     | USA            | 1.0           | https://markets.cboe.com/us/futures/overview/                |
 | Chicago Mercantile Exchange     | CMES     | USA            | 1.0           | https://www.cmegroup.com/                                    |
@@ -283,6 +283,7 @@ See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanat
 | Tel Aviv Stock Exchange         | XTAE     | Israel         | 2.1           | https://www.tase.co.il/                                      |
 | Astana International Exchange   | AIXK     | Kazakhstan     | 3.2           | https://www.aix.kz/                                          |
 | Bucharest Stock Exchange        | XBSE     | Romania        | 3.2           | https://www.bvb.ro/                                          |
+| Saudi Stock Exchange            | XSAU     | Saudi Arabia   | 4.2           | https://www.saudiexchange.sa/                                |
 
 > Note that exchange calendars are defined by their [ISO-10383](https://www.iso20022.org/10383/iso-10383-market-identifier-codes) market identifier code.
 
