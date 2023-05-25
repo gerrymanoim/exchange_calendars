@@ -435,13 +435,13 @@ eid_al_adha_first_day = pd.to_datetime(
 )
 
 
-def orthodox_easter(start_date="1980", end_date="2022"):
+def orthodox_easter(start_date="1980", end_date="2030"):
     """
     This function gives a DatetimeIndex of Orthodox Easter dates from start_date to end_date
     """
     return pd.to_datetime(
         [
             easter(year, method=EASTER_ORTHODOX)
-            for year in range(int(start_date), int(end_date))
+            for year in range(int(start_date), int(end_date) + 1)
         ]
     )

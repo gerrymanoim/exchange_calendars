@@ -17,6 +17,8 @@ class TestXBSECalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def regular_holidays_sample(self):
         yield [
+            "2023-04-17",  # Orthodox Easter
+            "2023-04-14",  # Good Friday
             "2021-01-01",  # New Year's Day
             "2021-04-30",  # Orthodox Good Friday
             "2021-06-01",  # Children's day
