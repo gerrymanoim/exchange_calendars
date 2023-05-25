@@ -33,8 +33,8 @@ jobs:
     - name: Install from testpypi and import
       run: |
         i=0
-        while (($i<12)) && [ "${{ github.ref_name }}" != $(pip index versions -i https://test.pypi.org/simple --pre exchange_calendars | cut -d'(' -f2 | cut -d')' -f1 | sed 1q) ];\
-          do echo waiting for package to appear in test index, sleeping 5s; sleep 5s; let i++; done
+        while [ $i -lt 12 ] && [ "${{ github.ref_name }}" != $(pip index versions -i https://test.pypi.org/simple --pre exchange_calendars | cut -d'(' -f2 | cut -d')' -f1 | sed 1q) ];\
+          do echo "waiting for package to appear in test index, i is $i, sleeping 5s"; sleep 5s; ((i++)); echo "next i is $i"; done
         pip install --index-url https://test.pypi.org/simple exchange_calendars==${{ github.ref_name }} --no-deps
         pip install -r etc/requirements.txt
         python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
@@ -53,7 +53,7 @@ jobs:
     - name: Install and import
       run: |
         i=0
-        while (($i<12)) && [ "${{ github.ref_name }}" != $(pip index versions -i https://pypi.org/simple --pre exchange_calendars | cut -d'(' -f2 | cut -d')' -f1 | sed 1q) ];\
-          do echo waiting for package to appear in index, sleeping 5s; sleep 5s; let i++; done
+        while [ $i -lt 12 ] && [ "${{ github.ref_name }}" != $(pip index versions -i https://pypi.org/simple --pre exchange_calendars | cut -d'(' -f2 | cut -d')' -f1 | sed 1q) ];\
+          do echo "waiting for package to appear in index, i is $i, sleeping 5s"; sleep 5s; ((i++)); echo "next i is $i"; done
         pip install --index-url https://pypi.org/simple exchange_calendars==${{ github.ref_name }}
         python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
