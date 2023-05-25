@@ -8,10 +8,8 @@
 #
 #    pip-compile --upgrade --upgrade-package pandas==1.1 --extra=dev --output-file=etc/requirements_minpandas.txt pyproject.toml
 #
-attrs==22.2.0
-    # via
-    #   hypothesis
-    #   pytest
+attrs==23.1.0
+    # via hypothesis
 build==0.10.0
     # via pip-tools
 click==8.1.3
@@ -29,7 +27,7 @@ execnet==1.9.0
     # via pytest-xdist
 flake8==6.0.0
     # via exchange-calendars (pyproject.toml)
-hypothesis==6.71.0
+hypothesis==6.75.3
     # via exchange-calendars (pyproject.toml)
 iniconfig==2.0.0
     # via pytest
@@ -37,11 +35,11 @@ korean-lunar-calendar==0.3.1
     # via exchange-calendars (pyproject.toml)
 mccabe==0.7.0
     # via flake8
-numpy==1.24.2
+numpy==1.24.3
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
-packaging==23.0
+packaging==23.1
     # via
     #   build
     #   pytest
@@ -61,14 +59,14 @@ pyluach==2.2.0
     # via exchange-calendars (pyproject.toml)
 pyproject-hooks==1.0.0
     # via build
-pytest==7.2.2
+pytest==7.3.1
     # via
     #   exchange-calendars (pyproject.toml)
     #   pytest-benchmark
     #   pytest-xdist
 pytest-benchmark==4.0.0
     # via exchange-calendars (pyproject.toml)
-pytest-xdist==3.2.1
+pytest-xdist==3.3.1
     # via exchange-calendars (pyproject.toml)
 python-dateutil==2.8.2
     # via
