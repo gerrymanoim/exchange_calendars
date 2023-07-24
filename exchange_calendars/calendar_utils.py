@@ -126,6 +126,7 @@ _default_calendar_aliases = {
     "NYSE": "XNYS",
     "NASDAQ": "XNYS",
     "BATS": "XNYS",
+    "XNAS": "XNYS",
     "FWB": "XFRA",
     "LSE": "XLON",
     "TSX": "XTSE",
