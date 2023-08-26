@@ -3319,7 +3319,6 @@ class ExchangeCalendarTestBase:
 
         for _, sessions in ans.session_block_generator():
             for i, session in enumerate(sessions):
-
                 # intra session
                 first_minute = ans.first_minutes[session]
                 rtrn = f(first_minute + pd.Timedelta(20, "T"), 10)
@@ -3425,7 +3424,6 @@ class ExchangeCalendarTestBase:
                 assertions(minute, target_session, f(minute, -1))
 
         if ans.has_a_session_with_break:
-
             sessions = ans.sessions_next_break_start_later[-5:]
             for session in sessions:
                 target_session = ans.get_next_session(session)
@@ -3913,7 +3911,7 @@ class ExchangeCalendarTestBase:
                 getattr(cal, name)
 
         # deprecated class methods
-        for name in ["bound_start", "bound_end"]:
+        for name in []:
             with pytest.warns(FutureWarning):
                 getattr(cal, name)()
 
@@ -3926,10 +3924,7 @@ class ExchangeCalendarTestBase:
         # deprecated methods that take start and end session parameters.
         start = ans.sessions[-10]
         end = session
-        for name in [
-            "sessions_opens",
-            "sessions_closes",
-        ]:
+        for name in []:
             with pytest.warns(FutureWarning):
                 getattr(cal, name)(start, end, _parse=False)
 

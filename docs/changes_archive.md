@@ -1,5 +1,32 @@
 **NOTE**: This file is NOT a comprehensive changes log but rather an archive of sections temporarily included to the README to advise of significant changes.
 
+## **v4 released** (June 2022)
+
+**The earliest stable version of v4 is 4.0.1** (not 4.0).
+
+### What's changed?
+
+Version 4.0.1 completes the transition to a more consistent interface across the package. The most significant changes are:
+
+* **Sessions are now timezone-naive** (previously UTC).
+* Schedule columns now have timezone set as UTC (whilst the times have always been defined in terms of UTC, previously the dtype was timezone-naive).
+* The following schedule columns were renamed:
+    * 'market_open' renamed as 'open'.
+    * 'market_close' renamed as 'close'.
+* Default calendar 'side' for all calendars is now "left" (previously "right" for 24-hour calendars and "both" for all others). This **changes the minutes that are considered trading minutes by default** (see [minutes tutorial](docs/tutorials/minutes.ipynb) for an explanation of trading minutes).
+* The 'count' parameter of `sessions_window` and `minutes_window` methods now reflects the window length (previously window length + 1).
+* New `is_open_at_time` calendar method to evaluate if an exchange is open as at a specific instance (as opposed to over an evaluated minute).
+* The minimum Python version supported is now 3.8 (previously 3.7).
+* Parameters have been renamed for some methods (list [here](#Methods-with-a-parameter-renamed-in-40))
+* The following methods have been deprecated:
+    * `sessions_opens` (use `.opens[start:end]`)
+    * `sessions_closes` (use `.closes[start:end]`)
+* Methods deprecated in 3.4 have been removed (lists [here](#Methods-renamed-in-version-34-and-removed-in-40) and [here](#Other-methods-deprecated-in-34-and-removed-in-40))
+
+See the [4.0 release todo](https://github.com/gerrymanoim/exchange_calendars/issues/61) for a full list of changes and corresponding PRs.
+
+Please offer any feedback at the [v4 discussion](https://github.com/gerrymanoim/exchange_calendars/discussions/202).
+
 ## **Changes in 3.4** (released October 2021)
 The 3.4 release introduced notable new features and documentation, including:
 

@@ -6,36 +6,6 @@ A Python library for defining and querying calendars for security exchanges.
 
 Calendars for more than [50 exchanges](#Calendars) available out-the-box! If you still can't find the calendar you're looking for, [create a new one](#How-can-I-create-a-new-calendar)!
 
-### Notice: **[market_prices](https://github.com/maread99/market_prices) - the new library for prices data!**
-Much of the recent development of `exchange_calendars` has been driven by the new [`market_prices`](https://github.com/maread99/market_prices) library. Check it out if you like the idea of using `exchange_calendars` to create meaningful OHLCV datasets. Works out-the-box with freely available data!
-
-## Notice: **v4 released** (June 2022)
-
-**The earliest stable version of v4 is 4.0.1** (not 4.0).
-
-### What's changed?
-
-Version 4.0.1 completes the transition to a more consistent interface across the package. The most significant changes are:
-
-* **Sessions are now timezone-naive** (previously UTC).
-* Schedule columns now have timezone set as UTC (whilst the times have always been defined in terms of UTC, previously the dtype was timezone-naive).
-* The following schedule columns were renamed:
-    * 'market_open' renamed as 'open'.
-    * 'market_close' renamed as 'close'.
-* Default calendar 'side' for all calendars is now "left" (previously "right" for 24-hour calendars and "both" for all others). This **changes the minutes that are considered trading minutes by default** (see [minutes tutorial](docs/tutorials/minutes.ipynb) for an explanation of trading minutes).
-* The 'count' parameter of `sessions_window` and `minutes_window` methods now reflects the window length (previously window length + 1).
-* New `is_open_at_time` calendar method to evaluate if an exchange is open as at a specific instance (as opposed to over an evaluated minute).
-* The minimum Python version supported is now 3.8 (previously 3.7).
-* Parameters have been renamed for some methods (list [here](#Methods-with-a-parameter-renamed-in-40))
-* The following methods have been deprecated:
-    * `sessions_opens` (use `.opens[start:end]`)
-    * `sessions_closes` (use `.closes[start:end]`)
-* Methods deprecated in 3.4 have been removed (lists [here](#Methods-renamed-in-version-34-and-removed-in-40) and [here](#Other-methods-deprecated-in-34-and-removed-in-40))
-
-See the [4.0 release todo](https://github.com/gerrymanoim/exchange_calendars/issues/61) for a full list of changes and corresponding PRs.
-
-Please offer any feedback at the [v4 discussion](https://github.com/gerrymanoim/exchange_calendars/discussions/202).
-
 ## Installation
 
 ```bash
@@ -287,9 +257,18 @@ See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanat
 
 > Note that exchange calendars are defined by their [ISO-10383](https://www.iso20022.org/10383/iso-10383-market-identifier-codes) market identifier code.
 
+## [`market-prices`](https://github.com/maread99/market_prices)
+Much of the post v3 development of `exchange_calendars` has been driven by the [`market_prices`](https://github.com/maread99/market_prices) library. Check it out if you like the idea of using `exchange_calendars` to create meaningful OHLCV datasets. It works out-the-box with freely available data!
+
 ## Deprecations and Renaming
 
-### Methods deprecated in 4.0
+### Methods renamed in version 4.0.3 and removed in 4.3
+| Previous name | New name |
+| ------------- | -------- |
+| bound_start | bound_min |
+| bound_end | bound_max |
+
+### Methods deprecated in 4.0 and removed in 4.3
 | Deprecated method | Reason |
 | ----------------- | ------ |
 | sessions_closes | use `.closes[start:end]` |
