@@ -698,16 +698,24 @@ class TestTradingIndex:
 
         if has_break and can_overlap:
             # filter out periods that will definitely overlap.
-            max_period = (ans.break_ends[slc] - ans.opens[slc]).min()
+            max_period = (
+                ans.break_ends[slc].dt.ceil(align_pm) - ans.opens[slc].dt.ceil(align)
+            ).min()
 
         # guard against "neither" returning empty. Tested for under seprate test.
         if closed == "neither":
             if has_break:
-                am_length = (ans.break_starts[slc] - ans.opens[slc]).min() - one_min
-                pm_length = (ans.closes[slc] - ans.break_ends[slc]).min() - one_min
+                am_length = (
+                    ans.break_starts[slc] - ans.opens[slc].dt.ceil(align)
+                ).min() - one_min
+                pm_length = (
+                    ans.closes[slc] - ans.break_ends[slc].dt.ceil(align_pm)
+                ).min() - one_min
                 max_period = min(max_period, am_length, pm_length)
             else:
-                min_length = (ans.closes[slc] - ans.opens[slc]).min() - one_min
+                min_length = (
+                    ans.closes[slc] - ans.opens[slc].dt.ceil(align)
+                ).min() - one_min
                 max_period = min(max_period, min_length)
 
         period = data.draw(self.st_periods(maximum=max_period))
