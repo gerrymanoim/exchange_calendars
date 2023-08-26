@@ -16,11 +16,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.9", "3.11"]
-        include:
-          - python-version: "3.9"
-            requirements_file: requirements_minpandas.txt
-          - python-version: "3.11"
-            requirements_file: requirements_dev.txt
 
     steps:
     - uses: actions/checkout@v3
@@ -29,11 +24,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-        cache-dependency-path: 'etc/${{matrix.requirements_file}}'
+        cache-dependency-path: 'etc/requirements_dev.txt'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r etc/${{matrix.requirements_file}}
+        pip install -r etc/requirements_dev.txt
         pip install -e .
     - name: Lint with flake8
       run: |

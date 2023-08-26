@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "pandas >= 1.1",
+    "pandas",
     "pyluach",
     "python-dateutil",
     "pytz",
