@@ -2277,7 +2277,8 @@ class ExchangeCalendar(ABC):
         if negate:
             start, end = end, start
         slc = self._get_sessions_slice(start, end, _parse=False)
-        return slc.start - slc.stop if negate else slc.stop - slc.start
+        dist = slc.start - slc.stop if negate else slc.stop - slc.start
+        return int(dist)  # otherwise returned as `numpy.int64`
 
     def sessions_minutes(
         self, start: Date, end: Date, _parse: bool = True
