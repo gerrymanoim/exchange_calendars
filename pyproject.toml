@@ -12,14 +12,14 @@ authors = [
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["finance", "security", "calendar", "exchange"]
-requires-python = "~=3.8"
+requires-python = "~=3.9"
 classifiers = [
 	"Development Status :: 4 - Beta",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: Apache Software License",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
@@ -64,4 +64,4 @@ write_to = "exchange_calendars/_version.py"
 
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310']
+target-version = ['py39', 'py310', 'py311']
