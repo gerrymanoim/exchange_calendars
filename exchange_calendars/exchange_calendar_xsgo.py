@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import time, timedelta
+from __future__ import annotations
+
+import datetime
 
 import pandas as pd
 from pandas.tseries.holiday import Easter, GoodFriday, Holiday
@@ -44,7 +46,7 @@ from .exchange_calendar import (
 )
 
 
-def nearest_monday(dt):
+def nearest_monday(dt: datetime.datetime) -> datetime.datetime:
     """
     If the holiday falls on a Saturday, Sunday or Monday then the date is
     unchanged (Sat/Sun observances are not made up), otherwise use the closest
@@ -53,13 +55,13 @@ def nearest_monday(dt):
     day = dt.weekday()
 
     if day in (TUESDAY, WEDNESDAY, THURSDAY):
-        return dt - timedelta(day - MONDAY)
+        return dt - datetime.timedelta(day - MONDAY)
     elif day == FRIDAY:
-        return dt + timedelta(3)
+        return dt + datetime.timedelta(3)
     return dt
 
 
-def tuesday_and_wednesday_to_friday(dt):
+def tuesday_and_wednesday_to_friday(dt: datetime.datetime):
     """
     If Evangelical Church Day (Halloween) falls on a Tuesday, it is observed
     the preceding Friday. If it falls on a Wednesday, it is observed the next
@@ -68,19 +70,19 @@ def tuesday_and_wednesday_to_friday(dt):
     day = dt.weekday()
 
     if day == TUESDAY:
-        return dt - timedelta(4)
+        return dt - datetime.timedelta(4)
     elif day == WEDNESDAY:
-        return dt + timedelta(2)
+        return dt + datetime.timedelta(2)
     return dt
 
 
-def not_2010(holidays):
+def not_2010(dt: datetime.datetime) -> datetime.datetime | None:
     """
     In 2010 Independence Day fell on a Saturday. Normally this would mean that
     Friday is a half day, but instead it is a full day off, so we need to
     exclude it from the usual half day rules.
     """
-    return holidays[holidays.year != 2010]
+    return None if dt.year == 2010 else dt
 
 
 NewYearsDay = new_years_day()
@@ -205,9 +207,9 @@ class XSGOExchangeCalendar(ExchangeCalendar):
     name = "XSGO"
     tz = timezone("America/Santiago")
 
-    open_times = ((None, time(9, 30)),)
-    early_close_1230 = time(12, 30)
-    early_close_130 = time(13, 30)
+    open_times = ((None, datetime.time(9, 30)),)
+    early_close_1230 = datetime.time(12, 30)
+    early_close_130 = datetime.time(13, 30)
 
     @property
     def close_times(self):
@@ -270,7 +272,7 @@ class XSGOExchangeCalendar(ExchangeCalendar):
         ]
 
     def _starting_dates_and_close_times(self):
-        yield ((None, time(17)))
+        yield ((None, datetime.time(17)))
         for year in range(1980, 2050):
-            yield (pd.Timestamp("{}-03-01".format(year)), time(16))
-            yield (pd.Timestamp("{}-11-01".format(year)), time(17))
+            yield (pd.Timestamp("{}-03-01".format(year)), datetime.time(16))
+            yield (pd.Timestamp("{}-11-01".format(year)), datetime.time(17))

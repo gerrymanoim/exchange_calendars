@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import time, timedelta
+from __future__ import annotations
+
+import datetime
 from itertools import chain
 
 import pandas as pd
@@ -39,7 +41,7 @@ from .exchange_calendar import (
 )
 
 
-def nearest_monday(dt):
+def nearest_monday(dt: datetime.datetime) -> datetime.datetime:
     """
     If a holiday falls on Tuesday or Wednesday, it is observed on the
     previous Monday.  If it falls on Thursday, Friday or a weekend,
@@ -48,29 +50,29 @@ def nearest_monday(dt):
     day = dt.weekday()
 
     if day in (MONDAY, TUESDAY, WEDNESDAY):
-        return dt - timedelta(day)
+        return dt - datetime.timedelta(day)
 
     while dt.weekday() != MONDAY:
-        dt += timedelta(1)
+        dt += datetime.timedelta(1)
 
     return dt
 
 
-def cultural_diversity_observance(holidays):
+def cultural_diversity_observance(dt: datetime.datetime) -> datetime.datetime | None:
     """
     Apply the nearest monday rule, and also exclude 2012 (Day of
     Respect for Cultural Diversity breaks the nearest monday rule
     in 2012).
     """
-    holidays = pd.to_datetime(holidays.map(nearest_monday))
-    return holidays[holidays.year != 2012]
+    hol = nearest_monday(dt)
+    return hol if hol.year != 2012 else None
 
 
-def not_2018(holidays):
+def not_2018(dt: datetime.datetime) -> datetime.datetime | None:
     """
     Exclude the year 2018 from the holiday list.
     """
-    return holidays[holidays.year != 2018]
+    return dt if dt.year != 2018 else None
 
 
 NewYearsDay = new_years_day()
@@ -252,12 +254,12 @@ class XBUEExchangeCalendar(ExchangeCalendar):
 
     tz = timezone("America/Argentina/Buenos_Aires")
 
-    open_times = ((None, time(11)),)
+    open_times = ((None, datetime.time(11)),)
 
-    close_times = ((None, time(17, 00)),)
+    close_times = ((None, datetime.time(17, 00)),)
 
     # TODO: Verify early close time
-    regular_early_close = time(13)
+    regular_early_close = datetime.time(13)
 
     @property
     def regular_holidays(self):

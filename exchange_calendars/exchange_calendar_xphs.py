@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import time
+from __future__ import annotations
+
+import datetime
 from itertools import chain
 
 import pandas as pd
@@ -33,13 +35,13 @@ from .lunisolar_holidays import chinese_lunar_new_year_dates
 from .exchange_calendar import FRIDAY, HolidayCalendar, ExchangeCalendar
 
 
-def only_friday(dt):
+def only_friday(dt: datetime.datetime) -> datetime.datetime | None:
     """
     Only keeps the holidays that fall on a Friday.  Useful
     for defining holidays that add a Friday to make a 4-day weekend
     when falling on a Thursday.
     """
-    return dt[dt.weekday == FRIDAY]
+    return dt if dt.weekday() == FRIDAY else None
 
 
 # All pre-2011 holidays are pre-computed, so we define Holidays starting
@@ -193,9 +195,9 @@ class XPHSExchangeCalendar(ExchangeCalendar):
 
     tz = timezone("Asia/Manila")
 
-    open_times = ((None, time(9, 30)),)
+    open_times = ((None, datetime.time(9, 30)),)
 
-    close_times = ((None, time(15, 30)),)
+    close_times = ((None, datetime.time(15, 30)),)
 
     @property
     def regular_holidays(self):

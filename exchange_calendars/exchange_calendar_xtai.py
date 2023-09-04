@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import time, timedelta
+from __future__ import annotations
+
+import datetime
 from itertools import chain
 
 import pandas as pd
@@ -33,13 +35,18 @@ from .lunisolar_holidays import (
     qingming_festival_dates,
 )
 from .exchange_calendar import (
+    MONDAY,
+    TUESDAY,
+    THURSDAY,
+    FRIDAY,
     SATURDAY,
     SUNDAY,
-    THURSDAY,
-    TUESDAY,
     HolidayCalendar,
     ExchangeCalendar,
 )
+
+
+ONE_DAY = datetime.timedelta(1)
 
 
 def before_chinese_new_year_offset(holidays):
@@ -58,7 +65,7 @@ def chinese_new_year_offset(holidays):
     return pd.to_datetime(holidays.map(lambda d: next_monday(d)))
 
 
-def nearest_workday_after_2013(dt):
+def nearest_workday_after_2013(dt: datetime.datetime) -> datetime.datetime:
     """
     Nearest workday starting in 2014.
     """
@@ -79,84 +86,138 @@ def manual_extra_days(holidays):
     The four day weekend rule seem to start in 2007 for these holidays.
     """
     friday_extras = [
-        d + timedelta(1) for d in holidays if d.weekday() == THURSDAY and d.year > 2006
+        d + ONE_DAY for d in holidays if d.weekday() == THURSDAY and d.year > 2006
     ]
 
     monday_extras = [
-        d - timedelta(1) for d in holidays if d.weekday() == TUESDAY and d.year > 2006
+        d - ONE_DAY for d in holidays if d.weekday() == TUESDAY and d.year > 2006
     ]
 
     return pd.to_datetime(friday_extras + monday_extras)
 
 
-def taiwan_makeup_rule(holidays):
+def weekend_makeup(dt: datetime.datetime) -> datetime.datetime:
+    """Makeup holiday falling on weekend to nearest workday.
+
+    This function attempts to implement what seems to be the Taiwan holiday
+    observance rule since 2013.
     """
+    if dt.year < 2014:
+        return dt
+    if dt.weekday() == SUNDAY:
+        dt += ONE_DAY
+    elif dt.weekday() == SATURDAY:
+        dt -= ONE_DAY
+    return dt
+
+
+def bridge_mon(dt: datetime.datetime) -> datetime.datetime | None:
+    """Define Monday as holiday if Tuesday is a holiday.
+
     This function attempts to implement what seems to be the Taiwan holiday
     observance rule since 2013.
 
     Notes
     -----
-    If a holiday falls on a Tuesday or Thursday, and extra holiday is observed
-    on Monday/Friday to create a four day weekend.  If a holiday falls on a
-    weekend, it is observed on the nearest workday (Monday/Friday).
+    If a holiday falls on a Tuesday an extra holiday is observed on Monday
+    to create a three day weekend.
     """
-    # Create four day weekends
-    mon = holidays[holidays.weekday == TUESDAY] - timedelta(1)
-    fri = holidays[holidays.weekday == THURSDAY] + timedelta(1)
-
-    # Nearest workday makeups
-    mon_makeups = holidays[holidays.weekday == SUNDAY] + timedelta(1)
-    fri_makeups = holidays[holidays.weekday == SATURDAY] - timedelta(1)
-
-    # Only observe rule after 2013
-    extras = pd.to_datetime(list(chain(mon, mon_makeups, fri, fri_makeups)))
-    extras = extras[extras.year > 2013]
-
-    return holidays.append(extras)
+    dt -= ONE_DAY
+    return dt if (dt.weekday() == MONDAY and dt.year > 2013) else None
 
 
-NewYearsDay = new_years_day(observance=taiwan_makeup_rule)
+def bridge_fri(dt: datetime.datetime) -> datetime.datetime | None:
+    """Define Friday as holiday if Thursday is a holiday.
+
+    This function attempts to implement what seems to be the Taiwan holiday
+    observance rule since 2013.
+
+    Notes
+    -----
+    If a holiday falls on a Thursday an extra holiday is observed on Friday
+    to create a three day weekend.
+    """
+    dt += ONE_DAY
+    return dt if (dt.weekday() == FRIDAY and dt.year > 2013) else None
+
+
+NewYearsDay = new_years_day(observance=weekend_makeup)
+NewYearsDayExtraMon = new_years_day(observance=bridge_mon)
+NewYearsDayExtraFri = new_years_day(observance=bridge_fri)
+
 
 PeaceMemorialDay = Holiday(
-    "Peace Memorial Day",
-    month=2,
-    day=28,
-    observance=taiwan_makeup_rule,
+    "Peace Memorial Day", month=2, day=28, observance=weekend_makeup
 )
+PeaceMemorialDayExtraMon = Holiday(
+    "Peace Memorial Day extra Monday", month=2, day=28, observance=bridge_mon
+)
+PeaceMemorialDayExtraFri = Holiday(
+    "Peace Memorial Day extra Friday", month=2, day=28, observance=bridge_fri
+)
+
 
 WomenAndChildrensDay = Holiday(
     "Women and Children's Day",
     month=4,
     day=4,
     start_date="2011",
-    observance=taiwan_makeup_rule,
+    observance=weekend_makeup,
+)
+WomenAndChildrensDayExtraMon = Holiday(
+    "Women and Children's Day extra Monday",
+    month=4,
+    day=4,
+    start_date="2011",
+    observance=bridge_mon,
+)
+WomenAndChildrensDayExtraFri = Holiday(
+    "Women and Children's Day extra Friday",
+    month=4,
+    day=4,
+    start_date="2011",
+    observance=bridge_fri,
 )
 
-LabourDay = european_labour_day(observance=manual_nearest_workday)
+
+LabourDay = european_labour_day(observance=nearest_workday_after_2013)
 
 NationalDay = Holiday(
     "National Day of the Republic of China",
     month=10,
     day=10,
-    observance=taiwan_makeup_rule,
+    observance=weekend_makeup,
 )
+NationalDayExtraMon = Holiday(
+    "National Day of the Republic of China extra Monday",
+    month=10,
+    day=10,
+    observance=bridge_mon,
+)
+NationalDayExtraFri = Holiday(
+    "National Day of the Republic of China extra Friday",
+    month=10,
+    day=10,
+    observance=bridge_fri,
+)
+
 
 chinese_new_year = chinese_new_year_offset(chinese_lunar_new_year_dates)
 
 chinese_new_years_eve = before_chinese_new_year_offset(
-    chinese_new_year - timedelta(1),
+    chinese_new_year - ONE_DAY,
 )
 
 chinese_new_years_eve_2 = before_chinese_new_year_offset(
-    chinese_new_years_eve - timedelta(1),
+    chinese_new_years_eve - ONE_DAY,
 )
 
 chinese_new_year_2 = chinese_new_year_offset(
-    chinese_new_year + timedelta(1),
+    chinese_new_year + ONE_DAY,
 )
 
 chinese_new_year_3 = chinese_new_year_offset(
-    chinese_new_year_2 + timedelta(1),
+    chinese_new_year_2 + ONE_DAY,
 )
 
 tomb_sweeping_day = manual_nearest_workday(qingming_festival_dates)
@@ -281,19 +342,27 @@ class XTAIExchangeCalendar(ExchangeCalendar):
 
     tz = timezone("Asia/Taipei")
 
-    open_times = ((None, time(9)),)
+    open_times = ((None, datetime.time(9)),)
 
-    close_times = ((None, time(13, 30)),)
+    close_times = ((None, datetime.time(13, 30)),)
 
     @property
     def regular_holidays(self):
         return HolidayCalendar(
             [
                 NewYearsDay,
+                NewYearsDayExtraMon,
+                NewYearsDayExtraFri,
                 PeaceMemorialDay,
+                PeaceMemorialDayExtraMon,
+                PeaceMemorialDayExtraFri,
                 WomenAndChildrensDay,
+                WomenAndChildrensDayExtraMon,
+                WomenAndChildrensDayExtraFri,
                 LabourDay,
                 NationalDay,
+                NationalDayExtraMon,
+                NationalDayExtraFri,
             ]
         )
 

@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import time, timedelta
+from __future__ import annotations
+
+import datetime
 
 from pandas.tseries.holiday import Easter, EasterMonday, Holiday
 from pandas.tseries.offsets import Day
@@ -31,58 +33,66 @@ from .common_holidays import (
 from .exchange_calendar import THURSDAY, TUESDAY, HolidayCalendar, ExchangeCalendar
 
 
-def four_day_weekend(dt, include_mon: bool = True, include_fri: bool = True):
+ONE_DAY = datetime.timedelta(1)
+
+
+def bridge_mon(dt: datetime.datetime) -> datetime.datetime | None:
+    """Define Monday as holiday if Tuesday is a holiday.
+
+    If a holiday falls on a Tuesday an extra holiday is observed on Monday
+    to create a three day weekend.
     """
-    Custom observance function as for almost all holidays in the XBUD calendar,
-    if the holiday falls on a Tuesday the previous Monday also becomes a holiday,
-    and if the holiday falls on a Thursday the following Friday also becomes a holiday.
+    return dt - ONE_DAY if dt.weekday() == TUESDAY else None
 
-    Parameters
-    ----------
-    dt : datetime
-         Unadjusted raw holiday datetimes
-    include_mon : boolean
-         If holiday falls on a Tuesday, previous Monday becomes a holiday.
-    include_fri : boolean
-         If holiday falls on a Thursday, following Friday becomes a holiday.
+
+def bridge_fri(dt: datetime.datetime) -> datetime.datetime | None:
+    """Define Friday as holiday if Thrusday is a holiday.
+
+    If a holiday falls on a Thursday an extra holiday is observed on Friday
+    to create a three day weekend.
     """
-    extras = []
-    if include_mon:
-        extras.append(dt[dt.weekday == TUESDAY] - timedelta(1))  # mv Tues back one day
-    if include_fri:
-        # mv Thurs ahead one day
-        extras.append(dt[dt.weekday == THURSDAY] + timedelta(1))
-    return dt.append(extras)
+    return dt + ONE_DAY if dt.weekday() == THURSDAY else None
 
 
-NewYearsDay = new_years_day(observance=four_day_weekend)
+NewYearsDayExtraMon = new_years_day(observance=bridge_mon)
+NewYearsDayExtraFri = new_years_day(observance=bridge_fri)
 
-NationalHoliday1 = Holiday("National Day", month=3, day=15, observance=four_day_weekend)
+NationalHoliday1 = Holiday("National Day", month=3, day=15)
+NationalHoliday1ExtraMon = Holiday(
+    "National Day extra Monday", month=3, day=15, observance=bridge_mon
+)
+NationalHoliday1ExtraFri = Holiday(
+    "National Day extra Friday", month=3, day=15, observance=bridge_fri
+)
 
 # Need custom start year so can't use pandas GoodFriday
 GoodFriday = Holiday(
     "Good Friday", month=1, day=1, offset=[Easter(), Day(-2)], start_date="2012"
 )
 
-LabourDay = european_labour_day(observance=four_day_weekend)
+LabourDayExtraMon = european_labour_day(observance=bridge_mon)
+LabourDayExtraFri = european_labour_day(observance=bridge_fri)
 
 WhitMonday = whit_monday()
 
-StStephensDay = Holiday(
-    "St. Stephen's Day",
-    month=8,
-    day=20,
-    observance=four_day_weekend,
+StStephensDay = Holiday("St. Stephen's Day", month=8, day=20)
+StStephensDayExtraMon = Holiday(
+    "St. Stephen's Day extra Monday", month=8, day=20, observance=bridge_mon
+)
+StStephensDayExtraFri = Holiday(
+    "St. Stephen's Day extra Friday", month=8, day=20, observance=bridge_fri
 )
 
-NationalHoliday2 = Holiday(
-    "National Day",
-    month=10,
-    day=23,
-    observance=four_day_weekend,
+NationalHoliday2 = Holiday("National Day", month=10, day=23)
+NationalHoliday2ExtraMon = Holiday(
+    "National Day extra Monday", month=10, day=23, observance=bridge_mon
+)
+NationalHoliday2ExtraFri = Holiday(
+    "National Day extra Friday", month=10, day=23, observance=bridge_fri
 )
 
-AllSaintsDay = all_saints_day(observance=four_day_weekend)
+AllSaintsDayExtraMon = all_saints_day(observance=bridge_mon)
+AllSaintsDayExtraFri = all_saints_day(observance=bridge_fri)
 
 # Christmas Eve does not follow the four day weekend rule
 ChristmasEve = christmas_eve()
@@ -92,25 +102,17 @@ ChristmasDay = christmas()
 # XBUD always has a holiday for the second day of Christmas (26th),
 # but starting in 2013 if the 26th falls on a Thursday then the
 # 27th (Friday) is also taken off
-SecondDayOfChristmas = Holiday(
-    "Second Day of Christmas (w/ no added Friday off)",
-    month=12,
-    day=26,
-    end_date="2013",
-)
-
-SecondDayOfChristmasAddFriday = Holiday(
-    "Second Day of Christmas (w/ added Friday off)",
+SecondDayOfChristmas = Holiday("Second Day of Christmas", month=12, day=26)
+SecondDayOfChristmasExtraFri = Holiday(
+    "Second Day of Christmas extra Friday",
     month=12,
     day=26,
     start_date="2013",
-    # Don't apply the rule here where the previous Monday also becomes a holiday if this
-    # falls onto a Tuesday.
-    # Rationale: The previous Monday in this case is Christmas which is already defined
-    # as a holiday above. Apply the other rule where the following Friday becomes a
-    # holiday if it falls onto a Thursday as usual.
-    observance=lambda dt: four_day_weekend(dt, include_mon=False, include_fri=True),
+    observance=bridge_fri,
 )
+# SecondDayOfChristmas unnecessary to bridge_mon as if second day of christmas
+# is a tuesday then monday will already be a holiday (Chirstmas Day)
+
 
 # Starting in 2011, New Year's Eve is observed as a holiday every year.
 # In some cases pre-2011, the 31st becomes a holiday due to the four day
@@ -150,27 +152,39 @@ class XBUDExchangeCalendar(ExchangeCalendar):
 
     tz = timezone("Europe/Budapest")
 
-    open_times = ((None, time(9)),)
+    open_times = ((None, datetime.time(9)),)
 
-    close_times = ((None, time(17, 00)),)
+    close_times = ((None, datetime.time(17, 00)),)
 
     @property
     def regular_holidays(self):
         return HolidayCalendar(
             [
-                NewYearsDay,
+                new_years_day(),
+                NewYearsDayExtraMon,
+                NewYearsDayExtraFri,
                 NationalHoliday1,
+                NationalHoliday1ExtraMon,
+                NationalHoliday1ExtraFri,
                 GoodFriday,
                 EasterMonday,
-                LabourDay,
+                european_labour_day(),
+                LabourDayExtraMon,
+                LabourDayExtraFri,
                 WhitMonday,
                 StStephensDay,
+                StStephensDayExtraMon,
+                StStephensDayExtraFri,
                 NationalHoliday2,
-                AllSaintsDay,
+                NationalHoliday2ExtraMon,
+                NationalHoliday2ExtraFri,
+                all_saints_day(),
+                AllSaintsDayExtraMon,
+                AllSaintsDayExtraFri,
                 ChristmasEve,
                 ChristmasDay,
                 SecondDayOfChristmas,
-                SecondDayOfChristmasAddFriday,
+                SecondDayOfChristmasExtraFri,
                 NewYearsEve,
             ]
         )

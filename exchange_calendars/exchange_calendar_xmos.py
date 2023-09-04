@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import time
+from __future__ import annotations
+
+import datetime
 from itertools import chain
 
-import pandas as pd
 from pandas.tseries.holiday import Holiday, weekend_to_monday
 from pytz import timezone
 
@@ -24,35 +25,27 @@ from .common_holidays import european_labour_day, new_years_day, new_years_eve
 from .exchange_calendar import WEEKDAYS, HolidayCalendar, ExchangeCalendar
 
 
-def new_years_eve_observance(holidays):
+def new_years_eve_observance(dt: datetime.datetime) -> datetime.datetime | None:
     # For some reason New Year's Eve was not a holiday these years.
-    holidays = holidays[(holidays.year != 2008) & (holidays.year != 2009)]
-
-    return pd.to_datetime([weekend_to_monday(day) for day in holidays])
+    return None if dt.year in [2008, 2009] else weekend_to_monday(dt)
 
 
-def new_years_holiday_observance(holidays):
+def new_years_holiday_observance(dt: datetime.datetime) -> datetime.datetime | None:
     # New Year's Holiday did not follow the next-non-holiday rule in 2016.
-    holidays = holidays[(holidays.year != 2016)]
-
-    return pd.to_datetime([weekend_to_monday(day) for day in holidays])
+    return None if dt.year == 2016 else weekend_to_monday(dt)
 
 
-def orthodox_christmas_observance(holidays):
+def orthodox_christmas_observance(dt: datetime.datetime) -> datetime.datetime | None:
     # Orthodox Christmas did not follow the next-non-holiday rule these years.
-    holidays = holidays[(holidays.year != 2012) & (holidays.year != 2017)]
-
-    return pd.to_datetime([weekend_to_monday(day) for day in holidays])
+    return None if dt.year in [2012, 2017] else weekend_to_monday(dt)
 
 
-def defender_of_fatherland_observance(holidays):
+def defender_of_fatherland_observance(
+    dt: datetime.datetime,
+) -> datetime.datetime | None:
     # Defender of the Fatherland Day did not follow the next-non-holiday rule
     # these years.
-    holidays = holidays[
-        (holidays.year != 2013) & (holidays.year != 2014) & (holidays.year != 2019)
-    ]
-
-    return pd.to_datetime([weekend_to_monday(day) for day in holidays])
+    return None if dt.year in [2013, 2014, 2019] else weekend_to_monday(dt)
 
 
 NewYearsDay = new_years_day(observance=weekend_to_monday)
@@ -258,9 +251,9 @@ class XMOSExchangeCalendar(ExchangeCalendar):
 
     tz = timezone("Europe/Moscow")
 
-    open_times = ((None, time(10)),)
+    open_times = ((None, datetime.time(10)),)
 
-    close_times = ((None, time(18, 45)),)
+    close_times = ((None, datetime.time(18, 45)),)
 
     @property
     def regular_holidays(self):
