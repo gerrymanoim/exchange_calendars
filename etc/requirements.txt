@@ -10,7 +10,7 @@ numpy==1.25.2
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
-pandas==2.0.3
+pandas==2.1.0
     # via exchange-calendars (pyproject.toml)
 pyluach==2.2.0
     # via exchange-calendars (pyproject.toml)
