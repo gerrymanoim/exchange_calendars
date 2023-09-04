@@ -40,7 +40,7 @@ def bridge_mon(dt: datetime.datetime) -> datetime.datetime | None:
     """Define Monday as holiday if Tuesday is a holiday.
 
     If a holiday falls on a Tuesday an extra holiday is observed on Monday
-    to create a three day weekend.
+    to bridge the weekend and the official holiday.
     """
     return dt - ONE_DAY if dt.weekday() == TUESDAY else None
 
@@ -49,7 +49,7 @@ def bridge_fri(dt: datetime.datetime) -> datetime.datetime | None:
     """Define Friday as holiday if Thrusday is a holiday.
 
     If a holiday falls on a Thursday an extra holiday is observed on Friday
-    to create a three day weekend.
+    to bridge the weekend and the official holiday.
     """
     return dt + ONE_DAY if dt.weekday() == THURSDAY else None
 

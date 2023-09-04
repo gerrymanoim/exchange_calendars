@@ -926,12 +926,12 @@ class ExchangeCalendar(ABC):
     @property
     def first_session_open(self) -> pd.Timestamp:
         """Open time of calendar's first session."""
-        return self.opens[0]
+        return self.opens.iloc[0]
 
     @property
     def last_session_close(self) -> pd.Timestamp:
         """Close time of calendar's last session."""
-        return self.closes[-1]
+        return self.closes.iloc[-1]
 
     @property
     def first_minute(self) -> pd.Timestamp:
@@ -1522,7 +1522,7 @@ class ExchangeCalendar(ABC):
         try:
             idx = next_divider_idx(self.opens_nanos, minute.value)
         except IndexError:
-            if minute >= self.opens[-1]:
+            if minute >= self.opens.iloc[-1]:
                 raise ValueError(
                     "Minute cannot be the last open or later (received `minute`"
                     f" parsed as '{minute}'.)"
@@ -1553,7 +1553,7 @@ class ExchangeCalendar(ABC):
         try:
             idx = next_divider_idx(self.closes_nanos, minute.value)
         except IndexError:
-            if minute == self.closes[-1]:
+            if minute == self.closes.iloc[-1]:
                 raise ValueError(
                     "Minute cannot be the last close (received `minute` parsed as"
                     f" '{minute}'.)"
@@ -1583,7 +1583,7 @@ class ExchangeCalendar(ABC):
         try:
             idx = previous_divider_idx(self.opens_nanos, minute.value)
         except ValueError:
-            if minute == self.opens[0]:
+            if minute == self.opens.iloc[0]:
                 raise ValueError(
                     "Minute cannot be the first open (received `minute` parsed as"
                     f" '{minute}'.)"
@@ -1614,7 +1614,7 @@ class ExchangeCalendar(ABC):
         try:
             idx = previous_divider_idx(self.closes_nanos, minute.value)
         except ValueError:
-            if minute <= self.closes[0]:
+            if minute <= self.closes.iloc[0]:
                 raise ValueError(
                     "Minute cannot be the first close or earlier (received"
                     f" `minute` parsed as '{minute}'.)"

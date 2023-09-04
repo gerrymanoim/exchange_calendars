@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import pytz
-from hypothesis import assume, given, settings
+from hypothesis import assume, given, settings, HealthCheck
 from hypothesis import strategies as st
 from pandas.testing import assert_index_equal
 
@@ -640,7 +640,7 @@ class TestTradingIndex:
         if curtail and not (force_close and force_break_close):
             indices = lower_bounds.argsort()
             lower_bounds = lower_bounds.sort_values()
-            upper_bounds = upper_bounds[indices]
+            upper_bounds = upper_bounds.iloc[indices]
             curtail_mask = upper_bounds > lower_bounds.shift(-1)
             if curtail_mask.any():
                 upper_bounds[curtail_mask] = lower_bounds.shift(-1)[curtail_mask]
@@ -656,7 +656,7 @@ class TestTradingIndex:
         align=st_align(),
         align_pm=st_align(),
     )
-    @settings(deadline=None)
+    @settings(deadline=None, suppress_health_check=[HealthCheck.differing_executors])
     def test_indices_fuzz(
         self,
         data,
@@ -779,7 +779,7 @@ class TestTradingIndex:
         align=st_align(),
         align_pm=st_align(),
     )
-    @settings(deadline=None)
+    @settings(deadline=None, suppress_health_check=[HealthCheck.differing_executors])
     def test_intervals_fuzz(
         self,
         data,
@@ -919,7 +919,7 @@ class TestTradingIndex:
         force_break_close=st.booleans(),
         curtail_overlaps=st.booleans(),
     )
-    @settings(deadline=None)
+    @settings(deadline=None, suppress_health_check=[HealthCheck.differing_executors])
     def test_daily_fuzz(
         self,
         data,
@@ -953,7 +953,7 @@ class TestTradingIndex:
 
     @pytest.mark.parametrize("name", ["XHKG", "24/7", "CMES"])
     @given(data=st.data(), closed=st.sampled_from(["right", "both"]))
-    @settings(deadline=None)
+    @settings(deadline=None, suppress_health_check=[HealthCheck.differing_executors])
     def test_overlap_error_fuzz(self, data, name, calendars, answers, closed, one_min):
         """Fuzz for expected IndicesOverlapError.
 
