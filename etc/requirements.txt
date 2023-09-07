@@ -18,13 +18,13 @@ python-dateutil==2.8.2
     # via
     #   exchange-calendars (pyproject.toml)
     #   pandas
-pytz==2023.3
-    # via
-    #   exchange-calendars (pyproject.toml)
-    #   pandas
+pytz==2023.3.post1
+    # via pandas
 six==1.16.0
     # via python-dateutil
 toolz==0.12.0
     # via exchange-calendars (pyproject.toml)
 tzdata==2023.3
-    # via pandas
+    # via
+    #   exchange-calendars (pyproject.toml)
+    #   pandas

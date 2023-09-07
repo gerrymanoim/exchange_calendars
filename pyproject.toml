@@ -31,8 +31,8 @@ dependencies = [
     "pandas>=1.5",
     "pyluach",
     "python-dateutil",
-    "pytz",
     "toolz",
+    "tzdata",
     "korean_lunar_calendar",
 ]
 dynamic = ["version"]
