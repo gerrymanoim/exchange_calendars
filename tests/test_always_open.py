@@ -1,9 +1,9 @@
 import pytest
 import pandas as pd
 import pandas.testing as tm
-from pytz import UTC
 
 from exchange_calendars.always_open import AlwaysOpenCalendar
+from exchange_calendars.calendar_helpers import UTC
 from .test_exchange_calendar import ExchangeCalendarTestBase
 
 

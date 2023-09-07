@@ -1,7 +1,7 @@
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-from pytz import timezone
 
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
 
@@ -435,7 +435,7 @@ class XBOMExchangeCalendar(PrecomputedExchangeCalendar):
     """
 
     name = "XBOM"
-    tz = timezone("Asia/Calcutta")
+    tz = ZoneInfo("Asia/Calcutta")
     open_times = ((None, time(9, 15)),)
     close_times = ((None, time(15, 30)),)
 

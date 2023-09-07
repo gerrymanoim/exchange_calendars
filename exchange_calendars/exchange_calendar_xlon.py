@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import (
@@ -25,7 +26,6 @@ from pandas.tseries.holiday import (
     previous_friday,
     weekend_to_monday,
 )
-from pytz import timezone
 
 from .common_holidays import (
     boxing_day,
@@ -188,7 +188,7 @@ class XLONExchangeCalendar(ExchangeCalendar):
 
     name = "XLON"
 
-    tz = timezone("Europe/London")
+    tz = ZoneInfo("Europe/London")
 
     open_times = ((None, time(8)),)
 

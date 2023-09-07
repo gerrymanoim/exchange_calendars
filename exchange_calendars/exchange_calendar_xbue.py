@@ -17,11 +17,11 @@ from __future__ import annotations
 
 import datetime
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import MO, Easter, GoodFriday, Holiday
 from pandas.tseries.offsets import Day
-from pytz import timezone
 
 from .common_holidays import (
     christmas,
@@ -252,7 +252,7 @@ class XBUEExchangeCalendar(ExchangeCalendar):
 
     name = "XBUE"
 
-    tz = timezone("America/Argentina/Buenos_Aires")
+    tz = ZoneInfo("America/Argentina/Buenos_Aires")
 
     open_times = ((None, datetime.time(11)),)
 

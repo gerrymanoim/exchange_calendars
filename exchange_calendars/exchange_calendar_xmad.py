@@ -14,9 +14,9 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday, weekend_to_monday
-from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -111,7 +111,7 @@ class XMADExchangeCalendar(ExchangeCalendar):
 
     name = "XMAD"
 
-    tz = timezone("Europe/Madrid")
+    tz = ZoneInfo("Europe/Madrid")
 
     open_times = ((None, time(9)),)
 
@@ -136,7 +136,7 @@ class XMADExchangeCalendar(ExchangeCalendar):
                 Christmas,
                 BoxingDay,
                 NewYearsEveThrough2010,
-                NewYearsEveFrom2021
+                NewYearsEveFrom2021,
             ]
         )
 

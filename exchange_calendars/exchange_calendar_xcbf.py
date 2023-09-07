@@ -1,5 +1,6 @@
 from datetime import time
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import (
     GoodFriday,
@@ -7,7 +8,6 @@ from pandas.tseries.holiday import (
     USPresidentsDay,
     USThanksgivingDay,
 )
-from pytz import timezone
 
 from .exchange_calendar import ExchangeCalendar
 from exchange_calendars.exchange_calendar import HolidayCalendar
@@ -20,7 +20,7 @@ from exchange_calendars.us_holidays import (
     USMemorialDay,
     USNationalDaysofMourning,
     USNewYearsDay,
-    USJuneteenth
+    USJuneteenth,
 )
 
 
@@ -38,7 +38,7 @@ class XCBFExchangeCalendar(ExchangeCalendar):
 
     name = "XCBF"
 
-    tz = timezone("America/Chicago")
+    tz = ZoneInfo("America/Chicago")
 
     open_times = ((None, time(8, 30)),)
 

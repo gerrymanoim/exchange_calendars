@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import (
@@ -23,7 +24,6 @@ from pandas.tseries.holiday import (
     Holiday,
     previous_friday,
 )
-from pytz import timezone
 
 from .common_holidays import corpus_christi
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
@@ -174,7 +174,7 @@ class BVMFExchangeCalendar(ExchangeCalendar):
 
     name = "BVMF"
 
-    tz = timezone("America/Sao_Paulo")
+    tz = ZoneInfo("America/Sao_Paulo")
 
     regular_late_open = time(13)
 

@@ -15,10 +15,10 @@
 
 from datetime import time, timedelta
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import (
     assumption_day,
@@ -102,7 +102,7 @@ class ASEXExchangeCalendar(ExchangeCalendar):
 
     name = "ASEX"
 
-    tz = timezone("Europe/Athens")
+    tz = ZoneInfo("Europe/Athens")
 
     open_times = ((None, time(10)),)
 

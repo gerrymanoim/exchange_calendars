@@ -18,6 +18,7 @@
 # http://www.TeAra.govt.nz/en/public-holidays/print (accessed 22 December 2019)
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas import Timestamp
 from pandas.tseries.holiday import (
@@ -31,7 +32,6 @@ from pandas.tseries.holiday import (
     previous_workday,
     weekend_to_monday,
 )
-from pytz import timezone
 
 from .common_holidays import anzac_day, boxing_day, christmas, new_years_day
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
@@ -185,7 +185,7 @@ class XNZEExchangeCalendar(ExchangeCalendar):
 
     name = "XNZE"
 
-    tz = timezone("NZ")
+    tz = ZoneInfo("NZ")
 
     open_times = ((None, time(10)),)
 
@@ -225,7 +225,7 @@ class XNZEExchangeCalendar(ExchangeCalendar):
             XMAS27DEC91,
             NYDX03JAN92,
             XMAS31DEC99,
-            QueenMourning2022
+            QueenMourning2022,
         ]
         dates += MatarikiDayDates.values()
         return dates

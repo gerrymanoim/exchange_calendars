@@ -1,3 +1,5 @@
+from zoneinfo import ZoneInfo
+
 import pandas as pd
 import pytest
 
@@ -129,13 +131,14 @@ class TestASEXCalendar(ExchangeCalendarTestBase):
         """
         cal = default_calendar
         close_time = cal.closes["2006-09-29"]
-        assert close_time == pd.Timestamp("2006-09-29 17:00", tz="Europe/Athens")
+        tz = ZoneInfo("Europe/Athens")
+        assert close_time == pd.Timestamp("2006-09-29 17:00", tz=tz)
 
         close_time = cal.closes["2008-09-26"]
-        assert close_time == pd.Timestamp("2008-09-26 17:00", tz="Europe/Athens")
+        assert close_time == pd.Timestamp("2008-09-26 17:00", tz=tz)
 
         close_time = cal.closes["2008-09-29"]
-        assert close_time == pd.Timestamp("2008-09-29 17:20", tz="Europe/Athens")
+        assert close_time == pd.Timestamp("2008-09-29 17:20", tz=tz)
 
         close_time = cal.closes["2008-09-30"]
-        assert close_time == pd.Timestamp("2008-09-30 17:20", tz="Europe/Athens")
+        assert close_time == pd.Timestamp("2008-09-30 17:20", tz=tz)

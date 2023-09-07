@@ -1,9 +1,9 @@
 import datetime
 import pandas as pd
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.offsets import Day
 from korean_lunar_calendar import KoreanLunarCalendar
-from pytz import timezone
 
 from .holiday import Holiday
 from .offsets import _is_normalized
@@ -14,8 +14,7 @@ def is_naive(dt):
 
 
 class KoreanHoliday(Holiday):
-
-    _timezone = timezone("Asia/Seoul")
+    _timezone = ZoneInfo("Asia/Seoul")
     _local_timezone = datetime.datetime.now().astimezone().tzinfo
 
     _computed_holidays = pd.Series([], index=pd.DatetimeIndex([]), dtype=object)
@@ -147,7 +146,6 @@ def last_business_day(dt):
 
 
 class KoreanSolarHoliday(KoreanHoliday):
-
     pass
 
 
@@ -187,7 +185,8 @@ def korean_solar_to_lunar_datetime(dt, round_down: bool):
     For example, 2022-03-31 (Gregorian) corresponds to 2022-02-29 (Korean lunar). The latter
     is not a valid Gregorian date. So, we introduce a rounding flag. If round_down is True,
     then this method will decrement the solar date until the lunar date happens to be a valid
-    Gregorian one. If round_down is False, then the solar date will be incremented analogously."""
+    Gregorian one. If round_down is False, then the solar date will be incremented analogously.
+    """
     while True:
         year, month, day = korean_solar_to_lunar(dt.year, dt.month, dt.day)
         try:
@@ -198,7 +197,6 @@ def korean_solar_to_lunar_datetime(dt, round_down: bool):
 
 
 class KoreanLunarHoliday(KoreanHoliday):
-
     _max_solar_end_date = pd.to_datetime(
         str(KoreanLunarCalendar.KOREAN_SOLAR_MAX_VALUE), format="%Y%m%d"
     )
@@ -221,8 +219,12 @@ class KoreanLunarHoliday(KoreanHoliday):
                 )
 
         # Get lunar reference dates
-        lunar_start_date = korean_solar_to_lunar_datetime(solar_start_date, round_down=True)
-        lunar_end_date = korean_solar_to_lunar_datetime(solar_end_date, round_down=False)
+        lunar_start_date = korean_solar_to_lunar_datetime(
+            solar_start_date, round_down=True
+        )
+        lunar_end_date = korean_solar_to_lunar_datetime(
+            solar_end_date, round_down=False
+        )
         dates = super()._reference_dates(lunar_start_date, lunar_end_date)
 
         # Still restrict date range to fall into supported range of korean_lunar_calendar library

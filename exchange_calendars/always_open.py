@@ -1,8 +1,7 @@
 from datetime import time
 
-from pytz import UTC
-
 from .exchange_calendar import ExchangeCalendar
+from exchange_calendars.calendar_helpers import UTC
 
 
 class AlwaysOpenCalendar(ExchangeCalendar):

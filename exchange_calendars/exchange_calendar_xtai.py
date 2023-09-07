@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import datetime
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import (
@@ -25,7 +26,6 @@ from pandas.tseries.holiday import (
     next_monday,
     previous_friday,
 )
-from pytz import timezone
 
 from .common_holidays import european_labour_day, new_years_day
 from .lunisolar_holidays import (
@@ -340,7 +340,7 @@ class XTAIExchangeCalendar(ExchangeCalendar):
 
     name = "XTAI"
 
-    tz = timezone("Asia/Taipei")
+    tz = ZoneInfo("Asia/Taipei")
 
     open_times = ((None, datetime.time(9)),)
 

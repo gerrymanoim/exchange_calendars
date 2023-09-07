@@ -14,11 +14,11 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas import Timestamp
 from pandas.tseries.holiday import Easter, GoodFriday, Holiday, sunday_to_monday
 from pandas.tseries.offsets import Day
-from pytz import timezone
 
 from .common_holidays import new_years_day
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
@@ -55,7 +55,7 @@ class XJSEExchangeCalendar(ExchangeCalendar):
 
     name = "XJSE"
 
-    tz = timezone("Africa/Johannesburg")
+    tz = ZoneInfo("Africa/Johannesburg")
 
     open_times = ((None, time(9)),)
 

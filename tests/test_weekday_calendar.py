@@ -1,8 +1,8 @@
 import pytest
 import pandas as pd
 import pandas.testing as tm
-from pytz import UTC
 
+from exchange_calendars.calendar_helpers import UTC
 from exchange_calendars.weekday_calendar import WeekdayCalendar
 from .test_exchange_calendar import ExchangeCalendarTestBase
 

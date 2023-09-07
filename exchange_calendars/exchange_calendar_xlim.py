@@ -15,10 +15,10 @@
 
 from datetime import time
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -114,7 +114,7 @@ class XLIMExchangeCalendar(ExchangeCalendar):
     """
 
     name = "XLIM"
-    tz = timezone("America/Lima")
+    tz = ZoneInfo("America/Lima")
 
     open_times = ((None, time(9)),)
     close_times = ((None, time(16)),)

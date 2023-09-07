@@ -15,9 +15,9 @@
 
 from datetime import time
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-import pytz
 
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 from .xkls_holidays import (
@@ -78,7 +78,7 @@ class XKLSExchangeCalendar(ExchangeCalendar):
 
     name = "XKLS"
 
-    tz = pytz.timezone("Asia/Kuala_Lumpur")
+    tz = ZoneInfo("Asia/Kuala_Lumpur")
 
     open_times = ((None, time(9)),)
 
@@ -101,7 +101,6 @@ class XKLSExchangeCalendar(ExchangeCalendar):
 
     @property
     def adhoc_holidays(self):
-
         return list(
             chain(
                 misc_adhoc,

@@ -16,13 +16,13 @@
 
 from datetime import time, timedelta
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 import toolz
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday, sunday_to_monday
 from pandas.tseries.offsets import LastWeekOfMonth, WeekOfMonth
-import pytz
 
 from .common_holidays import (
     boxing_day,
@@ -231,9 +231,7 @@ HKAdhocClosures = [
     #  which means the day after is a Sunday. In 2022, HKSE had a holiday
     #  on the Monday (2022-09-12). In the past they don't seem to have followed
     #  this pattern. We'll have to wait and see before we generalise this into a rule.
-    pd.Timestamp(
-        "2022-09-12"
-    )
+    pd.Timestamp("2022-09-12"),
 ]
 
 
@@ -279,7 +277,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
     """
 
     name = "XHKG"
-    tz = pytz.timezone("Asia/Hong_Kong")
+    tz = ZoneInfo("Asia/Hong_Kong")
 
     open_times = (
         (None, time(10)),

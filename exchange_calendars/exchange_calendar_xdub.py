@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import (
@@ -25,7 +26,6 @@ from pandas.tseries.holiday import (
     previous_friday,
     weekend_to_monday,
 )
-import pytz
 
 from .common_holidays import (
     boxing_day,
@@ -128,7 +128,7 @@ class XDUBExchangeCalendar(ExchangeCalendar):
     """
 
     name = "XDUB"
-    tz = pytz.timezone("Europe/Dublin")
+    tz = ZoneInfo("Europe/Dublin")
     open_times = ((None, time(8)),)
     close_times = ((None, time(16, 28)),)
     regular_early_close = time(12, 28)

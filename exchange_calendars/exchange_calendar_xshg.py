@@ -1,7 +1,7 @@
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-import pytz
 
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
 
@@ -596,7 +596,7 @@ class XSHGExchangeCalendar(PrecomputedExchangeCalendar):
     """
 
     name = "XSHG"
-    tz = pytz.timezone("Asia/Shanghai")
+    tz = ZoneInfo("Asia/Shanghai")
     open_times = ((None, time(9, 30)),)
     break_start_times = ((None, time(11, 30)),)
     break_end_times = ((None, time(13, 0)),)

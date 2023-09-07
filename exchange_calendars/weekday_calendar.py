@@ -1,7 +1,6 @@
 from datetime import time
 
-from pytz import UTC
-
+from exchange_calendars.calendar_helpers import UTC
 from .exchange_calendar import ExchangeCalendar
 
 

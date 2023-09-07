@@ -14,11 +14,11 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import Easter, EasterMonday, Holiday
 from pandas.tseries.offsets import Day
-from pytz import timezone
 
 from .common_holidays import (
     christmas,
@@ -116,7 +116,7 @@ class XPRAExchangeCalendar(ExchangeCalendar):
 
     name = "XPRA"
 
-    tz = timezone("Europe/Prague")
+    tz = ZoneInfo("Europe/Prague")
 
     open_times = ((None, time(9)),)
 

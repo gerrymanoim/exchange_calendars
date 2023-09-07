@@ -15,10 +15,10 @@
 
 from datetime import time
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import Holiday
-from pytz import timezone
 
 from .common_holidays import european_labour_day
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
@@ -54,7 +54,7 @@ class XKARExchangeCalendar(ExchangeCalendar):
 
     name = "XKAR"
 
-    tz = timezone("Asia/Karachi")
+    tz = ZoneInfo("Asia/Karachi")
 
     # NOTE: The Pakistan Stock Exchange is open from 09:32-15:30
     # Monday-Thursday, and from 09:17-12:00 AND 14:32-16:30 on Friday

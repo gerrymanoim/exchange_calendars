@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import (
     FR,
@@ -24,7 +25,6 @@ from pandas.tseries.holiday import (
     Holiday,
 )
 from pandas.tseries.offsets import Day
-from pytz import timezone
 
 from .common_holidays import (
     ascension_day,
@@ -121,7 +121,7 @@ class XSTOExchangeCalendar(ExchangeCalendar):
     """
 
     name = "XSTO"
-    tz = timezone("Europe/Stockholm")
+    tz = ZoneInfo("Europe/Stockholm")
     open_times = ((None, time(9, 0)),)
     close_times = ((None, time(17, 30)),)
     regular_early_close = time(13)

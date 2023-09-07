@@ -14,9 +14,9 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import (
     boxing_day,
@@ -66,7 +66,7 @@ class XMILExchangeCalendar(ExchangeCalendar):
     name = "XMIL"
 
     # Rome is the same timezone as Milan.
-    tz = timezone("Europe/Rome")
+    tz = ZoneInfo("Europe/Rome")
 
     open_times = ((None, time(9)),)
 

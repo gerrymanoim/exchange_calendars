@@ -11,24 +11,24 @@
 # limitations under the License.
 from __future__ import annotations
 
+from collections import abc
 import datetime
+from datetime import time
 import functools
 import itertools
 import pathlib
 import re
 import typing
 from typing import Literal
-from collections import abc
-from datetime import time
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 import pandas.testing as tm
 import pytest
-import pytz
-from pytz import UTC
 
 from exchange_calendars import errors
+from exchange_calendars.calendar_helpers import UTC
 from exchange_calendars.calendar_utils import (
     ExchangeCalendarDispatcher,
     _default_calendar_aliases,
@@ -137,7 +137,7 @@ def test_default_calendars():
             "2016-07-19",
             0,
             time(9, 31),
-            pytz.timezone("America/New_York"),
+            ZoneInfo("America/New_York"),
             "2016-07-19 9:31",
         ),
         # CME standard day
@@ -145,7 +145,7 @@ def test_default_calendars():
             "2016-07-19",
             -1,
             time(17, 1),
-            pytz.timezone("America/Chicago"),
+            ZoneInfo("America/Chicago"),
             "2016-07-18 17:01",
         ),
         # CME day after DST start
@@ -153,7 +153,7 @@ def test_default_calendars():
             "2004-04-05",
             -1,
             time(17, 1),
-            pytz.timezone("America/Chicago"),
+            ZoneInfo("America/Chicago"),
             "2004-04-04 17:01",
         ),
         # ICE day after DST start
@@ -161,7 +161,7 @@ def test_default_calendars():
             "1990-04-02",
             -1,
             time(19, 1),
-            pytz.timezone("America/Chicago"),
+            ZoneInfo("America/Chicago"),
             "1990-04-01 19:01",
         ),
     ],
@@ -2133,15 +2133,12 @@ class ExchangeCalendarTestBase:
         cal = default_calendar
         year = cal.last_session.year - 1
         days = pd.date_range(str(year), str(year + 1), freq="D")
-        tzinfo = pytz.timezone(cal.tz.zone)
+        tz = cal.tz
 
-        prev_offset = tzinfo.utcoffset(days[0])
+        prev_offset = tz.utcoffset(days[0])
         dates = []
         for day in days[1:]:
-            try:
-                offset = tzinfo.utcoffset(day)
-            except pytz.NonExistentTimeError:
-                offset = tzinfo.utcoffset(day + pd.Timedelta(1, "H"))
+            offset = tz.utcoffset(day)
             if offset != prev_offset:
                 dates.append(day)
                 if len(dates) == 2:
@@ -3863,9 +3860,7 @@ class ExchangeCalendarTestBase:
                         else:
                             ends = ans.closes
                         # index for a 'left' calendar, add end so evaluated as if 'both'
-                        index = index.append(
-                            pd.DatetimeIndex([ends[session]], tz=pytz.UTC)
-                        )
+                        index = index.append(pd.DatetimeIndex([ends[session]], tz=UTC))
 
                         index = index[::mins]  # only want every period
                         if not index[-1] == ends[session]:
@@ -3873,7 +3868,7 @@ class ExchangeCalendarTestBase:
                             # last interval which lies beyond end.
                             last_indice = index[-1] + period
                             index = index.append(
-                                pd.DatetimeIndex([last_indice], tz=pytz.UTC)
+                                pd.DatetimeIndex([last_indice], tz=UTC)
                             )
                         dtis.append(index)
 

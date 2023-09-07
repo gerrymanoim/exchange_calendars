@@ -14,9 +14,9 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import MO, TH, DateOffset, EasterMonday, GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import (
     ascension_day,
@@ -92,7 +92,7 @@ class XICEExchangeCalendar(ExchangeCalendar):
     """
 
     name = "XICE"
-    tz = timezone("Atlantic/Reykjavik")
+    tz = ZoneInfo("Atlantic/Reykjavik")
     open_times = ((None, time(9, 30)),)
     close_times = ((None, time(15, 30)),)
 

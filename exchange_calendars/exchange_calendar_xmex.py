@@ -14,11 +14,11 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import MO, GoodFriday, Holiday
 from pandas.tseries.offsets import DateOffset
-from pytz import timezone
 
 from .common_holidays import (
     christmas,
@@ -102,7 +102,7 @@ class XMEXExchangeCalendar(ExchangeCalendar):
     """
 
     name = "XMEX"
-    tz = timezone("America/Mexico_City")
+    tz = ZoneInfo("America/Mexico_City")
 
     open_times = ((None, time(8, 30)),)
     close_times = ((None, time(15)),)

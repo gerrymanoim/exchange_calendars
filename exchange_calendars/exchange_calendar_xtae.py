@@ -14,9 +14,9 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-import pytz
 
 from .tase_holidays import (
     FastDay,
@@ -101,7 +101,7 @@ class XTAEExchangeCalendar(ExchangeCalendar):
 
     name = "XTAE"
 
-    tz = pytz.timezone("Asia/Tel_Aviv")
+    tz = ZoneInfo("Asia/Tel_Aviv")
 
     open_times = ((None, time(9, 59)),)
 

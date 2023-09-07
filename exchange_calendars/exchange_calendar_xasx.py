@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from dateutil.relativedelta import MO
 from pandas import DateOffset, Timestamp
@@ -25,7 +26,6 @@ from pandas.tseries.holiday import (
     sunday_to_monday,
     weekend_to_monday,
 )
-from pytz import timezone
 
 from .common_holidays import (
     anzac_day,
@@ -163,7 +163,7 @@ class XASXExchangeCalendar(ExchangeCalendar):
 
     name = "XASX"
 
-    tz = timezone("Australia/Sydney")
+    tz = ZoneInfo("Australia/Sydney")
 
     open_times = ((None, time(10)),)  # Zipline compatability (10,1); else (10,0)
 

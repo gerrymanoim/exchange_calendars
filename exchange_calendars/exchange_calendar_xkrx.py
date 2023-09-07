@@ -16,11 +16,11 @@ from __future__ import annotations
 
 from datetime import time
 import functools
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import Holiday
 from pandas.tseries.offsets import CustomBusinessDay
-import pytz
 
 from .exchange_calendar import HolidayCalendar
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
@@ -65,7 +65,7 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
 
     name = "XKRX"
 
-    tz = pytz.timezone("Asia/Seoul")
+    tz = ZoneInfo("Asia/Seoul")
 
     # KRX schedule change history
     # https://blog.naver.com/daishin_blog/220724111002
@@ -396,7 +396,7 @@ class PrecomputedXKRXExchangeCalendar(PrecomputedExchangeCalendar):
 
     name = "XKRX"
 
-    tz = pytz.timezone("Asia/Seoul")
+    tz = ZoneInfo("Asia/Seoul")
 
     open_times = ((None, time(9)),)
     close_times = ((None, time(15, 30)),)

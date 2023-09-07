@@ -1,12 +1,14 @@
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 from pandas.tseries.holiday import GoodFriday
-from pytz import UTC, timezone
 
+from exchange_calendars.calendar_helpers import UTC
 from exchange_calendars.exchange_calendar import ExchangeCalendar, HolidayCalendar
 from exchange_calendars.us_holidays import Christmas, USNewYearsDay
+
 
 # Number of hours of offset between the open and close times dictated by this
 # calendar versus the 6:31am to 5:00pm times over which we want to simulate
@@ -37,7 +39,7 @@ class QuantopianUSFuturesCalendar(ExchangeCalendar):
     """
 
     name = "us_futures"
-    tz = timezone("America/New_York")
+    tz = ZoneInfo("America/New_York")
     open_times = ((None, time(18)),)
     close_times = ((None, time(18)),)
     open_offset = -1

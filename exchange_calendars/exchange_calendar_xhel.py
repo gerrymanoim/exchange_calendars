@@ -14,9 +14,9 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import (
     ascension_day,
@@ -76,7 +76,7 @@ class XHELExchangeCalendar(ExchangeCalendar):
     """
 
     name = "XHEL"
-    tz = timezone("Europe/Helsinki")
+    tz = ZoneInfo("Europe/Helsinki")
     open_times = ((None, time(10)),)
     close_times = ((None, time(18, 30)),)
 

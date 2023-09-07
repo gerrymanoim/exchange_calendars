@@ -4,15 +4,17 @@ import contextlib
 import datetime
 import typing
 from typing import Literal
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
-import pytz
 
 from exchange_calendars import errors
 
 if typing.TYPE_CHECKING:
     from exchange_calendars import ExchangeCalendar
+
+UTC = ZoneInfo("UTC")
 
 NANOSECONDS_PER_MINUTE = int(6e10)
 
@@ -36,7 +38,6 @@ TradingMinute = Minute
 
 
 def next_divider_idx(dividers: np.ndarray, minute_val: int) -> int:
-
     divider_idx = np.searchsorted(dividers, minute_val, side="right")
     target = dividers[divider_idx]
 
@@ -48,7 +49,6 @@ def next_divider_idx(dividers: np.ndarray, minute_val: int) -> int:
 
 
 def previous_divider_idx(dividers: np.ndarray, minute_val: int) -> int:
-
     divider_idx = np.searchsorted(dividers, minute_val)
 
     if divider_idx == 0:
@@ -146,9 +146,9 @@ def to_utc(ts: pd.Timestamp) -> pd.Timestamp:
         Timestamp to return a copy of with timezone set to UTC.
     """
     try:
-        return ts.tz_convert(pytz.UTC)
+        return ts.tz_convert(UTC)
     except TypeError:
-        return ts.tz_localize(pytz.UTC)
+        return ts.tz_localize(UTC)
 
 
 def parse_timestamp(
@@ -189,9 +189,9 @@ def parse_timestamp(
         to minute resolution.
 
     utc : default: True
-        True - convert / set timezone to "UTC".
+        True - convert / set timezone to UTC.
         False - leave any timezone unchanged. Note, if timezone of
-        `timestamp` is "UTC" then will remain as "UTC".
+        `timestamp` is UTC then will remain as UTC.
 
     Raises
     ------
@@ -224,8 +224,8 @@ def parse_timestamp(
             else:
                 raise ValueError(msg) from e
 
-    if utc and ts.tz is not pytz.UTC:
-        ts = ts.tz_localize("UTC") if ts.tz is None else ts.tz_convert("UTC")
+    if utc and ts.tz is not UTC:
+        ts = ts.tz_localize(UTC) if ts.tz is None else ts.tz_convert(UTC)
 
     if ts.second or ts.microsecond or ts.nanosecond:
         if side is None and calendar is None:
@@ -376,7 +376,7 @@ def parse_date(
 
     if ts.tz is not None:
         raise ValueError(
-            f"Parameter `{param_name}` received with timezone defined as '{ts.tz.zone}'"
+            f"Parameter `{param_name}` received with timezone defined as '{ts.tz.key}'"
             f" although a Date must be timezone naive."
         )
 
@@ -630,7 +630,6 @@ class _TradingIndex:
         becoming unsynced with the corresponding left indices.
         """
         if self.has_break:
-
             # sessions with breaks
             index_am = self._create_index_for_sessions(
                 self.opens[self.mask],
@@ -680,7 +679,7 @@ class _TradingIndex:
         index = self._trading_index()
         if self.has_break:
             index.sort()
-        index = pd.DatetimeIndex(index, tz=pytz.UTC)
+        index = pd.DatetimeIndex(index, tz=UTC)
         return self.curtail_for_times(index)
 
     @contextlib.contextmanager
@@ -718,7 +717,7 @@ class _TradingIndex:
             else:
                 raise errors.IntervalsOverlapError()
 
-        left = pd.DatetimeIndex(left, tz=pytz.UTC)
-        right = pd.DatetimeIndex(right, tz=pytz.UTC)
+        left = pd.DatetimeIndex(left, tz=UTC)
+        right = pd.DatetimeIndex(right, tz=UTC)
         index = pd.IntervalIndex.from_arrays(left, right, self.closed)
         return self.curtail_for_times(index)

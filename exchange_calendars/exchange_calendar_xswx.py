@@ -14,9 +14,9 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import (
     ascension_day,
@@ -81,7 +81,7 @@ class XSWXExchangeCalendar(ExchangeCalendar):
 
     name = "XSWX"
 
-    tz = timezone("Europe/Zurich")
+    tz = ZoneInfo("Europe/Zurich")
 
     open_times = ((None, time(9, 0)),)
 

@@ -10,8 +10,9 @@ Module retained in case might be useful.
 """
 
 from __future__ import annotations
-import dataclasses
+
 import abc
+import dataclasses
 import pathlib
 import pickle
 from typing import Literal, Type
@@ -19,6 +20,7 @@ from typing import Literal, Type
 import pandas as pd
 
 import exchange_calendars as xcals
+from exchange_calendars.calendar_helpers import UTC
 
 
 @dataclasses.dataclass
@@ -72,7 +74,7 @@ class _FindFactoryBounds:
 
     @property
     def today(self) -> pd.Timestamp:
-        return pd.Timestamp.now(tz="UTC").floor("D")
+        return pd.Timestamp.now(tz=UTC).floor("D")
 
     def _get_calendar(
         self,
@@ -173,13 +175,13 @@ class _FindFactoryBounds:
         """
         if bound == "start":
             likely_bounds = [
-                pd.Timestamp("1678-01-01", tz="UTC"),
-                pd.Timestamp("1679-01-01", tz="UTC"),
+                pd.Timestamp("1678-01-01", tz=UTC),
+                pd.Timestamp("1679-01-01", tz=UTC),
             ]
         else:
             likely_bounds = [
-                pd.Timestamp("2260-12-31", tz="UTC"),
-                pd.Timestamp("2262-04-10", tz="UTC"),
+                pd.Timestamp("2260-12-31", tz=UTC),
+                pd.Timestamp("2262-04-10", tz=UTC),
             ]
 
         for likely_bound in likely_bounds:
@@ -191,9 +193,9 @@ class _FindFactoryBounds:
     @staticmethod
     def _initial_value(bound: Literal["start", "end"]) -> pd.Timestamp:
         if bound == "start":
-            return pd.Timestamp.min.ceil("D").tz_localize("UTC")
+            return pd.Timestamp.min.ceil("D").tz_localize(UTC)
         else:
-            return pd.Timestamp.max.floor("D").tz_localize("UTC")
+            return pd.Timestamp.max.floor("D").tz_localize(UTC)
 
     def _get_bound(
         self, bound: Literal["start", "end"]

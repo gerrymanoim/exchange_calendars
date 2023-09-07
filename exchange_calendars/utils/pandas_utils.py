@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import datetime
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
-import pytz
-from pytz import UTC
+
+from exchange_calendars.calendar_helpers import UTC
 
 
 def days_at_time(
     dates: pd.DatetimeIndex,
     time: datetime.time | None,
-    tz: pytz.tzinfo.BaseTzInfo,
+    tz: ZoneInfo,
     day_offset: int,
 ) -> pd.DatetimeIndex:
     """Return UTC DatetimeIndex of given dates at a given time.

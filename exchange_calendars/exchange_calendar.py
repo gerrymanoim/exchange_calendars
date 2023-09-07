@@ -22,17 +22,17 @@ import functools
 import operator
 from typing import TYPE_CHECKING, Literal, Any
 import warnings
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 import toolz
 from pandas.tseries.holiday import AbstractHolidayCalendar
 from pandas.tseries.offsets import CustomBusinessDay
-import pytz
-from pytz import UTC
 
 from exchange_calendars import errors
 from .calendar_helpers import (
+    UTC,
     NANOSECONDS_PER_MINUTE,
     NP_NAT,
     Date,
@@ -54,6 +54,7 @@ from .utils.pandas_utils import days_at_time
 
 if TYPE_CHECKING:
     from pandas._libs.tslibs.nattype import NaTType
+
 
 GLOBAL_DEFAULT_START = pd.Timestamp.now().floor("D") - pd.DateOffset(years=20)
 # Give an aggressive buffer for logic that needs to use the next trading
@@ -84,7 +85,7 @@ def selection(
 def _group_times(
     sessions: pd.DatetimeIndex,
     times: None | Sequence[tuple[pd.Timestamp | None, datetime.time]],
-    tz: pytz.tzinfo.BaseTzInfo,
+    tz: ZoneInfo,
     offset: int = 0,
 ) -> pd.DatetimeIndex | None:
     """Evaluate standard times for a specific session bound.
@@ -424,7 +425,7 @@ class ExchangeCalendar(ABC):
 
     @property
     @abstractmethod
-    def tz(self) -> pytz.tzinfo.BaseTzInfo:
+    def tz(self) -> ZoneInfo:
         """Calendar timezone."""
         raise NotImplementedError()
 
@@ -1475,8 +1476,8 @@ class ExchangeCalendar(ABC):
                 f" got type {type(ts)}."
             )
 
-        if ts.tz is not pytz.UTC:
-            ts = ts.tz_localize("UTC") if ts.tz is None else ts.tz_convert("UTC")
+        if ts.tz is not UTC:
+            ts = ts.tz_localize(UTC) if ts.tz is None else ts.tz_convert(UTC)
 
         if self._minute_oob(ts):
             raise errors.MinuteOutOfBounds(self, ts, "timestamp")
@@ -2820,7 +2821,7 @@ def scheduled_special_times(
     start: pd.Timestamp,
     end: pd.Timestamp,
     time: datetime.time,
-    tz: pytz.tzinfo.BaseTzInfo,
+    tz: ZoneInfo,
 ) -> pd.Series:
     """Return map of dates to special times.
 

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import (
     MO,
@@ -24,7 +25,6 @@ from pandas.tseries.holiday import (
     previous_friday,
 )
 from pandas.tseries.offsets import Day
-from pytz import timezone
 
 from .common_holidays import (
     christmas,
@@ -162,7 +162,7 @@ class XBOGExchangeCalendar(ExchangeCalendar):
 
     # Though Bogota uses Colombia Standard Time, XBOG uses
     # US Eastern for trading times
-    tz = timezone("America/New_York")
+    tz = ZoneInfo("America/New_York")
 
     open_times = ((None, time(9, 30)),)
 

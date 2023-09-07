@@ -1,8 +1,8 @@
 from datetime import time, timedelta
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import Holiday
-from pytz import timezone
 
 from .common_holidays import (
     christmas,
@@ -91,7 +91,7 @@ class XBSEExchangeCalendar(ExchangeCalendar):
 
     name = "XBSE"
 
-    tz = timezone("Europe/Bucharest")
+    tz = ZoneInfo("Europe/Bucharest")
 
     open_times = ((None, time(10)),)
 

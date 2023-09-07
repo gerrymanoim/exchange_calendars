@@ -30,6 +30,8 @@ import pandas as pd
 import toolz
 from novas.compat import eph_manager
 
+from exchange_calendars.calendar_helpers import UTC
+
 
 @contextlib.contextmanager
 def ephemeris():
@@ -1089,7 +1091,7 @@ def utc_to_chinese_date(arr):
         An array of datetime64[ns] at midnight corresponding the date in China
         of the input.
     """
-    ts = pd.to_datetime(arr).tz_localize("UTC").tz_convert("Asia/Shanghai")
+    ts = pd.to_datetime(arr).tz_localize(UTC).tz_convert("Asia/Shanghai")
     out = ts.normalize().tz_localize(None)
     if isinstance(out, pd.Timestamp):
         return out.asm8

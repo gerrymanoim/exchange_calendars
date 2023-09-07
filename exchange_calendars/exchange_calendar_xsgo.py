@@ -16,11 +16,11 @@
 from __future__ import annotations
 
 import datetime
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import Easter, GoodFriday, Holiday
 from pandas.tseries.offsets import Day
-from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -205,7 +205,7 @@ class XSGOExchangeCalendar(ExchangeCalendar):
     """
 
     name = "XSGO"
-    tz = timezone("America/Santiago")
+    tz = ZoneInfo("America/Santiago")
 
     open_times = ((None, datetime.time(9, 30)),)
     early_close_1230 = datetime.time(12, 30)

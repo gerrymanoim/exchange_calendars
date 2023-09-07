@@ -1,8 +1,8 @@
 from datetime import time
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-import pytz
 from pandas.tseries.holiday import Holiday
 
 from exchange_calendars.exchange_calendar import ExchangeCalendar, HolidayCalendar
@@ -73,7 +73,7 @@ class XSAUExchangeCalendar(ExchangeCalendar):
 
     name = "XSAU"
 
-    tz = pytz.timezone("Asia/Riyadh")
+    tz = ZoneInfo("Asia/Riyadh")
 
     open_times = ((None, time(10)),)
 

@@ -1,9 +1,9 @@
 import itertools
 
 import pandas as pd
-from pytz import UTC
 
 from exchange_calendars import get_calendar
+from exchange_calendars.calendar_helpers import UTC
 from exchange_calendars.calendar_utils import (
     ExchangeCalendarDispatcher,
     _default_calendar_aliases,

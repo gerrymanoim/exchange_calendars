@@ -16,10 +16,10 @@
 from __future__ import annotations
 
 import datetime
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import Easter, EasterMonday, Holiday
 from pandas.tseries.offsets import Day
-from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -150,7 +150,7 @@ class XBUDExchangeCalendar(ExchangeCalendar):
 
     name = "XBUD"
 
-    tz = timezone("Europe/Budapest")
+    tz = ZoneInfo("Europe/Budapest")
 
     open_times = ((None, datetime.time(9)),)
 

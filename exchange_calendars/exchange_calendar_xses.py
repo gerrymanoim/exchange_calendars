@@ -1,7 +1,7 @@
 from datetime import time
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-from pytz import timezone
 
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
 
@@ -412,7 +412,7 @@ class XSESExchangeCalendar(PrecomputedExchangeCalendar):
     """
 
     name = "XSES"
-    tz = timezone("Asia/Singapore")
+    tz = ZoneInfo("Asia/Singapore")
     open_times = ((None, time(9)),)
     close_times = ((None, time(17, 0)),)
 

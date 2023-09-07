@@ -17,9 +17,9 @@ from __future__ import annotations
 
 import datetime
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import Holiday, weekend_to_monday
-from pytz import timezone
 
 from .common_holidays import european_labour_day, new_years_day, new_years_eve
 from .exchange_calendar import WEEKDAYS, HolidayCalendar, ExchangeCalendar
@@ -249,7 +249,7 @@ class XMOSExchangeCalendar(ExchangeCalendar):
 
     name = "XMOS"
 
-    tz = timezone("Europe/Moscow")
+    tz = ZoneInfo("Europe/Moscow")
 
     open_times = ((None, datetime.time(10)),)
 

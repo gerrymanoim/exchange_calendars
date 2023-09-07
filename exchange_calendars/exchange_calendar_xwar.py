@@ -16,10 +16,10 @@
 from __future__ import annotations
 
 import datetime
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -110,7 +110,7 @@ class XWARExchangeCalendar(ExchangeCalendar):
 
     name = "XWAR"
 
-    tz = timezone("Europe/Warsaw")
+    tz = ZoneInfo("Europe/Warsaw")
 
     open_times = ((None, datetime.time(9)),)
     close_times = ((None, datetime.time(17)),)

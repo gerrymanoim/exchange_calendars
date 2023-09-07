@@ -15,10 +15,10 @@
 
 from datetime import time
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 from pandas import DatetimeIndex
 from pandas.tseries.holiday import GoodFriday, USLaborDay
-import pytz
 
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 from .us_holidays import (
@@ -157,7 +157,7 @@ class XNYSExchangeCalendar(ExchangeCalendar):
 
     name = "XNYS"
 
-    tz = pytz.timezone("America/New_York")
+    tz = ZoneInfo("America/New_York")
 
     open_times = ((None, time(9, 30)),)
 

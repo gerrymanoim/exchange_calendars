@@ -4,6 +4,7 @@ import click
 import pandas as pd
 
 from exchange_calendars import get_calendar
+from exchange_calendars.calendar_helpers import UTC
 from exchange_calendars.calendar_utils import default_calendar_names
 
 
@@ -136,7 +137,7 @@ def _check_range(start, end, holidays, cal, calendar_name):
 @click.option(
     "--min-date",
     default=pd.Timestamp("2002-01-01"),
-    type=TimestampType(tz="UTC"),
+    type=TimestampType(tz=UTC),
     help="Start the holiday comparison at this date.",
     show_default=True,
 )
@@ -190,7 +191,6 @@ def main(
     strip_x_from_cal_name,
     answer_key_calendar_name,
 ):
-
     check_holidays(
         holiday_key_path,
         calendar_column,

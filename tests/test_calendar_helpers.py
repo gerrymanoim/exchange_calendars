@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
+from collections import abc
 import datetime
 from datetime import time
 import itertools
 import operator
 import re
-from collections import abc
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 import pytest
-import pytz
 from hypothesis import assume, given, settings, HealthCheck
 from hypothesis import strategies as st
 from pandas.testing import assert_index_equal
@@ -20,11 +20,19 @@ from pandas.testing import assert_index_equal
 from exchange_calendars import ExchangeCalendar
 from exchange_calendars import calendar_helpers as m
 from exchange_calendars import calendar_utils, errors
+from exchange_calendars.calendar_helpers import UTC
 from exchange_calendars.calendar_utils import XTAEExchangeCalendar
 
 from .test_exchange_calendar import Answers
 
 # TODO tests for next_divider_idx, previous_divider_idx, compute_minutes (#15)
+
+
+def test_constants():
+    # Just to make sure they aren't inadvertently changed
+    assert m.UTC is ZoneInfo("UTC")
+    assert m.NANOSECONDS_PER_MINUTE == int(6e10)
+    assert m.NP_NAT == pd.NaT.value
 
 
 @pytest.fixture(scope="class")
@@ -43,10 +51,11 @@ def test_is_date(one_min):
     assert not f(T("2021-11-01 23:59:00.999999"))
     assert not f(T("2021-11-02 12:00"))
 
+    tz = ZoneInfo("US/Eastern")
     minutes = [
-        T("2021-11-02", tz=pytz.UTC),
-        T("2021-11-02", tz="US/Eastern"),
-        T("2021-11-02", tz=pytz.UTC).tz_convert("US/Eastern"),
+        T("2021-11-02", tz=UTC),
+        T("2021-11-02", tz=tz),
+        T("2021-11-02", tz=UTC).tz_convert(tz),
     ]
     for minute in minutes:
         assert not f(minute)
@@ -57,13 +66,13 @@ def test_is_utc():
     f = m.to_utc
     T = pd.Timestamp
 
-    expected = T("2021-11-02", tz="UTC")
-    assert f(T("2021-11-02", tz="UTC")) == expected
+    expected = T("2021-11-02", tz=UTC)
+    assert f(T("2021-11-02", tz=UTC)) == expected
     assert f(T("2021-11-02")) == expected
 
-    expected = T("2021-11-02 13:33", tz="UTC")
+    expected = T("2021-11-02 13:33", tz=UTC)
     assert f(T("2021-11-02 13:33")) == expected
-    assert f(T("2021-11-02 09:33", tz="US/Eastern")) == expected
+    assert f(T("2021-11-02 09:33", tz=ZoneInfo("US/Eastern"))) == expected
 
 
 @pytest.fixture
@@ -101,7 +110,7 @@ def minute() -> abc.Iterator[str]:
     params=[
         "2021-06-02 23:00",
         pd.Timestamp("2021-06-02 23:00"),
-        pd.Timestamp("2021-06-02 23:00", tz="UTC"),
+        pd.Timestamp("2021-06-02 23:00", tz=UTC),
     ]
 )
 def minute_mult(request) -> abc.Iterator[str | pd.Timestamp]:
@@ -172,7 +181,7 @@ def test_parse_timestamp_with_date(date_mult, param_name, calendar, utc):
     if not utc and not date_is_utc_ts:
         assert dt == pd.Timestamp("2021-06-05")
     else:
-        assert dt == pd.Timestamp("2021-06-05", tz="UTC")
+        assert dt == pd.Timestamp("2021-06-05", tz=UTC)
     assert dt == dt.floor("T")
 
 
@@ -183,7 +192,7 @@ def test_parse_timestamp_with_minute(minute_mult, param_name, calendar, utc):
     if not utc and not minute_is_utc_ts:
         assert dt == pd.Timestamp("2021-06-02 23:00")
     else:
-        assert dt == pd.Timestamp("2021-06-02 23:00", tz="UTC")
+        assert dt == pd.Timestamp("2021-06-02 23:00", tz=UTC)
     assert dt == dt.floor("T")
 
 
@@ -199,9 +208,9 @@ def test_parse_timestamp_with_second(second, sides, param_name):
     else:
         parsed = m.parse_timestamp(second, param_name, raise_oob=False, side=side)
         if side == "left":
-            assert parsed == pd.Timestamp("2021-06-02 23:01", tz="UTC")
+            assert parsed == pd.Timestamp("2021-06-02 23:01", tz=UTC)
         else:
-            assert parsed == pd.Timestamp("2021-06-02 23:02", tz="UTC")
+            assert parsed == pd.Timestamp("2021-06-02 23:02", tz=UTC)
 
 
 def test_parse_timestamp_error_malformed(malformed, param_name, calendar):
@@ -251,9 +260,9 @@ def test_parse_date_or_minute_for_minute(
     def f(ts: pd.Timestamp) -> tuple[pd.Timestamp, bool]:
         return m.parse_date_or_minute(ts, param_name, calendar)
 
-    assert f(minute_mult) == (pd.Timestamp(minute, tz=pytz.UTC), True)
+    assert f(minute_mult) == (pd.Timestamp(minute, tz=UTC), True)
     # verify that midnight with tz as UTC intepreted as minute, not date.
-    assert f(pd.Timestamp(date, tz=pytz.UTC)) == (pd.Timestamp(date, tz=pytz.UTC), True)
+    assert f(pd.Timestamp(date, tz=UTC)) == (pd.Timestamp(date, tz=UTC), True)
 
 
 def test_parse_date_or_minute_for_date(calendar, param_name, date, date_mult):
@@ -309,7 +318,7 @@ def test_parse_date(date_mult, param_name):
 
 
 def test_parse_date_errors(calendar, param_name, date_too_early, date_too_late):
-    dt = pd.Timestamp("2021-06-02", tz="US/Central")
+    dt = pd.Timestamp("2021-06-02", tz=ZoneInfo("US/Central"))
     with pytest.raises(ValueError, match="a Date must be timezone naive"):
         m.parse_date(dt, param_name, raise_oob=False)
 
@@ -364,7 +373,7 @@ def test_parse_trading_minute(
     calendar, trading_minute, minute, minute_too_early, minute_too_late, param_name
 ):
     ts = m.parse_trading_minute(calendar, trading_minute, param_name)
-    assert ts == pd.Timestamp(trading_minute, tz="UTC")
+    assert ts == pd.Timestamp(trading_minute, tz=UTC)
 
     with pytest.raises(
         errors.NotTradingMinuteError, match="not a trading minute of calendar"
@@ -1271,7 +1280,7 @@ class TestTradingIndex:
 
         closed_left = closed in ["left", "both"]
         closed_right = closed in ["right", "both"]
-        tz = pytz.UTC
+        tz = UTC
 
         def create_expected(
             starts: list[pd.Timestamp],
@@ -1313,7 +1322,7 @@ class TestTradingIndex:
         combine = datetime.datetime.combine
 
         def get_start(date: pd.Timestamp, tm: time):
-            return pd.Timestamp(combine(date.date(), tm), tz=pytz.UTC)
+            return pd.Timestamp(combine(date.date(), tm), tz=UTC)
 
         aligned_time_am, _ = aligned_start_times[align]
         starts = [get_start(from_, aligned_time_am)]
@@ -1380,7 +1389,7 @@ class TestTradingIndex:
             *dates_align, period, intervals=intervals, align_pm=align_pm, **kwargs
         )
         limit = pd.Timestamp(
-            datetime.datetime.combine(dates_align[0], time(15)), tz=pytz.UTC
+            datetime.datetime.combine(dates_align[0], time(15)), tz=UTC
         )
         assert limit in rtrn.right
 
@@ -1747,7 +1756,7 @@ class TestTradingIndex:
             )
 
         # Verify raises error if period "1D" and start or end not passed as a date.
-        start = pd.Timestamp("2018-05-01", tz=pytz.UTC)
+        start = pd.Timestamp("2018-05-01", tz=UTC)
         end = pd.Timestamp("2018-05-31")
         with pytest.raises(ValueError, match="a Date must be timezone naive"):
             cal.trading_index(start, end, "1D")

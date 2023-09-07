@@ -1,8 +1,8 @@
 from datetime import time
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
-import pytz
 
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 from .xtks_holidays import (
@@ -80,7 +80,7 @@ class XTKSExchangeCalendar(ExchangeCalendar):
 
     name = "XTKS"
 
-    tz = pytz.timezone("Asia/Tokyo")
+    tz = ZoneInfo("Asia/Tokyo")
 
     open_times = ((None, time(9)),)
     break_start_times = ((None, time(11, 30)),)

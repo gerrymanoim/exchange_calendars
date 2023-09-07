@@ -1,5 +1,6 @@
 from datetime import time
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import (
@@ -8,7 +9,6 @@ from pandas.tseries.holiday import (
     nearest_workday,
     next_workday,
 )
-import pytz
 
 from .common_holidays import new_years_day, eid_al_adha_first_day
 from .exchange_calendar import (
@@ -172,7 +172,7 @@ class AIXKExchangeCalendar(ExchangeCalendar):
 
     name = "AIXK"
 
-    tz = pytz.timezone("Asia/Almaty")
+    tz = ZoneInfo("Asia/Almaty")
 
     open_times = ((None, time(11)),)
 

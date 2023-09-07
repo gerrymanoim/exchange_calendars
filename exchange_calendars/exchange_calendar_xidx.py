@@ -15,10 +15,10 @@
 
 from datetime import time
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import ascension_day, christmas, new_years_day, new_years_eve
 from .lunisolar_holidays import chinese_lunar_new_year_dates
@@ -56,7 +56,7 @@ class XIDXExchangeCalendar(ExchangeCalendar):
 
     name = "XIDX"
 
-    tz = timezone("Asia/Jakarta")
+    tz = ZoneInfo("Asia/Jakarta")
 
     open_times = ((None, time(9)),)
 

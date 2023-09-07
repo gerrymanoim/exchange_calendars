@@ -15,10 +15,10 @@
 
 from datetime import time, timedelta
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import Holiday
-import pytz
 
 from .common_holidays import (
     eid_al_adha_first_day,
@@ -117,7 +117,7 @@ class XISTExchangeCalendar(ExchangeCalendar):
 
     name = "XIST"
 
-    tz = pytz.timezone("Europe/Istanbul")
+    tz = ZoneInfo("Europe/Istanbul")
 
     open_times = ((None, time(10)),)
 

@@ -14,9 +14,9 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import EasterMonday, GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import (
     ascension_day,
@@ -76,7 +76,7 @@ class XOSLExchangeCalendar(ExchangeCalendar):
     """
 
     name = "XOSL"
-    tz = timezone("Europe/Oslo")
+    tz = ZoneInfo("Europe/Oslo")
     open_times = ((None, time(9)),)
     close_times = ((None, time(16, 20)),)
     regular_early_close = time(13)

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from datetime import time
+from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import (
     EasterMonday,
@@ -22,7 +23,6 @@ from pandas.tseries.holiday import (
     previous_friday,
     previous_workday,
 )
-from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -122,7 +122,7 @@ class XWBOExchangeCalendar(ExchangeCalendar):
 
     name = "XWBO"
 
-    tz = timezone("Europe/Vienna")
+    tz = ZoneInfo("Europe/Vienna")
 
     open_times = ((None, time(9)),)
 

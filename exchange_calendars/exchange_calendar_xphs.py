@@ -17,10 +17,10 @@ from __future__ import annotations
 
 import datetime
 from itertools import chain
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import MO, DateOffset, GoodFriday, Holiday
-from pytz import timezone
 
 from .common_holidays import (
     all_saints_day,
@@ -193,7 +193,7 @@ class XPHSExchangeCalendar(ExchangeCalendar):
 
     name = "XPHS"
 
-    tz = timezone("Asia/Manila")
+    tz = ZoneInfo("Asia/Manila")
 
     open_times = ((None, datetime.time(9, 30)),)
 
