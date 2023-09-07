@@ -12,7 +12,6 @@
 from __future__ import annotations
 
 from collections import abc
-import datetime
 from datetime import time
 import functools
 import itertools
@@ -183,14 +182,12 @@ def get_csv(name: str) -> pd.DataFrame:
         index_col=0,
         parse_dates=[0, 1, 2, 3, 4],
     )
-    # Necessary for csv saved prior to v4.0
     if df.index.tz is not None:
         df.index = df.index.tz_convert(None)
-    # Necessary for csv saved prior to v4.0
     for col in df:
         if df[col].dt.tz is None:
             df[col] = df[col].dt.tz_localize(UTC)
-        elif df[col].dt.tz is datetime.timezone.utc:
+        else:
             df[col] = df[col].dt.tz_convert(UTC)
     return df
 
