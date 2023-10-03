@@ -426,8 +426,8 @@ class XBOMExchangeCalendar(PrecomputedExchangeCalendar):
     """
     Exchange calendar for the Bombay Stock Exchange (BSE, XBOM).
 
-    Open Time: 9:15 AM, Asia/Calcutta
-    Close Time: 3:30 PM, Asia/Calcutta
+    Open Time: 9:15 AM, Asia/Kolkata
+    Close Time: 3:30 PM, Asia/Kolkata
 
     Due to the complexity around the BSE holidays, we are hardcoding a list
     of holidays back to 1997, and forward through 2023.  There are no known
@@ -435,7 +435,7 @@ class XBOMExchangeCalendar(PrecomputedExchangeCalendar):
     """
 
     name = "XBOM"
-    tz = ZoneInfo("Asia/Calcutta")
+    tz = ZoneInfo("Asia/Kolkata")
     open_times = ((None, time(9, 15)),)
     close_times = ((None, time(15, 30)),)
 
