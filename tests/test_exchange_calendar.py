@@ -2291,10 +2291,11 @@ class ExchangeCalendarTestBase:
             with pytest.raises(errors.NoSessionsError, match=re.escape(error_msg)):
                 calendar_cls(start=start, end=end)
 
-    def test_bound_min(self, calendar_cls, start_bound, today):
+    def test_bound_min(self, calendar_cls, start_bound, end_bound, today):
         assert calendar_cls.bound_min() == start_bound
         if start_bound is not None:
-            cal = calendar_cls(start_bound, today)
+            end = today if end_bound is None or today < end_bound else end_bound
+            cal = calendar_cls(start_bound, end)
             assert isinstance(cal, ExchangeCalendar)
 
             start = start_bound - pd.DateOffset(days=1)
@@ -2308,7 +2309,8 @@ class ExchangeCalendarTestBase:
     def test_bound_max(self, calendar_cls, end_bound, today):
         assert calendar_cls.bound_max() == end_bound
         if end_bound is not None:
-            cal = calendar_cls(today, end_bound)
+            start = today if today < end_bound else end_bound - pd.Timedelta(1, "D")
+            cal = calendar_cls(start, end_bound)
             assert isinstance(cal, ExchangeCalendar)
 
             end = end_bound + pd.DateOffset(days=1)

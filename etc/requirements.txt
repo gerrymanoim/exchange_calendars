@@ -5,26 +5,26 @@
 #    pip-compile --output-file=etc/requirements.txt pyproject.toml
 #
 korean-lunar-calendar==0.3.1
-    # via exchange-calendars (pyproject.toml)
-numpy==1.26.1
+    # via exchange_calendars (pyproject.toml)
+numpy==1.26.2
     # via
-    #   exchange-calendars (pyproject.toml)
+    #   exchange_calendars (pyproject.toml)
     #   pandas
-pandas==2.1.1
-    # via exchange-calendars (pyproject.toml)
+pandas==2.1.4
+    # via exchange_calendars (pyproject.toml)
 pyluach==2.2.0
-    # via exchange-calendars (pyproject.toml)
+    # via exchange_calendars (pyproject.toml)
 python-dateutil==2.8.2
     # via
-    #   exchange-calendars (pyproject.toml)
+    #   exchange_calendars (pyproject.toml)
     #   pandas
 pytz==2023.3.post1
     # via pandas
 six==1.16.0
     # via python-dateutil
 toolz==0.12.0
-    # via exchange-calendars (pyproject.toml)
-tzdata==2023.3
+    # via exchange_calendars (pyproject.toml)
+tzdata==2023.4
     # via
-    #   exchange-calendars (pyproject.toml)
+    #   exchange_calendars (pyproject.toml)
     #   pandas
