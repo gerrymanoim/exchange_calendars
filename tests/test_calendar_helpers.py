@@ -640,8 +640,12 @@ class TestTradingIndex:
             else:
                 day_upper = day_lower = pd.Series([], dtype="datetime64[ns, UTC]")
 
-            lower_bounds = pd.concat((am_lower, pm_lower, day_lower))
-            upper_bounds = pd.concat((am_upper, pm_upper, day_upper))
+            lower_bounds = pd.concat(
+                [srs for srs in (am_lower, pm_lower, day_lower) if not srs.empty]
+            )
+            upper_bounds = pd.concat(
+                [srs for srs in (am_upper, pm_upper, day_upper) if not srs.empty]
+            )
 
         else:
             lower_bounds, upper_bounds = bounds(opens, closes, force_close, align)
