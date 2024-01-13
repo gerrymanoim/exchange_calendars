@@ -31,8 +31,8 @@ def new_years_eve_observance(dt: datetime.datetime) -> datetime.datetime | None:
 
 
 def new_years_holiday_observance(dt: datetime.datetime) -> datetime.datetime | None:
-    # New Year's Holiday did not follow the next-non-holiday rule in 2016.
-    return None if dt.year == 2016 else weekend_to_monday(dt)
+    # New Year's Holiday did not follow the next-non-holiday rule in these years.
+    return None if dt.year in [2016, 2022] else weekend_to_monday(dt)
 
 
 def orthodox_christmas_observance(dt: datetime.datetime) -> datetime.datetime | None:
@@ -170,6 +170,7 @@ womens_day_extensions = [
     "2005-03-07",
     "2011-03-07",
     "2012-03-09",
+    "2022-03-07",
 ]
 
 labour_day_extensions = [
@@ -218,6 +219,13 @@ misc_adhoc = [
     # Trading Suspended.
     "2008-10-10",
     "2008-10-27",
+    # Non-Working Days
+    "2020-06-24",
+    "2020-07-01",
+    # LabourDay Holiday extended to Tuesday
+    "2022-05-03", 
+    # Victory Day Holiday extended to Tuesday
+    "2022-05-10", 
 ]
 
 
