@@ -43,20 +43,16 @@ class TestXSHGCalendar(ExchangeCalendarTestBase):
             "2017-10-04",
             "2017-10-05",
             "2017-10-06",
-
             # 2020
             "2020-01-31",
-
             # 2022
             "2022-01-31",
             "2022-09-12",
             "2022-10-06",
             "2022-10-07",
-
             # 2023
             "2023-05-03",  # Part of Chinese Labor Day 2023
             "2023-06-23",  # Part of Dragon Boat Festival 2023
-
             # 2024
             "2024-01-01",
             # 2024 Chinese New Year
@@ -65,16 +61,16 @@ class TestXSHGCalendar(ExchangeCalendarTestBase):
             "2024-02-14",
             "2024-02-15",
             "2024-02-16",
-            "2024-04-04", # Part of Qingming Festival 2024
-            "2024-04-05", # Part of Qingming Festival 2024
-            "2024-05-01", # Part of Chinese Labor Day 2024
+            "2024-04-04",  # Part of Qingming Festival 2024
+            "2024-04-05",  # Part of Qingming Festival 2024
+            "2024-05-01",  # Part of Chinese Labor Day 2024
             "2024-05-02",
             "2024-05-03",
-            "2024-06-10", # Part of Dragon Boat Festival 2024
-            "2024-09-16", # Part of Mid-Autumn Festival 2024
-            "2024-09-17", # Part of Mid-Autumn Festival 2024
-            "2024-10-01", # Part of National Day 2024
-            "2024-10-02", # Part of National Day 2024
-            "2024-10-03", # Part of National Day 2024
-            "2024-10-04", # Part of National Day 2024
+            "2024-06-10",  # Part of Dragon Boat Festival 2024
+            "2024-09-16",  # Part of Mid-Autumn Festival 2024
+            "2024-09-17",  # Part of Mid-Autumn Festival 2024
+            "2024-10-01",  # Part of National Day 2024
+            "2024-10-02",  # Part of National Day 2024
+            "2024-10-03",  # Part of National Day 2024
+            "2024-10-04",  # Part of National Day 2024
         ]
