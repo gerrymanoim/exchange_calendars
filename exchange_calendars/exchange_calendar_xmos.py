@@ -219,13 +219,13 @@ misc_adhoc = [
     # Trading Suspended.
     "2008-10-10",
     "2008-10-27",
-    # Non-Working Days
+    # Non-Working Days.
     "2020-06-24",
     "2020-07-01",
-    # LabourDay Holiday extended to Tuesday
-    "2022-05-03", 
-    # Victory Day Holiday extended to Tuesday
-    "2022-05-10", 
+    # LabourDay Holiday extended to Tuesday.
+    "2022-05-03",
+    # Victory Day Holiday extended to Tuesday.
+    "2022-05-10",
 ]
 
 
