@@ -17,6 +17,13 @@ class TestXMOSCalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def regular_holidays_sample(self):
         yield [
+            # 2022
+            "2022-03-07",  # Women's Day falls on a Tuesday.
+            "2022-05-03",  # LabourDay Holiday extended to Tuesday.
+            "2022-05-10",  # Victory Day Holiday extended to Tuesday.
+            # 2020
+            "2020-06-24",  # Non-Working Day
+            "2020-07-01",  # Non-Working Day
             # 2019
             "2019-01-01",  # New Year's Day
             "2019-01-02",  # New Year's Holiday
@@ -65,10 +72,22 @@ class TestXMOSCalendar(ExchangeCalendarTestBase):
             # New Year's Holiday on a Saturday, but the following Monday is a
             # trading day.
             "2016-01-04",
+            "2021-01-04",
+            "2022-01-03",
             # Orthodox Christmas on a Saturday, but the following Monday is a
             # trading day.
             "2017-01-09",
+            "2023-01-09",
+            # Orthodox Christmas (January 7th) on a Sunday, but
+            # the following Monday is a trading day.
+            "2024-01-08",
             # Defender of the Fatherland Day (February 23rd) on a Saturday, but
             # the following Monday is a trading day.
             "2019-02-25",
+            # Victory Day (May 9th) on a Sunday, but
+            # the following Monday is a trading day.
+            "2021-05-10",
+            # Day of Russia (June 12th) on a Saturday, but
+            # the following Monday is a trading day.
+            "2021-06-14",
         ]
