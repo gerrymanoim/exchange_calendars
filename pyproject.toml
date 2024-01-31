@@ -27,10 +27,9 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "numpy",
+    "numpy<2",
     "pandas>=1.5",
     "pyluach",
-    "python-dateutil",
     "toolz",
     "tzdata",
     "korean_lunar_calendar",

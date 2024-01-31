@@ -21,9 +21,9 @@ exceptiongroup==1.2.0
     #   pytest
 execnet==2.0.2
     # via pytest-xdist
-flake8==6.1.0
+flake8==7.0.0
     # via exchange_calendars (pyproject.toml)
-hypothesis==6.92.2
+hypothesis==6.97.3
     # via exchange_calendars (pyproject.toml)
 importlib-metadata==7.0.1
     # via build
@@ -33,7 +33,7 @@ korean-lunar-calendar==0.3.1
     # via exchange_calendars (pyproject.toml)
 mccabe==0.7.0
     # via flake8
-numpy==1.26.2
+numpy==1.26.3
     # via
     #   exchange_calendars (pyproject.toml)
     #   pandas
@@ -41,23 +41,23 @@ packaging==23.2
     # via
     #   build
     #   pytest
-pandas==2.1.4
+pandas==2.2.0
     # via exchange_calendars (pyproject.toml)
 pip-tools==7.3.0
     # via exchange_calendars (pyproject.toml)
-pluggy==1.3.0
+pluggy==1.4.0
     # via pytest
 py-cpuinfo==9.0.0
     # via pytest-benchmark
 pycodestyle==2.11.1
     # via flake8
-pyflakes==3.1.0
+pyflakes==3.2.0
     # via flake8
 pyluach==2.2.0
     # via exchange_calendars (pyproject.toml)
 pyproject-hooks==1.0.0
     # via build
-pytest==7.4.4
+pytest==8.0.0
     # via
     #   exchange_calendars (pyproject.toml)
     #   pytest-benchmark
@@ -67,10 +67,8 @@ pytest-benchmark==4.0.0
 pytest-xdist==3.5.0
     # via exchange_calendars (pyproject.toml)
 python-dateutil==2.8.2
-    # via
-    #   exchange_calendars (pyproject.toml)
-    #   pandas
-pytz==2023.3.post1
+    # via pandas
+pytz==2023.4
     # via pandas
 six==1.16.0
     # via python-dateutil
@@ -82,7 +80,7 @@ tomli==2.0.1
     #   pip-tools
     #   pyproject-hooks
     #   pytest
-toolz==0.12.0
+toolz==0.12.1
     # via exchange_calendars (pyproject.toml)
 tzdata==2023.4
     # via
