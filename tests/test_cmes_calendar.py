@@ -36,4 +36,4 @@ class TestCMESCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def early_closes_sample_time(self):
-        yield pd.Timedelta(12, "H")
+        yield pd.Timedelta(12, "h")

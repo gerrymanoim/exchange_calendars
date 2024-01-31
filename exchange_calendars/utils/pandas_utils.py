@@ -140,8 +140,8 @@ def indexes_union(indexes: list[pd.Index]) -> pd.Index:
 
     Examples
     --------
-    >>> index1 = pd.date_range('2021-05-01 12:20', periods=2, freq='1H')
-    >>> index2 = pd.date_range('2021-05-02 17:10', periods=2, freq='22T')
+    >>> index1 = pd.date_range('2021-05-01 12:20', periods=2, freq='1h')
+    >>> index2 = pd.date_range('2021-05-02 17:10', periods=2, freq='22min')
     >>> index3 = pd.date_range('2021-05-03', periods=2, freq='1D')
     >>> indexes_union([index1, index2, index3])
     DatetimeIndex(['2021-05-01 12:20:00', '2021-05-01 13:20:00',

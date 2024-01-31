@@ -33,7 +33,7 @@ class TestXETRCalendar(ExchangeCalendarTestBase):
             # Whit Monday
             "2015-05-25",  # regularly observed from 2015
             "2016-05-16",
-            "2021-05-24"
+            "2021-05-24",
         ]
 
     @pytest.fixture
@@ -58,7 +58,7 @@ class TestXETRCalendar(ExchangeCalendarTestBase):
             "2016-10-31",
             "2018-10-31",
             # German Unity Day was not observed in 2022
-            "2022-10-03"
+            "2022-10-03",
         ]
 
     @pytest.fixture
@@ -70,4 +70,4 @@ class TestXETRCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def early_closes_sample_time(self):
-        yield pd.Timedelta(14, "H")
+        yield pd.Timedelta(14, "h")

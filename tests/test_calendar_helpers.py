@@ -37,7 +37,7 @@ def test_constants():
 
 @pytest.fixture(scope="class")
 def one_min() -> abc.Iterator[pd.Timedelta]:
-    yield pd.Timedelta(1, "T")
+    yield pd.Timedelta(1, "min")
 
 
 def test_is_date(one_min):
@@ -182,7 +182,7 @@ def test_parse_timestamp_with_date(date_mult, param_name, calendar, utc):
         assert dt == pd.Timestamp("2021-06-05")
     else:
         assert dt == pd.Timestamp("2021-06-05", tz=UTC)
-    assert dt == dt.floor("T")
+    assert dt == dt.floor("min")
 
 
 def test_parse_timestamp_with_minute(minute_mult, param_name, calendar, utc):
@@ -193,7 +193,7 @@ def test_parse_timestamp_with_minute(minute_mult, param_name, calendar, utc):
         assert dt == pd.Timestamp("2021-06-02 23:00")
     else:
         assert dt == pd.Timestamp("2021-06-02 23:00", tz=UTC)
-    assert dt == dt.floor("T")
+    assert dt == dt.floor("min")
 
 
 def test_parse_timestamp_with_second(second, sides, param_name):
@@ -395,7 +395,7 @@ def test_parse_trading_minute(
 
 def st_align() -> st.SearchStrategy[pd.Timedelta]:
     """SearchStrategy for a valid alignment."""
-    sample_pos = [pd.Timedelta(i, "T") for i in range(1, 31) if not 60 % i]
+    sample_pos = [pd.Timedelta(i, "min") for i in range(1, 31) if not 60 % i]
     sample_neg = [-td for td in sample_pos]
     return st.sampled_from(sample_pos + sample_neg)
 
@@ -502,12 +502,12 @@ class TestTradingIndex:
     @st.composite
     def st_periods(
         draw,
-        minimum: pd.Timedelta = pd.Timedelta(1, "T"),
-        maximum: pd.Timedelta = pd.Timedelta(1, "D") - pd.Timedelta(1, "T"),
+        minimum: pd.Timedelta = pd.Timedelta(1, "min"),
+        maximum: pd.Timedelta = pd.Timedelta(1, "D") - pd.Timedelta(1, "min"),
     ) -> st.SearchStrategy[pd.Timedelta]:
         """SearchStrategy for a period between a `minimum` and `maximum`."""
         period = draw(st.integers(minimum.seconds // 60, maximum.seconds // 60))
-        return pd.Timedelta(period, "T")
+        return pd.Timedelta(period, "min")
 
     # Helper methods
 
@@ -1043,7 +1043,7 @@ class TestTradingIndex:
             pd.Timestamp("2018-12-31"),
         )
 
-    @pytest.fixture(params=itertools.product(("105T", "106T"), ("right", "both")))
+    @pytest.fixture(params=itertools.product(("105min", "106min"), ("right", "both")))
     def ti_for_overlap(
         self, request, cal_start_end, curtail_all, one_min
     ) -> abc.Iterator[m._TradingIndex]:
@@ -1074,7 +1074,7 @@ class TestTradingIndex:
         """Test 'curtail_overlaps' and for overlaps against concrete parameters."""
         ti = ti_for_overlap
         period = pd.Timedelta(ti.interval_nanos)
-        period_106 = period == pd.Timedelta("106T")
+        period_106 = period == pd.Timedelta("106min")
 
         if period_106 or ti.closed == "both":
             with pytest.raises(errors.IndicesOverlapError):
@@ -1084,7 +1084,7 @@ class TestTradingIndex:
             return
 
         if not ti.curtail_overlaps and period_106:
-            # won't raise on "105T" as right side of last interval of am
+            # won't raise on "105min" as right side of last interval of am
             # session won't clash on coinciding with left side of first
             # interval of pm session as one of these sides will always be
             # open (in this case the left side). NB can't close on both
@@ -1105,7 +1105,7 @@ class TestTradingIndex:
         104T is the edge case, one minute short of coinciding with pm subsession open.
         """
         cal, start, end = cal_start_end
-        period, closed = pd.Timedelta("104T"), request.param
+        period, closed = pd.Timedelta("104min"), request.param
         yield m._TradingIndex(
             cal,
             start,
@@ -1135,7 +1135,7 @@ class TestTradingIndex:
     def test_force(self, cal_start_end):
         """Verify `force` option overrides `force_close` and `force_break_close`."""
         cal, start, end = cal_start_end
-        kwargs = dict(start=start, end=end, period="1H", intervals=True)
+        kwargs = dict(start=start, end=end, period="1h", intervals=True)
 
         expected_true = cal.trading_index(
             **kwargs, force_close=True, force_break_close=True
@@ -1168,7 +1168,7 @@ class TestTradingIndex:
         """Verify effect of ignore_breaks option."""
         cal, start, end = cal_start_end
         assert cal.sessions_has_break(start, end)
-        kwargs = dict(start=start, end=end, period="1H", intervals=True)
+        kwargs = dict(start=start, end=end, period="1h", intervals=True)
 
         # verify a difference
         index_false = cal.trading_index(**kwargs, ignore_breaks=False)
@@ -1256,27 +1256,27 @@ class TestTradingIndex:
         cal, ans = cal_with_ans_align
         from_, to = dates_align
         aligned_start_times = {
-            "-1T": (time(7, 59), time(15, 28)),
-            "-2T": (time(7, 58), time(15, 28)),
-            "-3T": (time(7, 57), time(15, 27)),
-            "-5T": (time(7, 55), time(15, 25)),
-            "-15T": (time(7, 45), time(15, 15)),
-            "-20T": (time(7, 40), time(15, 20)),
-            "-30T": (time(7, 30), time(15)),
-            "-60T": (time(7), time(15)),
-            "1T": (time(7, 59), time(15, 28)),
-            "2T": (time(8), time(15, 28)),
-            "3T": (time(8), time(15, 30)),
-            "5T": (time(8), time(15, 30)),
-            "15T": (time(8), time(15, 30)),
-            "20T": (time(8), time(15, 40)),
-            "30T": (time(8), time(15, 30)),
-            "60T": (time(8), time(16)),
+            "-1min": (time(7, 59), time(15, 28)),
+            "-2min": (time(7, 58), time(15, 28)),
+            "-3min": (time(7, 57), time(15, 27)),
+            "-5min": (time(7, 55), time(15, 25)),
+            "-15min": (time(7, 45), time(15, 15)),
+            "-20min": (time(7, 40), time(15, 20)),
+            "-30min": (time(7, 30), time(15)),
+            "-60min": (time(7), time(15)),
+            "1min": (time(7, 59), time(15, 28)),
+            "2min": (time(8), time(15, 28)),
+            "3min": (time(8), time(15, 30)),
+            "5min": (time(8), time(15, 30)),
+            "15min": (time(8), time(15, 30)),
+            "20min": (time(8), time(15, 40)),
+            "30min": (time(8), time(15, 30)),
+            "60min": (time(8), time(16)),
         }
         alignments = list(aligned_start_times.keys())
         align = data.draw(st.sampled_from(alignments))
         align_pm = data.draw(st.one_of([st.sampled_from(alignments), st.booleans()]))
-        period = data.draw(self.st_periods(maximum=pd.Timedelta(1, "H")))
+        period = data.draw(self.st_periods(maximum=pd.Timedelta(1, "h")))
 
         open_pm = ans.break_ends[from_]
         closes = (ans.break_starts[from_], ans.closes[from_], ans.closes[to])
@@ -1383,12 +1383,12 @@ class TestTradingIndex:
         """
         cal, _ = cal_with_ans_align
 
-        kwargs = dict(closed="right", align="-5T")
-        align_pm = "-1H"
+        kwargs = dict(closed="right", align="-5min")
+        align_pm = "-1h"
 
         intervals = True
         # assert returns at edge
-        period = pd.Timedelta(85, "T")
+        period = pd.Timedelta(85, "min")
         rtrn = cal.trading_index(
             *dates_align, period, intervals=intervals, align_pm=align_pm, **kwargs
         )
@@ -1423,7 +1423,7 @@ class TestTradingIndex:
 
         intervals = False
         # assert returns at edge
-        period = pd.Timedelta(85, "T")
+        period = pd.Timedelta(85, "min")
         rtrn = cal.trading_index(
             *dates_align, period, intervals=intervals, align_pm=align_pm, **kwargs
         )
@@ -1589,7 +1589,7 @@ class TestTradingIndex:
 
         assertions(starts, ends, period, force, ignore_breaks)
 
-        period = pd.Timedelta(5, "T")
+        period = pd.Timedelta(5, "min")
         delta = period * 2
 
         starts = [
@@ -1609,17 +1609,17 @@ class TestTradingIndex:
 
         assertions(starts, ends, period, force, ignore_breaks)
 
-        period = pd.Timedelta(1, "H")
+        period = pd.Timedelta(1, "h")
         end_s_open = cal.session_open(end_s)
 
         # ignoring breaks...
         # assert assumption that end unaligned by 30mins
-        assert (end_s_close - end_s_open) % period == pd.Timedelta(30, "T")
+        assert (end_s_close - end_s_open) % period == pd.Timedelta(30, "min")
 
-        end_s_aligned_post_close = end_s_close + pd.Timedelta(30, "T")
+        end_s_aligned_post_close = end_s_close + pd.Timedelta(30, "min")
         end_s_break_end = cal.session_break_end(end_s)
         # assert assumption that pm session 3H duration
-        assert end_s_close - end_s_break_end == pd.Timedelta(3, "H")
+        assert end_s_close - end_s_break_end == pd.Timedelta(3, "h")
 
         starts = [
             (start_s, None, None, None, None, None),
@@ -1638,10 +1638,10 @@ class TestTradingIndex:
             (end_s_aligned_post_close - period, -1, None, -1, -1, None),
             (end_s_aligned_post_close - period - one_min, -2, -1, -2, -2, -1),
             (end_s_break_end, -4, -3, -4, -4, -3),
-            (end_s_break_end + pd.Timedelta(30, "T"), -3, -2, -3, -3, -2),
-            (end_s_break_end + pd.Timedelta(29, "T"), -4, -3, -4, -4, -3),
-            (end_s_break_end - pd.Timedelta(30, "T"), -4, -3, -4, -4, -3),
-            (end_s_break_end - pd.Timedelta(31, "T"), -5, -4, -5, -5, -4),
+            (end_s_break_end + pd.Timedelta(30, "min"), -3, -2, -3, -3, -2),
+            (end_s_break_end + pd.Timedelta(29, "min"), -4, -3, -4, -4, -3),
+            (end_s_break_end - pd.Timedelta(30, "min"), -4, -3, -4, -4, -3),
+            (end_s_break_end - pd.Timedelta(31, "min"), -5, -4, -5, -5, -4),
         ]
 
         assertions(starts, ends, period, force, ignore_breaks)
@@ -1659,14 +1659,14 @@ class TestTradingIndex:
             (end_s_aligned_post_close, None, None, None, None, None),
             (end_s_close, None, None, None, None, None),
             (end_s_close - one_min, -1, None, -1, -1, None),
-            (end_s_close - pd.Timedelta(30, "T"), -1, None, -1, -1, None),
-            (end_s_close - pd.Timedelta(31, "T"), -2, -1, -2, -2, -1),
+            (end_s_close - pd.Timedelta(30, "min"), -1, None, -1, -1, None),
+            (end_s_close - pd.Timedelta(31, "min"), -2, -1, -2, -2, -1),
             # break end as before...
             (end_s_break_end, -4, -3, -4, -4, -3),
-            (end_s_break_end + pd.Timedelta(30, "T"), -3, -2, -3, -3, -2),
-            (end_s_break_end + pd.Timedelta(29, "T"), -4, -3, -4, -4, -3),
-            (end_s_break_end - pd.Timedelta(30, "T"), -4, -3, -4, -4, -3),
-            (end_s_break_end - pd.Timedelta(31, "T"), -5, -4, -5, -5, -4),
+            (end_s_break_end + pd.Timedelta(30, "min"), -3, -2, -3, -3, -2),
+            (end_s_break_end + pd.Timedelta(29, "min"), -4, -3, -4, -4, -3),
+            (end_s_break_end - pd.Timedelta(30, "min"), -4, -3, -4, -4, -3),
+            (end_s_break_end - pd.Timedelta(31, "min"), -5, -4, -5, -5, -4),
         ]
 
         force = True
@@ -1676,7 +1676,7 @@ class TestTradingIndex:
 
         end_s_break_start = cal.session_break_start(end_s)
         # assert assumption that break start unaligned by 30mins
-        assert (end_s_break_start - end_s_open) % period == pd.Timedelta(30, "T")
+        assert (end_s_break_start - end_s_open) % period == pd.Timedelta(30, "min")
 
         starts = [
             (start_s, None, None, None, None, None),
@@ -1696,10 +1696,10 @@ class TestTradingIndex:
             (end_s_break_end + one_min, -3, -2, -3, -3, -2),
             (end_s_break_end - one_min, -3, -3, -3, -4, -2),
             (end_s_break_start, -4, -3, -4, -5, -2),
-            (end_s_break_start + pd.Timedelta(30, "T"), -3, -3, -3, -4, -2),
-            (end_s_break_start + pd.Timedelta(29, "T"), -4, -3, -4, -5, -2),
-            (end_s_break_start - pd.Timedelta(30, "T"), -4, -3, -4, -5, -2),
-            (end_s_break_start - pd.Timedelta(31, "T"), -5, -4, -5, -6, -3),
+            (end_s_break_start + pd.Timedelta(30, "min"), -3, -3, -3, -4, -2),
+            (end_s_break_start + pd.Timedelta(29, "min"), -4, -3, -4, -5, -2),
+            (end_s_break_start - pd.Timedelta(30, "min"), -4, -3, -4, -5, -2),
+            (end_s_break_start - pd.Timedelta(31, "min"), -5, -4, -5, -6, -3),
         ]
 
         force, ignore_breaks = False, False
@@ -1729,8 +1729,8 @@ class TestTradingIndex:
             # end_s_break_start affected by force
             (end_s_break_start, -3, -3, -3, -4, -2),
             (end_s_break_start - one_min, -4, -3, -4, -5, -2),
-            (end_s_break_start - pd.Timedelta(30, "T"), -4, -3, -4, -5, -2),
-            (end_s_break_start - pd.Timedelta(31, "T"), -5, -4, -5, -6, -3),
+            (end_s_break_start - pd.Timedelta(30, "min"), -4, -3, -4, -5, -2),
+            (end_s_break_start - pd.Timedelta(31, "min"), -5, -4, -5, -6, -3),
         ]
 
         force, ignore_breaks = True, False
@@ -1750,13 +1750,13 @@ class TestTradingIndex:
         error_msg = "If `intervals` is True then `closed` cannot be 'neither'."
         with pytest.raises(ValueError, match=re.escape(error_msg)):
             cal.trading_index(
-                start, end, "20T", intervals=True, closed="neither", parse=False
+                start, end, "20min", intervals=True, closed="neither", parse=False
             )
 
         error_msg = "If `intervals` is True then `closed` cannot be 'both'."
         with pytest.raises(ValueError, match=re.escape(error_msg)):
             cal.trading_index(
-                start, end, "20T", intervals=True, closed="both", parse=False
+                start, end, "20min", intervals=True, closed="both", parse=False
             )
 
         # Verify raises error if period "1D" and start or end not passed as a date.
@@ -1782,7 +1782,7 @@ class TestTradingIndex:
         with pytest.raises(ValueError, match=re.escape(error_msg)):
             cal.trading_index(start, end, invalid_str)
 
-        invalid_value = pd.Timedelta(1441, "T")
+        invalid_value = pd.Timedelta(1441, "min")
         error_msg = re.escape(
             "`period` cannot be greater than one day although received as"
             f" '{invalid_value}'."
@@ -1807,20 +1807,20 @@ class TestTradingIndex:
             " '5min', '5T', pd.Timedelta('-5T'), '-5min', '-5T'."
         )
         with pytest.raises(ValueError, match=re.escape(error_msg)):
-            cal.trading_index(start, end, "1H", align="5T", align_pm=invalid_str)
+            cal.trading_index(start, end, "1h", align="5min", align_pm=invalid_str)
 
-        invalid_values = [pd.Timedelta(7, "T"), pd.Timedelta(0), "0T"]
+        invalid_values = [pd.Timedelta(7, "min"), pd.Timedelta(0), "0min"]
         for value in invalid_values:
             error_msg_end = (
                 f" must be factor of 1H although received '{pd.Timedelta(value)}'."
             )
             with pytest.raises(ValueError, match=re.escape("`align`" + error_msg_end)):
-                cal.trading_index(start, end, "1H", align=value)
+                cal.trading_index(start, end, "1h", align=value)
 
             with pytest.raises(
                 ValueError, match=re.escape("`align_pm`" + error_msg_end)
             ):
-                cal.trading_index(start, end, "1H", align="5T", align_pm=value)
+                cal.trading_index(start, end, "1h", align="5min", align_pm=value)
 
         invalid_minute_fractions = [3, pd.Timedelta(3600, "ms"), 3.6, "3s"]
         for value in invalid_minute_fractions:
@@ -1829,9 +1829,9 @@ class TestTradingIndex:
                 f"'{pd.Timedelta(value)}'."
             )
             with pytest.raises(ValueError, match=re.escape("`align`" + error_msg_end)):
-                cal.trading_index(start, end, "1H", align=value)
+                cal.trading_index(start, end, "1h", align=value)
 
             with pytest.raises(
                 ValueError, match=re.escape("`align_pm`" + error_msg_end)
             ):
-                cal.trading_index(start, end, "1H", align="5T", align_pm=value)
+                cal.trading_index(start, end, "1h", align="5min", align_pm=value)

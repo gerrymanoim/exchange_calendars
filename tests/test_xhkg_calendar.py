@@ -177,9 +177,7 @@ class TestXHKGCalendar(ExchangeCalendarTestBase):
             "2017-12-26",  # The day after Christmas
         ]
 
-        typhoon_days = [
-            "2021-10-13"
-        ]
+        typhoon_days = ["2021-10-13"]
 
         mid_autumn_festival_holidays = [
             "2022-09-12"  # In 2019, the mid-autumn festival holiday was observed on the following business day.
@@ -193,4 +191,4 @@ class TestXHKGCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def early_closes_sample_time(self):
-        yield pd.Timedelta(12, "H")
+        yield pd.Timedelta(12, "h")

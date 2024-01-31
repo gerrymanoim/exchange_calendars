@@ -62,7 +62,7 @@ class TestXOSLCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def early_closes_sample_time(self):
-        yield pd.Timedelta(13, "H")
+        yield pd.Timedelta(13, "h")
 
     @pytest.fixture
     def non_early_closes_sample(self):

@@ -84,4 +84,4 @@ class TestXASXCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def non_early_closes_sample_time(self):
-        yield pd.Timedelta(16, "H")
+        yield pd.Timedelta(16, "h")

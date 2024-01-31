@@ -36,7 +36,7 @@ class TestXNYSCalendar(ExchangeCalendarTestBase):
             # Juneteenth 2022-2024
             "2022-06-20",
             "2023-06-19",
-            "2024-06-19"
+            "2024-06-19",
         ]
 
     @pytest.fixture
@@ -89,7 +89,7 @@ class TestXNYSCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def early_closes_sample_time(self):
-        yield pd.Timedelta(13, "H")
+        yield pd.Timedelta(13, "h")
 
     @pytest.fixture
     def non_early_closes_sample(self):
@@ -102,4 +102,4 @@ class TestXNYSCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def non_early_closes_sample_time(self):
-        yield pd.Timedelta(16, "H")
+        yield pd.Timedelta(16, "h")

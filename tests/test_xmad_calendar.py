@@ -46,7 +46,7 @@ class TestXMADCalendar(ExchangeCalendarTestBase):
             # New Year's Eve was a holiday through to 2010, then became an early
             # close, and then went back to being a full day's holiday from 2021.
             "2010-12-31",
-            "2021-12-31"
+            "2021-12-31",
         ]
 
     @pytest.fixture
@@ -76,11 +76,10 @@ class TestXMADCalendar(ExchangeCalendarTestBase):
             "2005-11-01",  # All Saints Day
             "2005-12-06",  # Constitution Day
             "2005-12-08",  # Immaculate Conception
-
             # New Year's Eve was holiday through to 2010, but then became an early
             # close after that, before becoming a full market holiday again in 2021.
             "2012-12-31",
-            "2020-12-31"
+            "2020-12-31",
         ]
 
     @pytest.fixture
@@ -89,10 +88,9 @@ class TestXMADCalendar(ExchangeCalendarTestBase):
             # Christmas Eve was an early close from 2012-12-24, to 2020-12-24
             "2012-12-24",
             "2020-12-24",
-
             "2012-12-31",  # New Year's Eve
         ]
 
     @pytest.fixture
     def early_closes_sample_time(self):
-        yield pd.Timedelta(14, "H")
+        yield pd.Timedelta(14, "h")

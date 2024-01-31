@@ -2344,7 +2344,7 @@ class ExchangeCalendar(ABC):
         force: bool | None = None,
         curtail_overlaps: bool = False,
         ignore_breaks: bool = False,
-        align: pd.Timedelta | str = pd.Timedelta(1, "T"),
+        align: pd.Timedelta | str = pd.Timedelta(1, "min"),
         align_pm: pd.Timedelta | bool = True,
         parse: bool = True,
     ) -> pd.DatetimeIndex | pd.IntervalIndex:
@@ -2538,7 +2538,7 @@ class ExchangeCalendar(ABC):
             component then can pass `parse` as False to save around
             500µs on the execution.
 
-        align : default: pd.Timedelta(1, "T")
+        align : default: pd.Timedelta(1, "min")
             Anchor the first indice of each session such that it aligns
             with the nearest occurrence of a specific fraction of an hour.
 
@@ -2547,14 +2547,14 @@ class ExchangeCalendar(ABC):
             forwards, -ve values to shift indices backwards.
 
             Valid values are (or equivalent):
-                "2T", "3T", "4T", "5T", "6T", "10T", "12T", "15T", "20T",
-                "30T", "-2T", "-4T", "-5T", "-6T", "-10T", "-12T", "-15T",
-                "-20T", "-30T"
+                "2min", "3min", "4min", "5min", "6min", "10min", "12min", "15min", "20min",
+                "30min", "-2min", "-4min", "-5min", "-6min", "-10min", "-12min", "-15min",
+                "-20min", "-30min"
 
             For example, if `intervals` is True and `period` is '5T' then
             the first interval of a session with open time as 07:59 would
             be:
-                07:59 - 08:04 if `align` is pd.Timedelta(1, "T")  (default)
+                07:59 - 08:04 if `align` is pd.Timedelta(1, "min")  (default)
                 08:00 - 08:05 if `align` is '5T'
                 07:55 - 08:00 if `align` is '-5T'
 
@@ -2662,13 +2662,13 @@ class ExchangeCalendar(ABC):
                 )
                 raise ValueError(msg) from None
 
-            ONE_HOUR = pd.Timedelta("1H")
+            ONE_HOUR = pd.Timedelta("1h")
             if value > ONE_HOUR or value < -ONE_HOUR or not value or (ONE_HOUR % value):
                 raise ValueError(
                     f"`{name}` must be factor of 1H although received '{value}'."
                 )
 
-            if value % pd.Timedelta(1, "T"):
+            if value % pd.Timedelta(1, "min"):
                 raise ValueError(
                     f"`{name}` cannot include a fraction of a minute although received"
                     f" '{value}'."
@@ -2678,7 +2678,7 @@ class ExchangeCalendar(ABC):
         align = get_align("align", align)
 
         if align_pm is False:
-            align_pm = pd.Timedelta(1, "T")
+            align_pm = pd.Timedelta(1, "min")
         else:
             align_pm = align if align_pm is True else get_align("align_pm", align_pm)
 

@@ -236,9 +236,9 @@ def parse_timestamp(
             )
         side = side if side is not None else calendar.side
         if side == "left":
-            ts = ts.floor("T")
+            ts = ts.floor("min")
         elif side == "right":
-            ts = ts.ceil("T")
+            ts = ts.ceil("min")
         else:
             raise ValueError(
                 "`timestamp` cannot have a non-zero second (or more accurate)"
@@ -493,7 +493,7 @@ class _TradingIndex:
             opens = opens.dt.ceil(align)
             return opens.values.astype(np.int64)
 
-        if align != pd.Timedelta(1, "T"):
+        if align != pd.Timedelta(1, "min"):
             self.opens = align_opens(calendar.opens[slce], align)
         else:
             self.opens = calendar.opens_nanos[slce]
@@ -503,7 +503,7 @@ class _TradingIndex:
         else:
             self.break_starts = calendar.break_starts_nanos[slce]
 
-            if align_pm != pd.Timedelta(1, "T"):
+            if align_pm != pd.Timedelta(1, "min"):
                 self.break_ends = align_opens(calendar.break_ends[slce], align_pm)
             else:
                 self.break_ends = calendar.break_ends_nanos[slce]

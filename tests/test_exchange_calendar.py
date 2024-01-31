@@ -211,8 +211,8 @@ class Answers:
         Side of sessions to treat as trading minutes.
     """
 
-    ONE_MIN = pd.Timedelta(1, "T")
-    TWO_MIN = pd.Timedelta(2, "T")
+    ONE_MIN = pd.Timedelta(1, "min")
+    TWO_MIN = pd.Timedelta(2, "min")
     ONE_DAY = pd.Timedelta(1, "D")
 
     LEFT_SIDES = ["left", "both"]
@@ -355,10 +355,10 @@ class Answers:
             self.first_pm_minutes[indexer],
         ):
             if pd.isna(last_am):
-                dtis.append(pd.date_range(first, last, freq="T"))
+                dtis.append(pd.date_range(first, last, freq="min"))
             else:
-                dtis.append(pd.date_range(first, last_am, freq="T"))
-                dtis.append(pd.date_range(first_pm, last, freq="T"))
+                dtis.append(pd.date_range(first, last_am, freq="min"))
+                dtis.append(pd.date_range(first_pm, last, freq="min"))
 
         return pandas_utils.indexes_union(dtis)
 
@@ -382,11 +382,11 @@ class Answers:
         first_pm = self.first_pm_minutes[session]
 
         if pd.isna(last_am):
-            return (pd.date_range(first, last, freq="T"),)
+            return (pd.date_range(first, last, freq="min"),)
         else:
             return (
-                pd.date_range(first, last_am, freq="T"),
-                pd.date_range(first_pm, last, freq="T"),
+                pd.date_range(first, last_am, freq="min"),
+                pd.date_range(first_pm, last, freq="min"),
             )
 
     def get_session_break_minutes(self, session: pd.Timestamp) -> pd.DatetimeIndex:
@@ -397,7 +397,7 @@ class Answers:
             am_minutes, pm_minutes = self.get_session_minutes(session)
         first = am_minutes[-1] + self.ONE_MIN
         last = pm_minutes[0] - self.ONE_MIN
-        return pd.date_range(first, last, freq="T")
+        return pd.date_range(first, last, freq="min")
 
     def get_session_edge_minutes(
         self, session: pd.Timestamp, delta: int = 0
@@ -411,7 +411,7 @@ class Answers:
         the session/subsession duration - this condition is NOT
         VERIFIED by this method.
         """
-        delta = pd.Timedelta(delta, "T")
+        delta = pd.Timedelta(delta, "min")
         first_minute = self.first_minutes[session]
         last_minute = self.last_minutes[session]
         has_break = self.session_has_break(session)
@@ -641,7 +641,7 @@ class Answers:
             # a trading minute cannot be a minute of more than one session.
             assert not (self.closes == self.opens.shift(-1)).any()
             # there will be no gap if next open is one minute after previous close
-            closes_plus_min = self.closes + pd.Timedelta(1, "T")
+            closes_plus_min = self.closes + pd.Timedelta(1, "min")
             return self.opens.shift(-1) == closes_plus_min
 
         else:
@@ -658,7 +658,7 @@ class Answers:
             # a trading minute cannot be a minute of more than one session.
             assert not (self.closes == self.opens.shift(-1)).any()
             # there will be no gap if previous close is one minute before next open
-            opens_minus_one = self.opens - pd.Timedelta(1, "T")
+            opens_minus_one = self.opens - pd.Timedelta(1, "min")
             return self.closes.shift(1) == opens_minus_one
 
         else:
@@ -1354,7 +1354,7 @@ class Answers:
     def _trading_minute_to_break_minute(
         self, sessions, break_sessions
     ) -> list[pd.DatetimeIndex, pd.DatetimeIndex, pd.DatetimeIndex]:
-        times = (self.last_am_minutes[break_sessions] + pd.Timedelta(1, "T")).dt.time
+        times = (self.last_am_minutes[break_sessions] + pd.Timedelta(1, "min")).dt.time
 
         mask = (self.first_minutes[sessions].dt.time.values < times.values) & (
             times.values < self.last_minutes[sessions].dt.time.values
@@ -1863,7 +1863,7 @@ class ExchangeCalendarTestBase:
                 subclass).
 
         Example returns:
-            pd.Timedelta(14, "H")  # 14:00 local time
+            pd.Timedelta(14, "h")  # 14:00 local time
             pd.Timedelta(hours=13, minutes=15)  # 13:15 local time
         """
         yield None
@@ -1912,7 +1912,7 @@ class ExchangeCalendarTestBase:
         overriden by subclass.
 
         Example returns:
-            pd.Timedelta(14, "H")  # 14:00 local time
+            pd.Timedelta(14, "h")  # 14:00 local time
             pd.Timedelta(hours=13, minutes=15)  # 13:15 local time
         """
         yield None
@@ -1958,7 +1958,7 @@ class ExchangeCalendarTestBase:
                 subclass).
 
         Example returns:
-            pd.Timedelta(17, "H")  # 17:00 local time
+            pd.Timedelta(17, "h")  # 17:00 local time
             pd.Timedelta(hours=16, minutes=30)  # 16:30 local time
         """
         yield None
@@ -2063,7 +2063,7 @@ class ExchangeCalendarTestBase:
 
     @pytest.fixture(scope="class")
     def one_minute(self) -> abc.Iterator[pd.Timedelta]:
-        yield pd.Timedelta(1, "T")
+        yield pd.Timedelta(1, "min")
 
     @pytest.fixture(scope="class")
     def today(self) -> abc.Iterator[pd.Timedelta]:
@@ -2924,7 +2924,7 @@ class ExchangeCalendarTestBase:
         cal, ans = all_calendars_with_answers
 
         one_min = one_minute
-        one_sec = pd.Timedelta(1, "S")
+        one_sec = pd.Timedelta(1, "s")
 
         sides = ("left", "both", "right", "neither")
 
@@ -3343,12 +3343,12 @@ class ExchangeCalendarTestBase:
             for i, session in enumerate(sessions):
                 # intra session
                 first_minute = ans.first_minutes[session]
-                rtrn = f(first_minute + pd.Timedelta(20, "T"), 10)
-                assert rtrn == first_minute + pd.Timedelta(30, "T")
+                rtrn = f(first_minute + pd.Timedelta(20, "min"), 10)
+                assert rtrn == first_minute + pd.Timedelta(30, "min")
 
                 last_minute = ans.last_minutes[session]
-                rtrn = f(last_minute - pd.Timedelta(20, "T"), -10)
-                assert rtrn == last_minute - pd.Timedelta(30, "T")
+                rtrn = f(last_minute - pd.Timedelta(20, "min"), -10)
+                assert rtrn == last_minute - pd.Timedelta(30, "min")
 
                 # crossing break
                 if ans.session_has_break(session):
@@ -3388,7 +3388,7 @@ class ExchangeCalendarTestBase:
         cal, ans = all_calendars_with_answers
         f = no_parsing(cal.minute_offset_by_sessions)
         delta_int = 20
-        delta = pd.Timedelta(delta_int, "T")
+        delta = pd.Timedelta(delta_int, "min")
 
         # tests for rtrn with same time.
 
@@ -3550,9 +3550,9 @@ class ExchangeCalendarTestBase:
             tm.assert_index_equal(ans_dti, cal_dti[start_idx:end_idx])
 
         # intra-session
-        from_ = ans.first_minutes[ans.first_session] + pd.Timedelta(15, "T")
-        to = ans.first_minutes[ans.first_session] + pd.Timedelta(45, "T")
-        expected = pd.date_range(from_, to, freq="T")
+        from_ = ans.first_minutes[ans.first_session] + pd.Timedelta(15, "min")
+        to = ans.first_minutes[ans.first_session] + pd.Timedelta(45, "min")
+        expected = pd.date_range(from_, to, freq="min")
         rtrn = f(from_, to)
         tm.assert_index_equal(expected, rtrn)
 
@@ -3581,9 +3581,9 @@ class ExchangeCalendarTestBase:
             tm.assert_index_equal(ans_dti, cal_dti)
 
         # intra-session
-        from_ = ans.first_minutes[ans.first_session] + pd.Timedelta(15, "T")
+        from_ = ans.first_minutes[ans.first_session] + pd.Timedelta(15, "min")
         count = 30
-        expected = pd.date_range(from_, periods=count, freq="T")
+        expected = pd.date_range(from_, periods=count, freq="min")
         rtrn = f(from_, count)
         tm.assert_index_equal(expected, rtrn)
 
@@ -3591,18 +3591,18 @@ class ExchangeCalendarTestBase:
         if not ans.sessions_with_gap_after.empty:
             session = ans.sessions_with_gap_after[0]
             next_session = ans.get_next_session(session)
-            from_ = ans.last_minutes[session] - pd.Timedelta(4, "T")
+            from_ = ans.last_minutes[session] - pd.Timedelta(4, "min")
             count = 10
-            expected_1 = pd.date_range(from_, periods=5, freq="T")
+            expected_1 = pd.date_range(from_, periods=5, freq="min")
             from_2 = ans.first_minutes[next_session]
-            expected_2 = pd.date_range(from_2, periods=5, freq="T")
+            expected_2 = pd.date_range(from_2, periods=5, freq="min")
             expected = expected_1.union(expected_2)
             rtrn = f(from_, count)
             tm.assert_index_equal(expected, rtrn)
 
         # verify raises ValueError when window extends beyond calendar's minute bounds
         # at limit, window starts on first calendar minute
-        delta = pd.Timedelta(2, "T")
+        delta = pd.Timedelta(2, "min")
         minute = ans.first_minute + delta
         assert f(minute, count=-3)[0] == ans.first_minute
         # window would start before first calendar minute
@@ -3848,7 +3848,7 @@ class ExchangeCalendarTestBase:
 
         for _, sessions in ans.session_block_generator():
             for mins in [5, 17, 60, 123, 333, 1033]:
-                period = pd.Timedelta(mins, "T")
+                period = pd.Timedelta(mins, "min")
                 dtis = []
                 for session in sessions:
                     indexes = ans.get_session_minutes(session)
