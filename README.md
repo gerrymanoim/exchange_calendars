@@ -215,7 +215,7 @@ See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanat
 | Frankfurt Stock Exchange        | XFRA     | Germany        | 1.2           | http://en.boerse-frankfurt.de/                               |
 | SIX Swiss Exchange              | XSWX     | Switzerland    | 1.2           | https://www.six-group.com/en/home.html                       |
 | Tokyo Stock Exchange            | XTKS     | Japan          | 1.2           | https://www.jpx.co.jp/english/                               |
-| Austrialian Securities Exchange | XASX     | Australia      | 1.3           | https://www.asx.com.au/                                      |
+| Australian Securities Exchange  | XASX     | Australia      | 1.3           | https://www.asx.com.au/                                      |
 | Bolsa de Madrid                 | XMAD     | Spain          | 1.3           | https://www.bolsamadrid.es                                   |
 | Borsa Italiana                  | XMIL     | Italy          | 1.3           | https://www.borsaitaliana.it                                 |
 | New Zealand Exchange            | XNZE     | New Zealand    | 1.3           | https://www.nzx.com/                                         |
