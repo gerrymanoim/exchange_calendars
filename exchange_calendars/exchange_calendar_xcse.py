@@ -39,6 +39,7 @@ GeneralPrayerDay = Holiday(
     month=1,
     day=1,
     offset=[Easter(), Day(26)],
+    end_date="2024",
 )
 AscensionDay = ascension_day()
 BankHoliday = Holiday(
