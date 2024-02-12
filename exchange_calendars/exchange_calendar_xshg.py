@@ -556,6 +556,7 @@ precomputed_shanghai_holidays = pd.to_datetime(
         "2023-10-05",
         "2023-10-06",
         "2024-01-01",  # 2024 holidays https://www.gov.cn/zhengce/content/202310/content_6911527.htm
+        "2024-02-09",  # http://english.sse.com.cn/start/trading/schedule/
         "2024-02-12",
         "2024-02-13",
         "2024-02-14",
