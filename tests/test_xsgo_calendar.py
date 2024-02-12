@@ -186,4 +186,4 @@ class TestXSGOCalendar(ExchangeCalendarTestBase):
         )
         cal = default_calendar
         for date, close in dates_closes:
-            cal.closes[date] == pd.Timestamp(close, tz=cal.tz)
+            assert cal.closes[date] == pd.Timestamp(close, tz=cal.tz)
