@@ -58,12 +58,12 @@ class Holiday(PandasHoliday):
             assert self.tz == self.start_date.tz
         if self.end_date is not None:
             if self.tz is None and self.end_date.tz is not None:
-                self.tz = start_date.tz
+                self.tz = end_date.tz
             if self.end_date.tz is None and self.tz is not None:
                 self.end_date = self.end_date.tz_localize(self.tz)
             assert self.tz == self.end_date.tz
         if self.start_date is not None and self.end_date is not None:
-            self.start_date.tz == self.end_date.tz
+            assert self.start_date.tz == self.end_date.tz
 
     def __repr__(self) -> str:
         info = ""
