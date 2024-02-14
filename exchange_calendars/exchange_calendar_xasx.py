@@ -118,11 +118,19 @@ KingsBirthday = Holiday(
 #
 # Sources:
 # https://www.asx.com.au/markets/market-resources/trading-hours-calendar/cash-market-trading-hours/trading-calendar
-LastTradingDayBeforeChristmas = Holiday(
+LastTradingDayBeforeChristmasPre2022 = Holiday(
     "Last Trading Day Before Christmas",
     month=12,
     day=24,
     start_date="2010",
+    end_date="2022",
+    observance=previous_friday,
+)
+LastTradingDayBeforeChristmasPost2022 = Holiday(
+    "Last Trading Day Before Christmas",
+    month=12,
+    day=24,
+    start_date="2023",
     observance=previous_friday,
 )
 
@@ -131,26 +139,20 @@ WeekendChristmas = weekend_christmas()
 BoxingDay = boxing_day()
 WeekendBoxingDay = weekend_boxing_day()
 
-LastTradingDayOfCalendarYear = Holiday(
+LastTradingDayOfCalendarYearPre2022 = Holiday(
     "Last Trading Day Of Calendar Year",
     month=12,
     day=31,
     start_date="2010",
+    end_date="2022",
     observance=previous_friday,
 )
-
-LastTradingDayBeforeChristmas2022Exception = Holiday(
-    "Last Trading Day Before Christmas 2022 Exception",
-    year=2022,
+LastTradingDayOfCalendarYearPost2022 = Holiday(
+    "Last Trading Day Of Calendar Year",
     month=12,
-    day=23,
-)
-
-LastTradingDayOfCalendarYear2022Exception = Holiday(
-    "Last Trading Day Of Calendar Year 2022 Exception",
-    year=2022,
-    month=12,
-    day=30,
+    day=31,
+    start_date="2023",
+    observance=previous_friday,
 )
 
 # additional ad-hoc holidays
@@ -230,24 +232,14 @@ class XASXExchangeCalendar(ExchangeCalendar):
     @property
     def special_closes(self):
         return [
-            # Ordering is important here - we need to specify the exceptional
-            # dates in 2022 first (the LastTradingDayBeforeChristmas
-            # and LastTradingDayOfCalendarYear are series that overlap these).
-            (
-                time(16),
-                HolidayCalendar(
-                    [
-                        LastTradingDayBeforeChristmas2022Exception,
-                        LastTradingDayOfCalendarYear2022Exception,
-                    ]
-                ),
-            ),
             (
                 self.regular_early_close,
                 HolidayCalendar(
                     [
-                        LastTradingDayBeforeChristmas,
-                        LastTradingDayOfCalendarYear,
+                        LastTradingDayBeforeChristmasPre2022,
+                        LastTradingDayOfCalendarYearPre2022,
+                        LastTradingDayBeforeChristmasPost2022,
+                        LastTradingDayOfCalendarYearPost2022,
                     ]
                 ),
             ),
