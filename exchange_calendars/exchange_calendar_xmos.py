@@ -28,6 +28,7 @@ from .common_holidays import european_labour_day, new_years_day, new_years_eve
 from .exchange_calendar import WEEKDAYS, HolidayCalendar, ExchangeCalendar
 from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 
+
 def new_years_eve_observance(dt: datetime.datetime) -> datetime.datetime | None:
     # For some reason New Year's Eve was not a holiday these years.
     return None if dt.year in [2008, 2009] else weekend_to_monday(dt)
@@ -295,8 +296,8 @@ class XMOSExchangeCalendar(ExchangeCalendar):
          weekmasks that applies between dates.
         """
         return [
-            # For 1999-2011 years next url was used to obtain data for 
-            # IMOEX close values in order to check if there are any Sat or Sun: 
+            # For 1999-2011 years next url was used to obtain data for
+            # IMOEX close values in order to check if there are any Sat or Sun:
             # https://iss.moex.com/iss/history/engines/stock/markets/index/securities/IMOEX
             (pd.Timestamp("1999-01-04"), pd.Timestamp("1999-01-10"), "1111101"),
             (pd.Timestamp("2000-05-01"), pd.Timestamp("2000-05-07"), "1111110"),
@@ -325,7 +326,7 @@ class XMOSExchangeCalendar(ExchangeCalendar):
             (pd.Timestamp("2010-02-22"), pd.Timestamp("2010-02-28"), "1111110"),
             (pd.Timestamp("2010-11-08"), pd.Timestamp("2010-11-14"), "1111110"),
             (pd.Timestamp("2011-02-28"), pd.Timestamp("2011-03-06"), "1111110"),
-            # For 2012 year https://www.moex.com/a254 
+            # For 2012 year https://www.moex.com/a254
             (pd.Timestamp("2012-03-05"), pd.Timestamp("2012-03-11"), "1111101"),
             (pd.Timestamp("2012-04-23"), pd.Timestamp("2012-05-13"), "1111110"),
             (pd.Timestamp("2012-06-04"), pd.Timestamp("2012-06-10"), "1111110"),

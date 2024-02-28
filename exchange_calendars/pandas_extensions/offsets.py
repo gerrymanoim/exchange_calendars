@@ -87,7 +87,7 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
             for left, right in toolz.sliding_window(
                 2, toolz.concatv(self._business_days_index)
             ):
-                if pd.Timestamp((right.left - left.right).days, 
+                if pd.Timestamp((right.left - left.right).days,
                                 unit="D") > pd.Timestamp(1, unit="D"):
                     interval = pd.Interval(
                         left.right + pd.Timedelta(1, unit="D"),
