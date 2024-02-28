@@ -18,12 +18,15 @@ from __future__ import annotations
 import datetime
 from itertools import chain
 from zoneinfo import ZoneInfo
+import pandas as pd
+import functools
 
 from pandas.tseries.holiday import Holiday, weekend_to_monday
+from pandas.tseries.offsets import CustomBusinessDay
 
 from .common_holidays import european_labour_day, new_years_day, new_years_eve
 from .exchange_calendar import WEEKDAYS, HolidayCalendar, ExchangeCalendar
-
+from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 
 def new_years_eve_observance(dt: datetime.datetime) -> datetime.datetime | None:
     # For some reason New Year's Eve was not a holiday these years.
@@ -284,6 +287,63 @@ class XMOSExchangeCalendar(ExchangeCalendar):
     close_times = ((None, datetime.time(18, 45)),)
 
     @property
+    def special_weekmasks(self):
+        """
+        Returns
+        -------
+        list: List of (date, date, str) tuples that represent special
+         weekmasks that applies between dates.
+        """
+        return [
+            # For 1999-2011 years next url was used to obtain data for 
+            # IMOEX close values in order to check if there are any Sat or Sun: 
+            # https://iss.moex.com/iss/history/engines/stock/markets/index/securities/IMOEX
+            (pd.Timestamp("1999-01-04"), pd.Timestamp("1999-01-10"), "1111101"),
+            (pd.Timestamp("2000-05-01"), pd.Timestamp("2000-05-07"), "1111110"),
+            (pd.Timestamp("2000-10-30"), pd.Timestamp("2000-11-05"), "1111110"),
+            (pd.Timestamp("2000-12-04"), pd.Timestamp("2000-12-10"), "1111110"),
+            (pd.Timestamp("2001-03-05"), pd.Timestamp("2001-03-11"), "1111101"),
+            (pd.Timestamp("2001-04-23"), pd.Timestamp("2001-04-29"), "1111110"),
+            (pd.Timestamp("2001-06-04"), pd.Timestamp("2001-06-10"), "1111110"),
+            (pd.Timestamp("2001-12-24"), pd.Timestamp("2001-12-30"), "1111110"),
+            (pd.Timestamp("2002-04-22"), pd.Timestamp("2002-04-28"), "1111110"),
+            (pd.Timestamp("2002-05-13"), pd.Timestamp("2002-05-19"), "1111110"),
+            (pd.Timestamp("2002-11-04"), pd.Timestamp("2002-11-10"), "1111101"),
+            (pd.Timestamp("2002-12-09"), pd.Timestamp("2002-12-15"), "1111101"),
+            (pd.Timestamp("2002-12-30"), pd.Timestamp("2003-01-05"), "1111111"),
+            (pd.Timestamp("2003-06-16"), pd.Timestamp("2003-06-22"), "1111110"),
+            (pd.Timestamp("2005-02-28"), pd.Timestamp("2005-03-06"), "1111110"),
+            (pd.Timestamp("2005-05-09"), pd.Timestamp("2005-05-15"), "1111110"),
+            (pd.Timestamp("2006-02-20"), pd.Timestamp("2006-02-26"), "1111101"),
+            (pd.Timestamp("2006-05-01"), pd.Timestamp("2006-05-07"), "1111110"),
+            (pd.Timestamp("2007-04-23"), pd.Timestamp("2007-04-29"), "1111110"),
+            (pd.Timestamp("2007-06-04"), pd.Timestamp("2007-06-10"), "1111110"),
+            (pd.Timestamp("2008-04-28"), pd.Timestamp("2008-05-04"), "1111101"),
+            (pd.Timestamp("2008-06-02"), pd.Timestamp("2008-06-08"), "1111110"),
+            (pd.Timestamp("2008-10-27"), pd.Timestamp("2008-11-02"), "1111110"),
+            (pd.Timestamp("2009-01-05"), pd.Timestamp("2009-01-11"), "1111101"),
+            (pd.Timestamp("2010-02-22"), pd.Timestamp("2010-02-28"), "1111110"),
+            (pd.Timestamp("2010-11-08"), pd.Timestamp("2010-11-14"), "1111110"),
+            (pd.Timestamp("2011-02-28"), pd.Timestamp("2011-03-06"), "1111110"),
+            # For 2012 year https://www.moex.com/a254 
+            (pd.Timestamp("2012-03-05"), pd.Timestamp("2012-03-11"), "1111101"),
+            (pd.Timestamp("2012-04-23"), pd.Timestamp("2012-05-13"), "1111110"),
+            (pd.Timestamp("2012-06-04"), pd.Timestamp("2012-06-10"), "1111110"),
+            # For 2016 year https://www.moex.com/a3367
+            (pd.Timestamp("2016-02-15"), pd.Timestamp("2016-02-21"), "1111110"),
+            # For 2018 year https://www.moex.com/a4187
+            (pd.Timestamp("2018-04-23"), pd.Timestamp("2018-04-29"), "1111110"),
+            (pd.Timestamp("2018-06-04"), pd.Timestamp("2018-06-10"), "1111110"),
+            (pd.Timestamp("2018-12-24"), pd.Timestamp("2018-12-30"), "1111110"),
+            # For 2021 year https://www.moex.com/n30445
+            (pd.Timestamp("2021-02-15"), pd.Timestamp("2021-02-21"), "1111110"),
+            # For 2024 year https://www.moex.com/n64121
+            (pd.Timestamp("2024-04-22"), pd.Timestamp("2024-04-28"), "1111110"),
+            (pd.Timestamp("2024-10-28"), pd.Timestamp("2024-11-03"), "1111110"),
+            (pd.Timestamp("2024-12-23"), pd.Timestamp("2024-12-29"), "1111110"),
+        ]
+
+    @property
     def regular_holidays(self):
         return HolidayCalendar(
             [
@@ -319,3 +379,19 @@ class XMOSExchangeCalendar(ExchangeCalendar):
                 misc_adhoc,
             ),
         )
+
+    @functools.cached_property
+    def day(self):
+        if self.special_weekmasks:
+            return MultipleWeekmaskCustomBusinessDay(
+                holidays=self.adhoc_holidays,
+                calendar=self.regular_holidays,
+                weekmask=self.weekmask,
+                weekmasks=self.special_weekmasks,
+            )
+        else:
+            return CustomBusinessDay(
+                holidays=self.adhoc_holidays,
+                calendar=self.regular_holidays,
+                weekmask=self.weekmask,
+            )
