@@ -119,6 +119,13 @@ ConscienciaNegra = Holiday(
     start_date="2004-01-01",
     end_date="2022-01-01",
 )
+# Day of Black Awareness is now a national holiday, starting 2024
+ConscienciaNegraNacional = Holiday(
+    "Dia Nacional de Zumbi e da Consciencia Negra",
+    month=11,
+    day=20,
+    start_date="2024-01-01"
+)
 # Christmas Eve
 VesperaNatal = Holiday(
     "Vespera Natal",
@@ -209,6 +216,7 @@ class BVMFExchangeCalendar(ExchangeCalendar):
                 Finados,
                 ProclamacaoRepublica,
                 ConscienciaNegra,
+                ConscienciaNegraNacional,
                 VesperaNatal,
                 Natal,
                 AnoNovo,
