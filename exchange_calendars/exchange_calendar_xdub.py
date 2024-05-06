@@ -59,13 +59,22 @@ LabourDayFrom2019 = european_labour_day(
     observance=weekend_to_monday,
 )
 
-MayBankHoliday = Holiday(
+MayBankHolidayTo2018 = Holiday(
     "May Bank Holiday",
     month=5,
     day=1,
     end_date="2019",
     offset=DateOffset(weekday=MO(1)),
 )
+
+MayBankHolidayFrom2021 = Holiday(
+    "May Bank Holiday",
+    month=5,
+    day=1,
+    start_date="2021",
+    offset=DateOffset(weekday=MO(1)),
+)
+
 JuneBankHoliday = Holiday(
     "June Bank Holiday",
     month=6,
@@ -143,7 +152,8 @@ class XDUBExchangeCalendar(ExchangeCalendar):
                 EasterMonday,
                 LabourDayTo2009,
                 LabourDayFrom2019,
-                MayBankHoliday,
+                MayBankHolidayTo2018,
+                MayBankHolidayFrom2021,
                 JuneBankHoliday,
                 ChristmasEve,
                 Christmas,
