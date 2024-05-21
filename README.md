@@ -254,6 +254,7 @@ See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanat
 | Astana International Exchange   | AIXK     | Kazakhstan     | 3.2           | https://www.aix.kz/                                          |
 | Bucharest Stock Exchange        | XBSE     | Romania        | 3.2           | https://www.bvb.ro/                                          |
 | Saudi Stock Exchange            | XSAU     | Saudi Arabia   | 4.2           | https://www.saudiexchange.sa/                                |
+| European Energy Exchange AG     | EEX      | Germany        | 4.3           | https://www.eex.com/                                         |
 
 > Note that exchange calendars are defined by their [ISO-10383](https://www.iso20022.org/10383/iso-10383-market-identifier-codes) market identifier code.
 
