@@ -10,7 +10,6 @@ from .exchange_calendar_aixk import AIXKExchangeCalendar
 from .exchange_calendar_asex import ASEXExchangeCalendar
 from .exchange_calendar_bvmf import BVMFExchangeCalendar
 from .exchange_calendar_cmes import CMESExchangeCalendar
-from .exchange_calendar_eex import EEXExchangeCalendar
 from .exchange_calendar_iepa import IEPAExchangeCalendar
 from .exchange_calendar_xams import XAMSExchangeCalendar
 from .exchange_calendar_xasx import XASXExchangeCalendar
@@ -24,6 +23,7 @@ from .exchange_calendar_xbue import XBUEExchangeCalendar
 from .exchange_calendar_xcbf import XCBFExchangeCalendar
 from .exchange_calendar_xcse import XCSEExchangeCalendar
 from .exchange_calendar_xdub import XDUBExchangeCalendar
+from .exchange_calendar_xeee import XEEEExchangeCalendar
 from .exchange_calendar_xetr import XETRExchangeCalendar
 from .exchange_calendar_xfra import XFRAExchangeCalendar
 from .exchange_calendar_xhel import XHELExchangeCalendar
@@ -69,7 +69,6 @@ _default_calendar_factories = {
     "ASEX": ASEXExchangeCalendar,
     "BVMF": BVMFExchangeCalendar,
     "CMES": CMESExchangeCalendar,
-    "EEX": EEXExchangeCalendar,
     "IEPA": IEPAExchangeCalendar,
     "XAMS": XAMSExchangeCalendar,
     "XASX": XASXExchangeCalendar,
@@ -83,6 +82,7 @@ _default_calendar_factories = {
     "XCBF": XCBFExchangeCalendar,
     "XCSE": XCSEExchangeCalendar,
     "XDUB": XDUBExchangeCalendar,
+    "XEEE": XEEEExchangeCalendar,
     "XFRA": XFRAExchangeCalendar,
     "XETR": XETRExchangeCalendar,
     "XHEL": XHELExchangeCalendar,

@@ -21,13 +21,13 @@ BoxingDay = boxing_day()
 NewYearsEve = new_years_eve()
 
 
-class EEXExchangeCalendar(ExchangeCalendar):
+class XEEEExchangeCalendar(ExchangeCalendar):
     """
     Calendar for the European Energy Exchange AG, Leipzig, Germany.
     https://www.eex.com/fileadmin/EEX/Downloads/Trading/Calendar/Holiday_Calendar/20230303_Trading_Calendar_EEX_Group.pdf
 
-    Open Time: 9:00 AM, CET (Central European Time)
-    Close Time: 5:30 PM, CET (Central European Time)
+    Open Time: 8:00 AM, CET (Central European Time)
+    Close Time: 6:00 PM, CET (Central European Time)
 
     Regularly-Observed Holidays:
       - New Year's Day
@@ -40,13 +40,13 @@ class EEXExchangeCalendar(ExchangeCalendar):
       - New Year's Eve
     """
 
-    name = "EEX"
+    name = "XEEE"
 
     tz = ZoneInfo("Europe/Berlin")
 
-    open_times = ((None, time(9)),)
+    open_times = ((None, time(8)),)
 
-    close_times = ((None, time(17, 30)),)
+    close_times = ((None, time(18, 0)),)
 
     @property
     def regular_holidays(self):

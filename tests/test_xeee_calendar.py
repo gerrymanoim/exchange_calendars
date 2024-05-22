@@ -1,18 +1,18 @@
 import pytest
 
-from exchange_calendars.exchange_calendar_eex import EEXExchangeCalendar
+from exchange_calendars.exchange_calendar_xeee import XEEEExchangeCalendar
 from .test_exchange_calendar import ExchangeCalendarTestBase
 
 
-class TestEEXCalendar(ExchangeCalendarTestBase):
+class TestXEEECalendar(ExchangeCalendarTestBase):
     @pytest.fixture(scope="class")
     def calendar_cls(self):
-        yield EEXExchangeCalendar
+        yield XEEEExchangeCalendar
 
     @pytest.fixture
     def max_session_hours(self):
-        # The XMIL is open from 9:00 am to 5:30 pm.
-        yield 8.5
+        # The XEEE is open from 8:00 am to 6:00 pm.
+        yield 10
 
     @pytest.fixture
     def regular_holidays_sample(self):
