@@ -1,19 +1,19 @@
 import pytest
 import pandas as pd
 
-from exchange_calendars.exchange_calendar_xfra import XFRAExchangeCalendar
+from exchange_calendars.exchange_calendar_xdus import XDUSExchangeCalendar
 from .test_exchange_calendar import ExchangeCalendarTestBase
 
 
-class TestXFRACalendar(ExchangeCalendarTestBase):
+class TestXDUSCalendar(ExchangeCalendarTestBase):
     @pytest.fixture(scope="class")
     def calendar_cls(self):
-        yield XFRAExchangeCalendar
+        yield XDUSExchangeCalendar
 
     @pytest.fixture
     def max_session_hours(self):
-        # The FWB is open from 9:00 am to 5:30 pm.
-        yield 8.5
+        # open from 8am to 10pm
+        yield 14
 
     @pytest.fixture
     def regular_holidays_sample(self):
