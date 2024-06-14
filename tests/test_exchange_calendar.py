@@ -2124,7 +2124,7 @@ class ExchangeCalendarTestBase:
 
         Notes
         -----
-        NB Any test that employs this fixture assumes the accuarcy of the
+        NB Any test that employs this fixture assumes the accuracy of the
         default calendar's `tz` property.
         """
         cal = default_calendar
