@@ -28,9 +28,8 @@ import novas.compat as novas
 import numpy as np
 import pandas as pd
 import toolz
-from novas.compat import eph_manager
-
 from exchange_calendars.calendar_helpers import UTC
+from novas.compat import eph_manager
 
 
 @contextlib.contextmanager
@@ -878,11 +877,11 @@ def lunar_ecliptic_longitude(root_dir, verbose, start, stop):
 
     with ephemeris():
         minutes = np.arange(start, stop, dtype="M8[m]")
-        for minutes in toolz.partition_all(60 * 24 * 365, minutes):
+        for mins_in_year in toolz.partition_all(60 * 24 * 365, minutes):
             if verbose:
-                print(f"start={minutes[0]}; stop={minutes[-1]}")
+                print(f"start={mins_in_year[0]}; stop={mins_in_year[-1]}")
 
-            lunar_ecliptic_longitude_block(root_dir, np.array(minutes))
+            lunar_ecliptic_longitude_block(root_dir, np.array(mins_in_year))
 
 
 def calculate_new_moon(solar_ecliptic_longitude, lunar_ecliptic_longitude, minutes):
@@ -1025,11 +1024,11 @@ def solar_solar_ecliptic_longitude(root_dir, verbose, start, stop):
 
     with ephemeris():
         minutes = np.arange(start, stop, dtype="M8[m]")
-        for minutes in toolz.partition_all(60 * 24 * 365, minutes):
+        for mins_in_year in toolz.partition_all(60 * 24 * 365, minutes):
             if verbose:
-                print(f"start={minutes[0]}; stop={minutes[-1]}")
+                print(f"start={mins_in_year[0]}; stop={mins_in_year[-1]}")
 
-            solar_ecliptic_longitude_block(root_dir, np.array(minutes))
+            solar_ecliptic_longitude_block(root_dir, np.array(mins_in_year))
 
 
 def minutes_at_phase(longitude, minutes, phase):

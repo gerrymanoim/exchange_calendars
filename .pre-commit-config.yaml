@@ -1,16 +1,15 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.2.0
+  rev: v4.5.0
   hooks:
     - id: check-yaml
     - id: end-of-file-fixer
     - id: trailing-whitespace
-- repo: https://github.com/pycqa/flake8
-  rev: 6.1.0
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.2.1
   hooks:
-    - id: flake8
-- repo: https://github.com/psf/black
-  rev: 23.7.0
-  hooks:
-    - id: black
-      language_version: python
+    - id: ruff
+      # We have --exit-non-zero-on-fix so that the
+      # CI build fails if there are any fixes
+      args: [--fix, --exit-non-zero-on-fix]
+    - id: ruff-format

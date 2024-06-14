@@ -66,6 +66,8 @@ MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
 WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
 WEEKENDS = (SATURDAY, SUNDAY)
 
+ONE_MINUTE = pd.Timedelta(1, "min")
+
 
 def selection(
     arr: pd.DatetimeIndex, start: pd.Timestamp, end: pd.Timestamp
@@ -119,7 +121,7 @@ class deprecate:
     def __call__(self, f: Callable) -> Callable:
         @functools.wraps(f)
         def wrapped_f(*args, **kwargs):
-            warnings.warn(self._message(f), FutureWarning)
+            warnings.warn(self._message(f), FutureWarning, stacklevel=2)
             return f(*args, **kwargs)
 
         return wrapped_f
@@ -2010,7 +2012,7 @@ class ExchangeCalendar(ABC):
             return last_minute
         elif self.is_break_minute(minute, _parse=False):
             return self.session_last_am_minute(target_session, _parse=False)
-        assert False, "offset minute should have resolved!"
+        raise AssertionError("offset minute should have resolved!")
 
     # Methods that evaluate or interrogate a range of minutes.
 
@@ -2344,7 +2346,7 @@ class ExchangeCalendar(ABC):
         force: bool | None = None,
         curtail_overlaps: bool = False,
         ignore_breaks: bool = False,
-        align: pd.Timedelta | str = pd.Timedelta(1, "min"),
+        align: pd.Timedelta | str = ONE_MINUTE,
         align_pm: pd.Timedelta | bool = True,
         parse: bool = True,
     ) -> pd.DatetimeIndex | pd.IntervalIndex:

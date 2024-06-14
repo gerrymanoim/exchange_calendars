@@ -1869,7 +1869,7 @@ class ExchangeCalendarTestBase:
         yield None
 
     @pytest.fixture
-    def early_closes_weekdays(self) -> abc.Iterator[tuple(int)]:
+    def early_closes_weekdays(self) -> abc.Iterator[tuple[int]]:
         """Weekdays with non-standard close times.
 
         `test_early_closes_weekdays` will check that all sessions on these
@@ -2843,9 +2843,7 @@ class ExchangeCalendarTestBase:
 
         # direction as "next"
         last_session = None
-        for date, is_session in zip(
-            dates.sort_values(ascending=False), date_is_session[::-1]
-        ):
+        for date, _ in zip(dates.sort_values(ascending=False), date_is_session[::-1]):
             session_label = f(date, "next")
             if date in sessions:
                 assert session_label == date
@@ -3314,9 +3312,9 @@ class ExchangeCalendarTestBase:
         for minutes, session in ans.break_minutes[:1]:
             for minute in minutes:
                 if direction == "previous":
-                    f(minute, direction) == ans.last_am_minutes[session]
+                    assert f(minute, direction) == ans.last_am_minutes[session]
                 elif direction == "next":
-                    f(minute, direction) == ans.first_pm_minutes[session]
+                    assert f(minute, direction) == ans.first_pm_minutes[session]
                 else:
                     error_msg = (
                         f"`minute` '{minute}' is not a trading minute. Consider passing"
@@ -3888,9 +3886,14 @@ class ExchangeCalendarTestBase:
                             break
 
                 def get_index(closed: str, intervals: bool):
-                    start, end = sessions[0], sessions[-1]
+                    start, end = sessions[0], sessions[-1]  # noqa: B023
                     return cal.trading_index(
-                        start, end, period, intervals, closed, parse=False
+                        start,
+                        end,
+                        period,  # noqa: B023
+                        intervals,
+                        closed,
+                        parse=False,  # noqa: B023
                     )
 
                 def tst_indices_index(
@@ -3912,7 +3915,9 @@ class ExchangeCalendarTestBase:
                     if not overlaps:
                         rtrn = get_index(closed, True)
                         expected = pd.IntervalIndex.from_arrays(
-                            left_index, right_index, closed
+                            left_index,  # noqa: B023
+                            right_index,  # noqa: B023
+                            closed,  # noqa: B023
                         )
                         pd.testing.assert_index_equal(expected, rtrn)
                     else:

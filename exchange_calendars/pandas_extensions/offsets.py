@@ -12,7 +12,6 @@ from pandas._libs.tslibs.offsets import apply_wraps
 
 
 class CompositeCustomBusinessDay(CustomBusinessDay):
-
     _prefix = "C"
     _attributes = tuple(
         [
@@ -246,7 +245,6 @@ def _get_calendar(weekmask, holidays, calendar):
 
 
 class MultipleWeekmaskCustomBusinessDay(CompositeCustomBusinessDay):
-
     _prefix = "C"
     _attributes = tuple(
         [

@@ -114,7 +114,7 @@ class Holiday(PandasHoliday):
                     offset = observance
 
                     def f(d):
-                        return d + offset
+                        return d + offset  # noqa:B023
 
                     observance = f
                 dates = dates.map(observance)

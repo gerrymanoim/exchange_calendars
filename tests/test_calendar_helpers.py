@@ -27,6 +27,9 @@ from .test_exchange_calendar import Answers
 
 # TODO tests for next_divider_idx, previous_divider_idx, compute_minutes (#15)
 
+ONE_MINUTE = pd.Timedelta(1, "min")
+ONE_DAY = pd.Timedelta(1, "D")
+
 
 def test_constants():
     # Just to make sure they aren't inadvertently changed
@@ -502,8 +505,8 @@ class TestTradingIndex:
     @st.composite
     def st_periods(
         draw,
-        minimum: pd.Timedelta = pd.Timedelta(1, "min"),
-        maximum: pd.Timedelta = pd.Timedelta(1, "D") - pd.Timedelta(1, "min"),
+        minimum: pd.Timedelta = ONE_MINUTE,
+        maximum: pd.Timedelta = ONE_DAY - ONE_MINUTE,
     ) -> st.SearchStrategy[pd.Timedelta]:
         """SearchStrategy for a period between a `minimum` and `maximum`."""
         period = draw(st.integers(minimum.seconds // 60, maximum.seconds // 60))

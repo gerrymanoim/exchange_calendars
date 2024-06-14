@@ -183,7 +183,13 @@ class TestXHKGCalendar(ExchangeCalendarTestBase):
             "2022-09-12"  # In 2019, the mid-autumn festival holiday was observed on the following business day.
         ]
 
-        yield lunar_2003 + lunar_2018 + lunar_2017 + typhoon_days + mid_autumn_festival_holidays
+        yield (
+            lunar_2003
+            + lunar_2018
+            + lunar_2017
+            + typhoon_days
+            + mid_autumn_festival_holidays
+        )
 
     @pytest.fixture
     def early_closes_sample(self):

@@ -38,12 +38,12 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "flake8",
     "hypothesis",
     "pytest",
     "pytest-benchmark",
     "pytest-xdist",
     "pip-tools",
+    "ruff",
 ]
 
 [project.scripts]
@@ -61,6 +61,13 @@ include = ["exchange_calendars", "exchange_calendars.*"]
 [tool.setuptools_scm]
 write_to = "exchange_calendars/_version.py"
 
-[tool.black]
+[tool.ruff]
+target-version = "py39"
 line-length = 88
-target-version = ['py39', 'py310', 'py311']
+src = ["etc", "exchange_calendars", "tests"]
+
+[tool.ruff.lint]
+# TODO - decide if we want sorted imports - "I" if so
+select = ["E", "F", "B"]
+fixable = ["ALL"]
+ignore = ["E501", "B019"]

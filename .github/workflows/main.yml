@@ -35,9 +35,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r etc/${{matrix.requirements_file}}
         pip install -e .
-    - name: Lint with flake8
-      run: |
-        flake8
     - name: Test with pytest
       run: |
         pytest tests -n auto --dist loadscope
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+    - uses: pre-commit/action@v3.0.0
