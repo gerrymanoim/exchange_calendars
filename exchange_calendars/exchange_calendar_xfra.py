@@ -102,7 +102,7 @@ class XFRAExchangeCalendar(ExchangeCalendar):
 
     name = "XFRA"
 
-    tz = ZoneInfo("CET")
+    tz = ZoneInfo("Europe/Berlin")
 
     open_times = ((None, time(9)),)
 
