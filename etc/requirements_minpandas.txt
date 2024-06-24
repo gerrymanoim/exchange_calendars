@@ -4,9 +4,9 @@
 #
 #    pip-compile --extra=dev --output-file=etc/requirements_minpandas.txt pyproject.toml
 #
-# To upgrade with pandas==1.5 fixed run:
+# To upgrade with pandas==1.5 and numpy==1.26.4 fixed run:
 #
-#    pip-compile --upgrade --upgrade-package pandas==1.5 --extra=dev --output-file=etc/requirements_minpandas.txt pyproject.toml
+#    pip-compile --upgrade --upgrade-package pandas==1.5 --upgrade-package numpy==1.26.4 --extra=dev --output-file=etc/requirements_minpandas.txt pyproject.toml
 
 attrs==23.2.0
     # via hypothesis
@@ -37,7 +37,7 @@ korean-lunar-calendar==0.3.1
     # via exchange_calendars (pyproject.toml)
 mccabe==0.7.0
     # via flake8
-numpy==2.0.0
+numpy==1.26.4
     # via
     #   exchange_calendars (pyproject.toml)
     #   pandas
