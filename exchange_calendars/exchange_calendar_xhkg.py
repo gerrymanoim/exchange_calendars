@@ -232,7 +232,9 @@ HKAdhocClosures = [
     #  on the Monday (2022-09-12). In the past they don't seem to have followed
     #  this pattern. We'll have to wait and see before we generalise this into a rule.
     pd.Timestamp("2022-09-12"),
-    pd.Timestamp("2023-07-17"),  # 8号台风泰利, 全天休市 https://www.hkex.com.hk/News/Market-Communications/2023/2307172news?sc_lang=en
+    pd.Timestamp(
+        "2023-07-17"
+    ),  # 8号台风泰利, 全天休市 https://www.hkex.com.hk/News/Market-Communications/2023/2307172news?sc_lang=en
 ]
 
 
@@ -359,7 +361,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
 
         qingming_festival = vectorized_sunday_to_monday(
             qingming_festival_dates,
-        ).values
+        ).values.copy()  # copy so that array is writeable
         years = qingming_festival.astype("M8[Y]")
         easter_monday = EasterMonday.dates(years[0], years[-1] + 1)
         # qingming gets observed one day later if easter monday is on the same
@@ -370,7 +372,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
         # conflicts with national day, then national day is observed on the
         # second, though we don't encode that in the regular holiday, so
         # instead we pretend that the mid autumn festival would be delayed.
-        mid_autumn_festival = day_after_mid_autumn_festival_dates.values
+        mid_autumn_festival = day_after_mid_autumn_festival_dates.values.copy()
         mid_autumn_festival[
             (day_after_mid_autumn_festival_dates.month == 10)
             & (day_after_mid_autumn_festival_dates.day == 1)
@@ -435,7 +437,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
     @property
     def special_closes_adhoc(self):
         lunar_new_years_eve = (chinese_lunar_new_year_dates - pd.Timedelta(days=1))[
-            np.in1d(
+            np.isin(
                 chinese_lunar_new_year_dates.weekday,
                 [TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],
             )

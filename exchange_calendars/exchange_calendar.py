@@ -357,11 +357,15 @@ class ExchangeCalendar(ABC):
         _special_opens = self._calculate_special_opens(start, end)
         _special_closes = self._calculate_special_closes(start, end)
 
-        # Overwrite the special opens and closes on top of the standard ones.
-        _overwrite_special_dates(_all_days, self._opens, _special_opens)
-        _overwrite_special_dates(_all_days, self._closes, _special_closes)
-        _remove_breaks_for_special_dates(_all_days, self._break_starts, _special_closes)
-        _remove_breaks_for_special_dates(_all_days, self._break_ends, _special_closes)
+        # Adjust for special opens and closes.
+        self._opens = _adjust_special_dates(_all_days, self._opens, _special_opens)
+        self._closes = _adjust_special_dates(_all_days, self._closes, _special_closes)
+        self._break_starts = _remove_breaks_for_special_dates(
+            _all_days, self._break_starts, _special_closes
+        )
+        self._break_ends = _remove_breaks_for_special_dates(
+            _all_days, self._break_ends, _special_closes
+        )
 
         break_starts = None if self._break_starts is None else self._break_starts
         break_ends = None if self._break_ends is None else self._break_ends
@@ -2869,18 +2873,18 @@ def scheduled_special_times(
     )
 
 
-def _overwrite_special_dates(
+def _adjust_special_dates(
     session_labels: pd.DatetimeIndex,
     standard_times: pd.DatetimeIndex,
     special_times: pd.Series,
-) -> None:
-    """Overwrite standard times of a session bound with special times.
+) -> pd.DatetimeIndex:
+    """Adjust standard times of a session bound with special times.
 
     `session_labels` required for alignment.
     """
     # Short circuit when nothing to apply.
     if special_times.empty:
-        return
+        return standard_times
 
     len_m, len_oc = len(session_labels), len(standard_times)
     if len_m != len_oc:
@@ -2900,21 +2904,19 @@ def _overwrite_special_dates(
         bad_dates = list(special_times[indexer == -1])
         raise ValueError(f"Special dates {bad_dates} are not sessions.")
 
-    # NOTE: This is a slightly dirty hack.  We're in-place overwriting the
-    # internal data of an Index, which is conceptually immutable.  Since we're
-    # maintaining sorting, this should be ok, but this is a good place to
-    # sanity check if things start going haywire with calendar computations.
-    standard_times.values[indexer] = special_times.values
+    srs = standard_times.to_series()
+    srs.iloc[indexer] = special_times
+    return pd.DatetimeIndex(srs)
 
 
 def _remove_breaks_for_special_dates(
     session_labels: pd.DatetimeIndex,
     standard_break_times: pd.DatetimeIndex | None,
     special_times: pd.Series,
-) -> None:
+) -> pd.DatetimeIndex | None:
     """Remove standard break times for sessions with special times."
 
-    Overwrites standard break times with NaT for sessions with speical
+    Replaces standard break times with NaT for sessions with speical
     times. Anticipated that `special_times` will be special times for
     'opens' or 'closes'.
 
@@ -2922,11 +2924,11 @@ def _remove_breaks_for_special_dates(
     """
     # Short circuit when we have no breaks
     if standard_break_times is None:
-        return
+        return None
 
     # Short circuit when nothing to apply.
     if special_times.empty:
-        return
+        return standard_break_times
 
     len_m, len_oc = len(session_labels), len(standard_break_times)
     if len_m != len_oc:
@@ -2946,8 +2948,6 @@ def _remove_breaks_for_special_dates(
         bad_dates = list(special_times[indexer == -1])
         raise ValueError(f"Special dates {bad_dates} are not trading days.")
 
-    # NOTE: This is a slightly dirty hack.  We're in-place overwriting the
-    # internal data of an Index, which is conceptually immutable.  Since we're
-    # maintaining sorting, this should be ok, but this is a good place to
-    # sanity check if things start going haywire with calendar computations.
-    standard_break_times.values[indexer] = NP_NAT
+    srs = standard_break_times.to_series()
+    srs.iloc[indexer] = np.nan
+    return pd.DatetimeIndex(srs)
