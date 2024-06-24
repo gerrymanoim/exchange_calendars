@@ -97,13 +97,7 @@ class XFRAExchangeCalendar(ExchangeCalendar):
     - Last working day before Dec. 31
     """
 
-    # TODO: verify the early close time
-    # regular_early_close = time(12, 30)
-    #
-    # Update: CBOE thinks 2pm
-    # https://www.cboe.com/about/hours/european-equities
-    # But still need official confirmation!
-    regular_early_close = time(14)
+    regular_early_close = time(14)  # https://www.cboe.com/about/hours/european-equities
 
     name = "XFRA"
 

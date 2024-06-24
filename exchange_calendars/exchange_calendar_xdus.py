@@ -64,7 +64,7 @@ LastWorkingDay = Holiday(
 
 class XDUSExchangeCalendar(ExchangeCalendar):
     """
-    Exchange calendar for the Dusseldorf Stock Exchange (XHAM).
+    Exchange calendar for the Dusseldorf Stock Exchange (XDUS).
     Compared to Frankfurt:
     - same holidays
     - earlier open, later close
