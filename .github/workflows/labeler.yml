@@ -8,6 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Label the PR
-      uses: gerrymanoim/pr-prefix-labeler@v3
+      uses: gerrymanoim/pr-prefix-labeler@3.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
