@@ -51,7 +51,7 @@ def test_is_date(one_min):
     assert not f(T("2021-11-01 23:59:00.999999"))
     assert not f(T("2021-11-02 12:00"))
 
-    tz = ZoneInfo("US/Eastern")
+    tz = ZoneInfo("America/New_York")
     minutes = [
         T("2021-11-02", tz=UTC),
         T("2021-11-02", tz=tz),
@@ -72,7 +72,7 @@ def test_is_utc():
 
     expected = T("2021-11-02 13:33", tz=UTC)
     assert f(T("2021-11-02 13:33")) == expected
-    assert f(T("2021-11-02 09:33", tz=ZoneInfo("US/Eastern"))) == expected
+    assert f(T("2021-11-02 09:33", tz=ZoneInfo("America/New_York"))) == expected
 
 
 @pytest.fixture
@@ -318,7 +318,7 @@ def test_parse_date(date_mult, param_name):
 
 
 def test_parse_date_errors(calendar, param_name, date_too_early, date_too_late):
-    dt = pd.Timestamp("2021-06-02", tz=ZoneInfo("US/Central"))
+    dt = pd.Timestamp("2021-06-02", tz=ZoneInfo("America/Chicago"))
     with pytest.raises(ValueError, match="a Date must be timezone naive"):
         m.parse_date(dt, param_name, raise_oob=False)
 
