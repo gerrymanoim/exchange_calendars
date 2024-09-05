@@ -185,7 +185,7 @@ class XNZEExchangeCalendar(ExchangeCalendar):
 
     name = "XNZE"
 
-    tz = ZoneInfo("NZ")
+    tz = ZoneInfo("Pacific/Auckland")
 
     open_times = ((None, time(10)),)
 

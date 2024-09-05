@@ -4,14 +4,13 @@
 #
 #    pip-compile --extra=dev --output-file=etc/requirements_minpandas.txt pyproject.toml
 #
-# To upgrade with pandas==1.5 fixed run:
+# To upgrade with pandas==1.5 and numpy==1.26.4 fixed run:
 #
-#    pip-compile --upgrade --upgrade-package pandas==1.5 --extra=dev --output-file=etc/requirements_minpandas.txt pyproject.toml
+#    pip-compile --upgrade --upgrade-package pandas==1.5 --upgrade-package numpy==1.26.4 --extra=dev --output-file=etc/requirements_minpandas.txt pyproject.toml
 
-#
 attrs==23.2.0
     # via hypothesis
-build==1.0.3
+build==1.2.1
     # via pip-tools
 click==8.1.7
     # via pip-tools
@@ -20,17 +19,17 @@ colorama==0.4.6
     #   build
     #   click
     #   pytest
-exceptiongroup==1.2.0
+exceptiongroup==1.2.1
     # via
     #   hypothesis
     #   pytest
-execnet==2.0.2
+execnet==2.1.1
     # via pytest-xdist
-flake8==7.0.0
+flake8==7.1.0
     # via exchange_calendars (pyproject.toml)
-hypothesis==6.98.6
+hypothesis==6.103.5
     # via exchange_calendars (pyproject.toml)
-importlib-metadata==7.0.1
+importlib-metadata==7.2.1
     # via build
 iniconfig==2.0.0
     # via pytest
@@ -42,36 +41,38 @@ numpy==1.26.4
     # via
     #   exchange_calendars (pyproject.toml)
     #   pandas
-packaging==23.2
+packaging==24.1
     # via
     #   build
     #   pytest
 pandas==1.5.0
     # via exchange_calendars (pyproject.toml)
-pip-tools==7.3.0
+pip-tools==7.4.1
     # via exchange_calendars (pyproject.toml)
-pluggy==1.4.0
+pluggy==1.5.0
     # via pytest
 py-cpuinfo==9.0.0
     # via pytest-benchmark
-pycodestyle==2.11.1
+pycodestyle==2.12.0
     # via flake8
 pyflakes==3.2.0
     # via flake8
 pyluach==2.2.0
     # via exchange_calendars (pyproject.toml)
-pyproject-hooks==1.0.0
-    # via build
-pytest==8.0.0
+pyproject-hooks==1.1.0
+    # via
+    #   build
+    #   pip-tools
+pytest==8.2.2
     # via
     #   exchange_calendars (pyproject.toml)
     #   pytest-benchmark
     #   pytest-xdist
 pytest-benchmark==4.0.0
     # via exchange_calendars (pyproject.toml)
-pytest-xdist==3.5.0
+pytest-xdist==3.6.1
     # via exchange_calendars (pyproject.toml)
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via pandas
 pytz==2024.1
     # via pandas
@@ -83,15 +84,14 @@ tomli==2.0.1
     # via
     #   build
     #   pip-tools
-    #   pyproject-hooks
     #   pytest
 toolz==0.12.1
     # via exchange_calendars (pyproject.toml)
 tzdata==2024.1
     # via exchange_calendars (pyproject.toml)
-wheel==0.42.0
+wheel==0.43.0
     # via pip-tools
-zipp==3.17.0
+zipp==3.19.2
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

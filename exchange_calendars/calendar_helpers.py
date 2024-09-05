@@ -484,8 +484,6 @@ class _TradingIndex:
         slce = slice(slice_start, slice_end)
 
         self.interval_nanos = period.value
-        self.dtype = np.int64 if self.interval_nanos < 3000000000 else np.int32
-
         self.closes = calendar.closes_nanos[slce]
 
         def align_opens(opens: pd.Series, align: pd.Timedelta) -> np.ndarray:
@@ -578,7 +576,7 @@ class _TradingIndex:
 
         # evaluate number of indices for each session
         num_intervals = (end_nanos - start_nanos) / self.interval_nanos
-        num_indices = np.ceil(num_intervals).astype("int")
+        num_indices = np.ceil(num_intervals).astype("int64")
 
         if force_close:
             if self.closed_right:
@@ -598,7 +596,7 @@ class _TradingIndex:
         start = 0 if self.closed_left else 1
         func = np.vectorize(lambda stop: np.arange(start, stop), otypes=[np.ndarray])
         stop = num_indices if self.closed_left else num_indices + 1
-        ranges = np.concatenate(func(stop), axis=0, dtype=self.dtype)
+        ranges = np.concatenate(func(stop), axis=0, dtype=np.int64)
 
         # evaluate index as nano array
         base = start_nanos.repeat(num_indices)

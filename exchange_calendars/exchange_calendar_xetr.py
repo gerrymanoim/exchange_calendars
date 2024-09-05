@@ -103,7 +103,7 @@ class XETRExchangeCalendar(ExchangeCalendar):
 
     name = "XETR"
 
-    tz = ZoneInfo("CET")
+    tz = ZoneInfo("Europe/Berlin")
 
     open_times = ((None, time(9)),)
 

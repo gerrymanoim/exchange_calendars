@@ -410,12 +410,13 @@ class XPHSExchangeCalendar(ExchangeCalendar):
             "2010-12-31",
         ]
 
-        return list(
-            chain(
+        return [
+            pd.Timestamp(d)
+            for d in chain(
                 misc_adhoc,
                 pre_2011_holidays,
                 ChineseNewYearAfter2011,
                 philippines_eid_al_adha,
                 philippines_eid_al_fitr,
             )
-        )
+        ]

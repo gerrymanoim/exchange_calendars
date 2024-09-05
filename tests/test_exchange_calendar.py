@@ -1364,7 +1364,7 @@ class Answers:
         for session, break_session in zip(sessions[mask], break_sessions[mask]):
             break_minutes = self.get_session_break_minutes(break_session)
             trading_minutes = self.get_session_minutes(session)[0]
-            bv = np.in1d(trading_minutes.time, break_minutes.time)
+            bv = np.isin(trading_minutes.time, break_minutes.time)
             minutes.append([trading_minutes[bv][-1], session, break_session])
         return minutes
 
@@ -2124,7 +2124,7 @@ class ExchangeCalendarTestBase:
 
         Notes
         -----
-        NB Any test that employs this fixture assumes the accuarcy of the
+        NB Any test that employs this fixture assumes the accuracy of the
         default calendar's `tz` property.
         """
         cal = default_calendar

@@ -217,7 +217,7 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
             ),
         ]
 
-    def _overwrite_special_offsets(
+    def _adjust_special_offsets(
         self,
         session_labels: pd.DatetimeIndex,
         standard_times: pd.DatetimeIndex | None,
@@ -229,7 +229,7 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
     ):
         # Short circuit when nothing to apply.
         if standard_times is None or not len(standard_times):
-            return
+            return standard_times
 
         len_m, len_oc = len(session_labels), len(standard_times)
         if len_m != len_oc:
@@ -271,13 +271,11 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
 
         # Short circuit when nothing to apply.
         if not len(special_opens_or_closes):
-            return
+            return standard_times
 
-        # NOTE: This is a slightly dirty hack.  We're in-place overwriting the
-        # internal data of an Index, which is conceptually immutable.  Since we're
-        # maintaining sorting, this should be ok, but this is a good place to
-        # sanity check if things start going haywire with calendar computations.
-        standard_times.values[indexer] = special_opens_or_closes.values
+        srs = standard_times.to_series()
+        srs.iloc[indexer] = special_opens_or_closes
+        return pd.DatetimeIndex(srs)
 
     def apply_special_offsets(
         self,
@@ -314,7 +312,7 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
             (t[3], t[-1]) for t in _special_offsets_adhoc if t[3] is not None
         ]
 
-        self._overwrite_special_offsets(
+        self._opens = self._adjust_special_offsets(
             session_labels,
             self._opens,
             _special_open_offsets,
@@ -322,7 +320,7 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
             start,
             end,
         )
-        self._overwrite_special_offsets(
+        self._break_starts = self._adjust_special_offsets(
             session_labels,
             self._break_starts,
             _special_break_start_offsets,
@@ -330,7 +328,7 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
             start,
             end,
         )
-        self._overwrite_special_offsets(
+        self._break_ends = self._adjust_special_offsets(
             session_labels,
             self._break_ends,
             _special_break_end_offsets,
@@ -338,7 +336,7 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
             start,
             end,
         )
-        self._overwrite_special_offsets(
+        self._closes = self._adjust_special_offsets(
             session_labels,
             self._closes,
             _special_close_offsets,
