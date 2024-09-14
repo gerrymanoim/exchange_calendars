@@ -135,6 +135,7 @@ _default_calendar_aliases = {
     "XNAS": "XNYS",
     "ARCX": "XNYS",
     "OOTC": "XNYS",
+    "XASE": "XNYS",
     "XTSX": "XTSE",
     "FWB": "XFRA",
     "LSE": "XLON",
