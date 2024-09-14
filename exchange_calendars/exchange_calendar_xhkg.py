@@ -232,9 +232,8 @@ HKAdhocClosures = [
     #  on the Monday (2022-09-12). In the past they don't seem to have followed
     #  this pattern. We'll have to wait and see before we generalise this into a rule.
     pd.Timestamp("2022-09-12"),
-    pd.Timestamp(
-        "2023-07-17"
-    ),  # 8号台风泰利, 全天休市 https://www.hkex.com.hk/News/Market-Communications/2023/2307172news?sc_lang=en
+    pd.Timestamp("2023-07-17"),  # 8号台风泰利, 全天休市
+    pd.Timestamp("2024-09-06"),  # 八號颱風，全天休市
 ]
 
 
