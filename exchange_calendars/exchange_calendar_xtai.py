@@ -16,7 +16,9 @@
 from __future__ import annotations
 
 import datetime
+from functools import partial
 from itertools import chain
+from typing import Callable
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -49,6 +51,12 @@ from .exchange_calendar import (
 ONE_DAY = datetime.timedelta(1)
 
 
+def check_after_2013(dt: datetime.datetime) -> bool:
+    return dt.year > 2013
+
+def check_between_2013_2024(dt: datetime.datetime) -> bool:
+    return 2024 > dt.year > 2013
+
 def before_chinese_new_year_offset(holidays):
     """
     For Holidays that come before Chinese New Year, we subtract a day
@@ -64,12 +72,21 @@ def chinese_new_year_offset(holidays):
     """
     return pd.to_datetime(holidays.map(lambda d: next_monday(d)))
 
+def tomb_within_children_day(dt:datetime.datetime) -> datetime.datetime:
+    dts = []
+    for d in dt:
+        if d.year > 2012 and d.month == 4 and d.day == 4:
+            if datetime.datetime(d.year, 4, 4).weekday() == THURSDAY:
+                dts.append(datetime.datetime(d.year, 4, 5))
+            else:
+                dts.append(datetime.datetime(d.year, 4, 3))
+    return pd.to_datetime(dts)
 
 def nearest_workday_after_2013(dt: datetime.datetime) -> datetime.datetime:
     """
     Nearest workday starting in 2014.
     """
-    return nearest_workday(dt) if dt.year > 2013 else dt
+    return nearest_workday(dt) if 2024 > dt.year > 2013 else dt
 
 
 def manual_nearest_workday(holidays):
@@ -86,11 +103,11 @@ def manual_extra_days(holidays):
     The four day weekend rule seem to start in 2007 for these holidays.
     """
     friday_extras = [
-        d + ONE_DAY for d in holidays if d.weekday() == THURSDAY and d.year > 2006
+        d + ONE_DAY for d in holidays if d.weekday() == THURSDAY and 2024 > d.year > 2006
     ]
 
     monday_extras = [
-        d - ONE_DAY for d in holidays if d.weekday() == TUESDAY and d.year > 2006
+        d - ONE_DAY for d in holidays if d.weekday() == TUESDAY and 2024 > d.year > 2006
     ]
 
     return pd.to_datetime(friday_extras + monday_extras)
@@ -111,7 +128,7 @@ def weekend_makeup(dt: datetime.datetime) -> datetime.datetime:
     return dt
 
 
-def bridge_mon(dt: datetime.datetime) -> datetime.datetime | None:
+def bridge_mon(dt: datetime.datetime, checker: Callable=check_after_2013) -> datetime.datetime | None:
     """Define Monday as holiday if Tuesday is a holiday.
 
     This function attempts to implement what seems to be the Taiwan holiday
@@ -123,10 +140,11 @@ def bridge_mon(dt: datetime.datetime) -> datetime.datetime | None:
     to bridge the weekend and the official holiday.
     """
     dt -= ONE_DAY
-    return dt if (dt.weekday() == MONDAY and dt.year > 2013) else None
+    
+    return dt if (dt.weekday() == MONDAY and checker(dt)) else None
 
 
-def bridge_fri(dt: datetime.datetime) -> datetime.datetime | None:
+def bridge_fri(dt: datetime.datetime, checker: Callable=check_after_2013) -> datetime.datetime | None:
     """Define Friday as holiday if Thursday is a holiday.
 
     This function attempts to implement what seems to be the Taiwan holiday
@@ -138,22 +156,24 @@ def bridge_fri(dt: datetime.datetime) -> datetime.datetime | None:
     to bridge the weekend and the official holiday.
     """
     dt += ONE_DAY
-    return dt if (dt.weekday() == FRIDAY and dt.year > 2013) else None
+    return dt if (dt.weekday() == FRIDAY and checker(dt)) else None
 
 
 NewYearsDay = new_years_day(observance=weekend_makeup)
 NewYearsDayExtraMon = new_years_day(observance=bridge_mon)
 NewYearsDayExtraFri = new_years_day(observance=bridge_fri)
 
+partial_bridge_mon = partial(bridge_mon, checker=check_between_2013_2024)
+partial_bridge_fri = partial(bridge_fri, checker=check_between_2013_2024)
 
 PeaceMemorialDay = Holiday(
     "Peace Memorial Day", month=2, day=28, observance=weekend_makeup
 )
 PeaceMemorialDayExtraMon = Holiday(
-    "Peace Memorial Day extra Monday", month=2, day=28, observance=bridge_mon
+    "Peace Memorial Day extra Monday", month=2, day=28, observance=partial_bridge_mon
 )
 PeaceMemorialDayExtraFri = Holiday(
-    "Peace Memorial Day extra Friday", month=2, day=28, observance=bridge_fri
+    "Peace Memorial Day extra Friday", month=2, day=28, observance=partial_bridge_fri
 )
 
 
@@ -169,14 +189,14 @@ WomenAndChildrensDayExtraMon = Holiday(
     month=4,
     day=4,
     start_date="2011",
-    observance=bridge_mon,
+    observance=partial_bridge_mon,
 )
 WomenAndChildrensDayExtraFri = Holiday(
     "Women and Children's Day extra Friday",
     month=4,
     day=4,
     start_date="2011",
-    observance=bridge_fri,
+    observance=partial_bridge_fri,
 )
 
 
@@ -192,13 +212,13 @@ NationalDayExtraMon = Holiday(
     "National Day of the Republic of China extra Monday",
     month=10,
     day=10,
-    observance=bridge_mon,
+    observance=partial_bridge_mon,
 )
 NationalDayExtraFri = Holiday(
     "National Day of the Republic of China extra Friday",
     month=10,
     day=10,
-    observance=bridge_fri,
+    observance=partial_bridge_fri,
 )
 
 
@@ -222,7 +242,7 @@ chinese_new_year_3 = chinese_new_year_offset(
 
 tomb_sweeping_day = manual_nearest_workday(qingming_festival_dates)
 
-tomb_sweeping_day_extras = manual_extra_days(tomb_sweeping_day)
+tomb_sweeping_day_extras = tomb_within_children_day(qingming_festival_dates)
 
 dragon_boat_festival = manual_nearest_workday(dragon_boat_festival_dates)
 
@@ -285,6 +305,8 @@ extra_holidays = pd.to_datetime(
         "2009-01-02",  # New Year's Day
         "2006-10-09",  # National Day
         "2005-09-01",  # Bank Holiday
+        "2018-04-06",  # Tomb Sweeping Day
+        "2007-04-06",  # Tomb Sweeping Day
     ]
 )
 

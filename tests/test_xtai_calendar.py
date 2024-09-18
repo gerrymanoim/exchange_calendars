@@ -64,4 +64,6 @@ class TestXTAICalendar(ExchangeCalendarTestBase):
             "2015-06-22",  # Dragon Boat Festival on Saturday, Jun 20th.
             "2015-09-25",  # Mid-Autumn Festival on Sunday, Sep 27th.
             "2015-10-12",  # National Day on Saturday, Oct 10th.
+            "2024-09-16",  # Mid-Autumn Festival on Tuesday, Sep 17th.
+            "2024-10-11",  # National Day on Thursday, Oct 10th.
         ]
