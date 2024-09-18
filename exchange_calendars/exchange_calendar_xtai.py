@@ -147,6 +147,7 @@ def bridge_mon(dt: datetime.datetime, checker: Callable = check_after_2013) -> d
     
     return dt if (dt.weekday() == MONDAY and checker(dt)) else None
 
+
 def bridge_fri(dt: datetime.datetime, checker: Callable = check_after_2013) -> datetime.datetime | None:
     """Define Friday as holiday if Thursday is a holiday.
 
