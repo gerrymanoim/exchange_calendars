@@ -54,8 +54,10 @@ ONE_DAY = datetime.timedelta(1)
 def check_after_2013(dt: datetime.datetime) -> bool:
     return dt.year > 2013
 
+
 def check_between_2013_2024(dt: datetime.datetime) -> bool:
     return 2024 > dt.year > 2013
+
 
 def before_chinese_new_year_offset(holidays):
     """
@@ -72,7 +74,8 @@ def chinese_new_year_offset(holidays):
     """
     return pd.to_datetime(holidays.map(lambda d: next_monday(d)))
 
-def tomb_within_children_day(dt:datetime.datetime) -> datetime.datetime:
+
+def tomb_within_children_day(dt: datetime.datetime) -> datetime.datetime:
     dts = []
     for d in dt:
         if d.year > 2012 and d.month == 4 and d.day == 4:
@@ -81,6 +84,7 @@ def tomb_within_children_day(dt:datetime.datetime) -> datetime.datetime:
             else:
                 dts.append(datetime.datetime(d.year, 4, 3))
     return pd.to_datetime(dts)
+
 
 def nearest_workday_after_2013(dt: datetime.datetime) -> datetime.datetime:
     """
@@ -128,7 +132,7 @@ def weekend_makeup(dt: datetime.datetime) -> datetime.datetime:
     return dt
 
 
-def bridge_mon(dt: datetime.datetime, checker: Callable=check_after_2013) -> datetime.datetime | None:
+def bridge_mon(dt: datetime.datetime, checker: Callable = check_after_2013) -> datetime.datetime | None:
     """Define Monday as holiday if Tuesday is a holiday.
 
     This function attempts to implement what seems to be the Taiwan holiday
@@ -143,8 +147,7 @@ def bridge_mon(dt: datetime.datetime, checker: Callable=check_after_2013) -> dat
     
     return dt if (dt.weekday() == MONDAY and checker(dt)) else None
 
-
-def bridge_fri(dt: datetime.datetime, checker: Callable=check_after_2013) -> datetime.datetime | None:
+def bridge_fri(dt: datetime.datetime, checker: Callable = check_after_2013) -> datetime.datetime | None:
     """Define Friday as holiday if Thursday is a holiday.
 
     This function attempts to implement what seems to be the Taiwan holiday
