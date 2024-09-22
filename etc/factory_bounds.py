@@ -9,8 +9,6 @@ raised when dates are passed beyond these limits.
 Module retained in case might be useful.
 """
 
-from __future__ import annotations
-
 import abc
 import dataclasses
 import pathlib

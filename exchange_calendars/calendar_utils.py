@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from typing import Literal
 
 from .calendar_helpers import parse_date, Date

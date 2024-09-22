@@ -1,7 +1,5 @@
 """Tests for calendar_helpers module."""
 
-from __future__ import annotations
-
 from collections import abc
 import datetime
 from datetime import time
