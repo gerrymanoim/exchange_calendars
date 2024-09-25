@@ -38,14 +38,14 @@ class Holiday(PandasHoliday):
     ):
         super().__init__(
             name,
-            year,
-            month,
-            day,
-            None,
-            None,
-            start_date,
-            end_date,
-            days_of_week,
+            year=year,
+            month=month,
+            day=day,
+            offset=None,
+            observance=None,
+            start_date=start_date,
+            end_date=end_date,
+            days_of_week=days_of_week,
         )
         self.offset = offset
         self.observance = observance
