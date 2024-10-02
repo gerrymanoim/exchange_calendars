@@ -94,7 +94,7 @@ def update_dupmed_precomputed_krx_holidays():
     )
     with open(xkrx_holidays_py, "r") as f:
         lines = [line for line in f]
-    start_line = "dumped_precomputed_krx_holidays = pd.to_datetime("
+    start_line = "dumped_precomputed_krx_holidays = pd.DatetimeIndex("
     end_line = ")"
     start_line_index = 0
     end_line_index = 0
