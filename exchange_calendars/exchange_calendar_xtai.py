@@ -340,6 +340,8 @@ extra_holidays = pd.to_datetime(
 
 typhoons = pd.to_datetime(
     [
+        "2024-10-03",
+        "2024-10-02",
         "2024-07-25",
         "2024-07-24",
         "2019-09-30",
