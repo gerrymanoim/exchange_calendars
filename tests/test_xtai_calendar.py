@@ -66,4 +66,5 @@ class TestXTAICalendar(ExchangeCalendarTestBase):
             "2015-10-12",  # National Day on Saturday, Oct 10th.
             "2024-09-16",  # Mid-Autumn Festival on Tuesday, Sep 17th.
             "2024-10-11",  # National Day on Thursday, Oct 10th.
+            "2030-09-13",  # Mid-Autumn Festival on Thursday, Sep 12th.
         ]
