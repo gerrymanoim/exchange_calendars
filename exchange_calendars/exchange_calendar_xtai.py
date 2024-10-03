@@ -63,7 +63,7 @@ def check_between_2013_2024(dt: datetime.datetime) -> bool:
     """
     This function attempts to implement what seems to be the Taiwan holiday
     observance rule since 2024.
-"""
+    """
     return 2024 > dt.year > 2013
 
 
