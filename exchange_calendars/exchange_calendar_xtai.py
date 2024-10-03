@@ -15,7 +15,9 @@
 
 
 import datetime
+from functools import partial
 from itertools import chain
+from typing import Callable
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -48,6 +50,22 @@ from .exchange_calendar import (
 ONE_DAY = datetime.timedelta(1)
 
 
+def check_after_2013(dt: datetime.datetime) -> bool:
+    """
+    This function attempts to implement what seems to be the Taiwan holiday
+    observance rule since 2013.
+    """
+    return dt.year > 2013
+
+
+def check_between_2013_2024(dt: datetime.datetime) -> bool:
+    """
+    This function attempts to implement what seems to be the Taiwan holiday
+    observance rule since 2024.
+    """
+    return 2024 > dt.year > 2013
+
+
 def before_chinese_new_year_offset(holidays):
     """
     For Holidays that come before Chinese New Year, we subtract a day
@@ -64,11 +82,26 @@ def chinese_new_year_offset(holidays):
     return pd.to_datetime(holidays.map(lambda d: next_monday(d)))
 
 
+def evalute_tomb_sweeping_extra_days(dt: pd.DatetimeIndex) -> pd.DatetimeIndex:
+    """
+    According to the Taiwan Implementation Measures for Memorial Days and Holidays 1.5.2.1
+    https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=D0020033
+    """
+    dts = []
+    for d in dt:
+        if d.year > 2012 and d.month == 4 and d.day == 4:
+            if datetime.datetime(d.year, 4, 4).weekday() == THURSDAY:
+                dts.append(datetime.datetime(d.year, 4, 5))
+            else:
+                dts.append(datetime.datetime(d.year, 4, 3))
+    return pd.to_datetime(dts)
+
+
 def nearest_workday_after_2013(dt: datetime.datetime) -> datetime.datetime:
     """
     Nearest workday starting in 2014.
     """
-    return nearest_workday(dt) if dt.year > 2013 else dt
+    return nearest_workday(dt) if 2024 > dt.year > 2013 else dt
 
 
 def manual_nearest_workday(holidays):
@@ -79,17 +112,17 @@ def manual_nearest_workday(holidays):
     return pd.to_datetime(holidays.map(lambda d: nearest_workday_after_2013(d)))
 
 
-def manual_extra_days(holidays):
+def manual_extra_days_07_thr_2023(holidays):
     """
     Four day weekend makeup days for Chinese lunar calendar holidays.
     The four day weekend rule seem to start in 2007 for these holidays.
     """
     friday_extras = [
-        d + ONE_DAY for d in holidays if d.weekday() == THURSDAY and d.year > 2006
+        d + ONE_DAY for d in holidays if d.weekday() == THURSDAY and 2024 > d.year > 2006
     ]
 
     monday_extras = [
-        d - ONE_DAY for d in holidays if d.weekday() == TUESDAY and d.year > 2006
+        d - ONE_DAY for d in holidays if d.weekday() == TUESDAY and 2024 > d.year > 2006
     ]
 
     return pd.to_datetime(friday_extras + monday_extras)
@@ -110,11 +143,13 @@ def weekend_makeup(dt: datetime.datetime) -> datetime.datetime:
     return dt
 
 
-def bridge_mon(dt: datetime.datetime) -> datetime.datetime | None:
+def bridge_mon(dt: datetime.datetime, checker: Callable = check_after_2013) -> datetime.datetime | None:
     """Define Monday as holiday if Tuesday is a holiday.
 
-    This function attempts to implement what seems to be the Taiwan holiday
-    observance rule since 2013.
+    Parameters:
+        dt: datetime.datetime, datetime to bridge
+        checker: A callable that takes a datetime.datetime and returns a bool, to implement what seems to be the Taiwan holiday
+    observance rule 
 
     Notes
     -----
@@ -122,14 +157,17 @@ def bridge_mon(dt: datetime.datetime) -> datetime.datetime | None:
     to bridge the weekend and the official holiday.
     """
     dt -= ONE_DAY
-    return dt if (dt.weekday() == MONDAY and dt.year > 2013) else None
+    
+    return dt if (dt.weekday() == MONDAY and checker(dt)) else None
 
 
-def bridge_fri(dt: datetime.datetime) -> datetime.datetime | None:
+def bridge_fri(dt: datetime.datetime, checker: Callable = check_after_2013) -> datetime.datetime | None:
     """Define Friday as holiday if Thursday is a holiday.
 
-    This function attempts to implement what seems to be the Taiwan holiday
-    observance rule since 2013.
+    Parameters:
+        dt: datetime.datetime, datetime to bridge
+        checker: A callable that takes a datetime.datetime and returns a bool, to implement what seems to be the Taiwan holiday
+    observance rule 
 
     Notes
     -----
@@ -137,7 +175,7 @@ def bridge_fri(dt: datetime.datetime) -> datetime.datetime | None:
     to bridge the weekend and the official holiday.
     """
     dt += ONE_DAY
-    return dt if (dt.weekday() == FRIDAY and dt.year > 2013) else None
+    return dt if (dt.weekday() == FRIDAY and checker(dt)) else None
 
 
 NewYearsDay = new_years_day(observance=weekend_makeup)
@@ -145,14 +183,24 @@ NewYearsDayExtraMon = new_years_day(observance=bridge_mon)
 NewYearsDayExtraFri = new_years_day(observance=bridge_fri)
 
 
+"""
+Since 2024: 
+    https://www.dgpa.gov.tw/information?uid=82&pid=11398 Section 2
+    https://news.pts.org.tw/article/638479
+    Starting from 2024, the "anniversaries and holidays that should be taken off" will be adjusted to "the day before New Year's Eve" and "Children's Day and National Tomb Sweeping Day";
+"""
+bridge_mon_2014_thr_2023 = partial(bridge_mon, checker=check_between_2013_2024)
+bridge_fri_2014_thr_2023 = partial(bridge_fri, checker=check_between_2013_2024)
+
+
 PeaceMemorialDay = Holiday(
     "Peace Memorial Day", month=2, day=28, observance=weekend_makeup
 )
 PeaceMemorialDayExtraMon = Holiday(
-    "Peace Memorial Day extra Monday", month=2, day=28, observance=bridge_mon
+    "Peace Memorial Day extra Monday", month=2, day=28, observance=bridge_mon_2014_thr_2023
 )
 PeaceMemorialDayExtraFri = Holiday(
-    "Peace Memorial Day extra Friday", month=2, day=28, observance=bridge_fri
+    "Peace Memorial Day extra Friday", month=2, day=28, observance=bridge_fri_2014_thr_2023
 )
 
 
@@ -168,14 +216,14 @@ WomenAndChildrensDayExtraMon = Holiday(
     month=4,
     day=4,
     start_date="2011",
-    observance=bridge_mon,
+    observance=bridge_mon_2014_thr_2023,
 )
 WomenAndChildrensDayExtraFri = Holiday(
     "Women and Children's Day extra Friday",
     month=4,
     day=4,
     start_date="2011",
-    observance=bridge_fri,
+    observance=bridge_fri_2014_thr_2023,
 )
 
 
@@ -191,13 +239,13 @@ NationalDayExtraMon = Holiday(
     "National Day of the Republic of China extra Monday",
     month=10,
     day=10,
-    observance=bridge_mon,
+    observance=bridge_mon_2014_thr_2023,
 )
 NationalDayExtraFri = Holiday(
     "National Day of the Republic of China extra Friday",
     month=10,
     day=10,
-    observance=bridge_fri,
+    observance=bridge_fri_2014_thr_2023,
 )
 
 
@@ -221,17 +269,17 @@ chinese_new_year_3 = chinese_new_year_offset(
 
 tomb_sweeping_day = manual_nearest_workday(qingming_festival_dates)
 
-tomb_sweeping_day_extras = manual_extra_days(tomb_sweeping_day)
+tomb_sweeping_day_extras = evalute_tomb_sweeping_extra_days(qingming_festival_dates)
 
 dragon_boat_festival = manual_nearest_workday(dragon_boat_festival_dates)
 
-dragon_boat_festival_extras = manual_extra_days(dragon_boat_festival)
+dragon_boat_festival_extras = manual_extra_days_07_thr_2023(dragon_boat_festival)
 
 mid_autumn_festival = manual_nearest_workday(
     mid_autumn_festival_dates,
 )
 
-mid_autumn_festival_extras = manual_extra_days(mid_autumn_festival)
+mid_autumn_festival_extras = manual_extra_days_07_thr_2023(mid_autumn_festival)
 
 # Taiwan takes multiple days off before and after chinese new year,
 # and sometimes it is unclear precisely which days will be holidays.
@@ -284,11 +332,15 @@ extra_holidays = pd.to_datetime(
         "2009-01-02",  # New Year's Day
         "2006-10-09",  # National Day
         "2005-09-01",  # Bank Holiday
+        "2018-04-06",  # Tomb Sweeping Day, https://www.dgpa.gov.tw/information?uid=41&pid=7488
+        "2007-04-06",  # Tomb Sweeping Day, http://www.tta.tp.edu.tw/1_news/detail.asp?titleid=1721
     ]
 )
 
 typhoons = pd.to_datetime(
     [
+        "2024-10-03",
+        "2024-10-02",
         "2024-07-25",
         "2024-07-24",
         "2019-09-30",
