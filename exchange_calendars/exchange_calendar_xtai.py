@@ -150,7 +150,7 @@ def bridge_mon(dt: datetime.datetime, checker: Callable = check_after_2013) -> d
     Parameters:
         dt: datetime.datetime, datetime to bridge
         checker: A callable that takes a datetime.datetime and returns a bool, to implement what seems to be the Taiwan holiday
-    observance rule 
+    observance rule
 
     Notes
     -----
@@ -158,7 +158,7 @@ def bridge_mon(dt: datetime.datetime, checker: Callable = check_after_2013) -> d
     to bridge the weekend and the official holiday.
     """
     dt -= ONE_DAY
-    
+
     return dt if (dt.weekday() == MONDAY and checker(dt)) else None
 
 
@@ -168,7 +168,7 @@ def bridge_fri(dt: datetime.datetime, checker: Callable = check_after_2013) -> d
     Parameters:
         dt: datetime.datetime, datetime to bridge
         checker: A callable that takes a datetime.datetime and returns a bool, to implement what seems to be the Taiwan holiday
-    observance rule 
+    observance rule
 
     Notes
     -----
@@ -185,7 +185,7 @@ NewYearsDayExtraFri = new_years_day(observance=bridge_fri)
 
 
 """
-Since 2024: 
+Since 2024:
     https://www.dgpa.gov.tw/information?uid=82&pid=11398 Section 2
     https://news.pts.org.tw/article/638479
     Starting from 2024, the "anniversaries and holidays that should be taken off" will be adjusted to "the day before New Year's Eve" and "Children's Day and National Tomb Sweeping Day";
