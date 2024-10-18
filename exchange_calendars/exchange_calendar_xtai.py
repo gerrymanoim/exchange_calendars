@@ -20,7 +20,6 @@ from functools import partial
 from itertools import chain
 from typing import Callable
 from zoneinfo import ZoneInfo
-
 import pandas as pd
 from pandas.tseries.holiday import (
     Holiday,
@@ -30,23 +29,22 @@ from pandas.tseries.holiday import (
 )
 
 from .common_holidays import european_labour_day, new_years_day
+from .exchange_calendar import (
+    FRIDAY,
+    MONDAY,
+    SATURDAY,
+    SUNDAY,
+    THURSDAY,
+    TUESDAY,
+    ExchangeCalendar,
+    HolidayCalendar,
+)
 from .lunisolar_holidays import (
     chinese_lunar_new_year_dates,
     dragon_boat_festival_dates,
     mid_autumn_festival_dates,
     qingming_festival_dates,
 )
-from .exchange_calendar import (
-    MONDAY,
-    TUESDAY,
-    THURSDAY,
-    FRIDAY,
-    SATURDAY,
-    SUNDAY,
-    HolidayCalendar,
-    ExchangeCalendar,
-)
-
 
 ONE_DAY = datetime.timedelta(1)
 
@@ -83,7 +81,7 @@ def chinese_new_year_offset(holidays):
     return pd.to_datetime(holidays.map(lambda d: next_monday(d)))
 
 
-def evalute_tomb_sweeping_extra_days(dt: pd.DatetimeIndex) -> pd.DatetimeIndex:
+def evalute_tomb_sweeping_workday_extra(dt: pd.DatetimeIndex) -> pd.DatetimeIndex:
     """
     According to the Taiwan Implementation Measures for Memorial Days and Holidays 1.5.2.1
     https://law.moj.gov.tw/LawClass/LawAll.aspx?pcode=D0020033
@@ -98,19 +96,19 @@ def evalute_tomb_sweeping_extra_days(dt: pd.DatetimeIndex) -> pd.DatetimeIndex:
     return pd.to_datetime(dts)
 
 
-def nearest_workday_after_2013(dt: datetime.datetime) -> datetime.datetime:
+def nearest_workday_2013_thr_2023(dt: datetime.datetime) -> datetime.datetime:
     """
     Nearest workday starting in 2014.
     """
     return nearest_workday(dt) if 2024 > dt.year > 2013 else dt
 
 
-def manual_nearest_workday(holidays):
+def manual_nearest_workday_2013_thr_2023(holidays):
     """
     Nearest workday observance rule for Chinese lunar calendar holidays.
     The nearest workday rule seems to start in 2014 for these holidays.
     """
-    return pd.to_datetime(holidays.map(lambda d: nearest_workday_after_2013(d)))
+    return pd.to_datetime(holidays.map(lambda d: nearest_workday_2013_thr_2023(d)))
 
 
 def manual_extra_days_07_thr_2023(holidays):
@@ -142,6 +140,15 @@ def weekend_makeup(dt: datetime.datetime) -> datetime.datetime:
     elif dt.weekday() == SATURDAY:
         dt -= ONE_DAY
     return dt
+
+
+def holidays_weekend_makeup(holidays: pd.DatetimeIndex) -> pd.DatetimeIndex:
+    """
+    Four day weekend makeup days for Chinese lunar calendar holidays.
+    The four day weekend rule seem to start in 2007 for these holidays.
+    """
+    
+    return pd.to_datetime([weekend_makeup(d) for d in holidays])
 
 
 def bridge_mon(dt: datetime.datetime, checker: Callable = check_after_2013) -> datetime.datetime | None:
@@ -228,7 +235,7 @@ WomenAndChildrensDayExtraFri = Holiday(
 )
 
 
-LabourDay = european_labour_day(observance=nearest_workday_after_2013)
+LabourDay = european_labour_day(observance=nearest_workday_2013_thr_2023)
 
 NationalDay = Holiday(
     "National Day of the Republic of China",
@@ -268,19 +275,23 @@ chinese_new_year_3 = chinese_new_year_offset(
     chinese_new_year_2 + ONE_DAY,
 )
 
-tomb_sweeping_day = manual_nearest_workday(qingming_festival_dates)
+tomb_sweeping_day = manual_nearest_workday_2013_thr_2023(qingming_festival_dates)
 
-tomb_sweeping_day_extras = evalute_tomb_sweeping_extra_days(qingming_festival_dates)
+tomb_sweeping_day_workday_extras = evalute_tomb_sweeping_workday_extra(qingming_festival_dates)
 
-dragon_boat_festival = manual_nearest_workday(dragon_boat_festival_dates)
+tomb_sweeping_day_weekend_extras = holidays_weekend_makeup(qingming_festival_dates)
 
-dragon_boat_festival_extras = manual_extra_days_07_thr_2023(dragon_boat_festival)
+dragon_boat_festival = manual_nearest_workday_2013_thr_2023(dragon_boat_festival_dates)
 
-mid_autumn_festival = manual_nearest_workday(
+dragon_boat_festival_workday_extras = manual_extra_days_07_thr_2023(dragon_boat_festival)
+dragon_boat_festival_weekend_extras = holidays_weekend_makeup(dragon_boat_festival_dates)
+
+mid_autumn_festival = manual_nearest_workday_2013_thr_2023(
     mid_autumn_festival_dates,
 )
 
-mid_autumn_festival_extras = manual_extra_days_07_thr_2023(mid_autumn_festival)
+mid_autumn_festival_workday_extras = manual_extra_days_07_thr_2023(mid_autumn_festival)
+mid_autumn_festival_weekend_extras = holidays_weekend_makeup(mid_autumn_festival_dates)
 
 # Taiwan takes multiple days off before and after chinese new year,
 # and sometimes it is unclear precisely which days will be holidays.
@@ -433,10 +444,13 @@ class XTAIExchangeCalendar(ExchangeCalendar):
                 chinese_new_year_3,
                 chinese_new_year_extras,
                 tomb_sweeping_day,
-                tomb_sweeping_day_extras,
+                tomb_sweeping_day_workday_extras,
+                tomb_sweeping_day_weekend_extras,
                 dragon_boat_festival,
-                dragon_boat_festival_extras,
+                dragon_boat_festival_workday_extras,
+                dragon_boat_festival_weekend_extras,
                 mid_autumn_festival,
-                mid_autumn_festival_extras,
+                mid_autumn_festival_workday_extras,
+                mid_autumn_festival_weekend_extras,
             )
         )
