@@ -10,7 +10,7 @@
 
 attrs==24.2.0
     # via hypothesis
-build==1.2.2
+build==1.2.2.post1
     # via pip-tools
 click==8.1.7
     # via pip-tools
@@ -27,7 +27,7 @@ execnet==2.1.1
     # via pytest-xdist
 flake8==7.1.1
     # via exchange_calendars (pyproject.toml)
-hypothesis==6.112.1
+hypothesis==6.115.3
     # via exchange_calendars (pyproject.toml)
 iniconfig==2.0.0
     # via pytest
@@ -57,7 +57,7 @@ pyflakes==3.2.0
     # via flake8
 pyluach==2.2.0
     # via exchange_calendars (pyproject.toml)
-pyproject-hooks==1.1.0
+pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
@@ -78,14 +78,14 @@ six==1.16.0
     # via python-dateutil
 sortedcontainers==2.4.0
     # via hypothesis
-tomli==2.0.1
+tomli==2.0.2
     # via
     #   build
     #   pip-tools
     #   pytest
-toolz==0.12.1
+toolz==1.0.0
     # via exchange_calendars (pyproject.toml)
-tzdata==2024.1
+tzdata==2024.2
     # via exchange_calendars (pyproject.toml)
 wheel==0.44.0
     # via pip-tools
