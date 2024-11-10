@@ -1,4 +1,4 @@
-# [Choice] Python version: 3, 3.8, 3.7, 3.6
+# [Choice] Python version: 3, 3.10, 3.11, 3.12
 ARG VARIANT=3
 FROM mcr.microsoft.com/vscode/devcontainers/python:${VARIANT}
 
@@ -8,9 +8,9 @@ ARG NODE_VERSION="lts/*"
 RUN if [ "${INSTALL_NODE}" = "true" ]; then su vscode -c "source /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
 # [Optional] If your pip requirements rarely change, uncomment this section to add them to the image.
-COPY etc/requirements_locked.txt /tmp/pip-tmp/
+COPY etc/requirements_dev.txt /tmp/pip-tmp/
 RUN pip3 --disable-pip-version-check --no-cache-dir install ipython \
-   && pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements_locked.txt \
+   && pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements_dev.txt \
    && rm -rf /tmp/pip-tmp
 
 # [Optional] Uncomment this section to install additional OS packages.
