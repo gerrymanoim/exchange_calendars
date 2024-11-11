@@ -85,7 +85,7 @@ class XTKSExchangeCalendar(ExchangeCalendar):
     open_times = ((None, time(9)),)
     break_start_times = ((None, time(11, 30)),)
     break_end_times = ((None, time(12, 30)),)
-    close_times = ((None, time(15, 30)),)
+    close_times = ((None, time(15)), (pd.Timestamp("2024-11-05"), time(15, 30)))
 
     @classmethod
     def bound_min(cls) -> pd.Timestamp:
