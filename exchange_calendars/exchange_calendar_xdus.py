@@ -94,7 +94,7 @@ class XDUSExchangeCalendar(ExchangeCalendar):
 
     name = "XDUS"
 
-    tz = ZoneInfo("CET")
+    tz = ZoneInfo("Europe/Brussels")
 
     open_times = ((None, time(8)),)
 

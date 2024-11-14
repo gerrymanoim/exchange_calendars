@@ -94,7 +94,7 @@ class XHAMExchangeCalendar(ExchangeCalendar):
 
     name = "XHAM"
 
-    tz = ZoneInfo("CET")
+    tz = ZoneInfo("Europe/Brussels")
 
     open_times = ((None, time(8)),)
 
