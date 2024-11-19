@@ -249,7 +249,7 @@ class TestXTKSCalendar(ExchangeCalendarTestBase):
             "2025-10-13",  # Sports Day
             "2025-11-03",  # Culture Day
             "2025-11-23",  # Labor Thanksgiving Day
-            "2025-11-24",  # Labor Thanksgiving Day observed 
+            "2025-11-24",  # Labor Thanksgiving Day observed
             "2025-12-31",  # Market Holiday
             # Mountain Day 11th August, observed from 2016.
             "2016-08-11",
