@@ -227,6 +227,30 @@ class TestXTKSCalendar(ExchangeCalendarTestBase):
             "2024-11-04",  # Culture Day observed
             "2024-11-23",  # Labor Thanksgiving Day
             "2024-12-31",  # Market Holiday
+            #
+            # 2025
+            "2025-01-01",  # New Year's Day
+            "2025-01-02",  # Market Holiday
+            "2025-01-03",  # Market Holiday
+            "2025-01-13",  # Coming of Age Day
+            "2025-02-11",  # National Foundation Day
+            "2025-02-23",  # Emperor's Birthday
+            "2025-02-24",  # Emperor's Birthday observed
+            "2025-03-20",  # Vernal Equinox
+            "2025-04-29",  # Showa Day
+            "2025-05-03",  # Constitution Memorial Day
+            "2025-05-04",  # Greenery Day
+            "2025-05-05",  # Children's Day
+            "2025-05-06",  # Greenery Day observed
+            "2025-07-21",  # Marine Day
+            "2025-08-11",  # Mountain Day
+            "2025-09-15",  # Respect for the Aged Day
+            "2025-09-23",  # Autumnal Equinox
+            "2025-10-13",  # Sports Day
+            "2025-11-03",  # Culture Day
+            "2025-11-23",  # Labor Thanksgiving Day
+            "2025-11-24",  # Labor Thanksgiving Day observed 
+            "2025-12-31",  # Market Holiday
             # Mountain Day 11th August, observed from 2016.
             "2016-08-11",
             "2019-08-12",  # Falls on Sunday, made up on Monday.
