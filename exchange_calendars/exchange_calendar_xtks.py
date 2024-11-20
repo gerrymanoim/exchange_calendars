@@ -53,7 +53,7 @@ class XTKSExchangeCalendar(ExchangeCalendar):
 
     First session: 9:00am - 11:30am
     Lunch Break: 11:30am - 12:30pm
-    Second session: 12:30pm - 3:00pm
+    Second session: 12:30pm - 3:30pm
 
     Regularly-Observed Holidays (see xtks_holidays.py for more info):
     - New Year's Holidays (Dec. 31 - Jan. 3)
@@ -85,7 +85,10 @@ class XTKSExchangeCalendar(ExchangeCalendar):
     open_times = ((None, time(9)),)
     break_start_times = ((None, time(11, 30)),)
     break_end_times = ((None, time(12, 30)),)
-    close_times = ((None, time(15)),)
+    close_times = (
+        (None, time(15)),
+        (pd.Timestamp("2024-11-05"), time(15, 30)),
+    )
 
     @classmethod
     def bound_min(cls) -> pd.Timestamp:

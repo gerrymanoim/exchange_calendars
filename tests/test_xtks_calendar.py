@@ -28,7 +28,7 @@ class TestXTKSCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def max_session_hours(self):
-        yield 6
+        yield 6.5
 
     @pytest.fixture
     def start_bound(self):
