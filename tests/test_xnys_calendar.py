@@ -61,6 +61,7 @@ class TestXNYSCalendar(ExchangeCalendarTestBase):
             "1994-04-27",  # Richard Nixon
             "1973-01-25",  # Lyndon B. Johnson
             "1972-12-28",  # Harry S. Truman
+            "2025-01-09",  # Jimmy Carter
             # National Days of Mourning
         ]
 

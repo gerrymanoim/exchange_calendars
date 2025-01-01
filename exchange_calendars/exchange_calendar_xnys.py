@@ -146,6 +146,7 @@ class XNYSExchangeCalendar(ExchangeCalendar):
     - Closed at 1:00 PM on Friday, December 31, 1999
     - Closed at 1:00 PM on Friday, December 26, 1997
     - Closed at 1:00 PM on Friday, December 26, 2003
+    - Closed on 1/9/2025 due to Jimmy Carter's death.
 
     NOTE: The exchange was **not** closed early on Friday December 26, 2008,
     nor was it closed on Friday December 26, 2014. The next Thursday Christmas
