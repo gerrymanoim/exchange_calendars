@@ -19,9 +19,9 @@ jobs:
         python-version: ["3.10", "3.13"]
         include:
           - python-version: "3.10"
-            requirements_file: requirements_dev.txt
-          - python-version: "3.13"
             requirements_file: requirements_minpandas.txt
+          - python-version: "3.13"
+            requirements_file: requirements_dev.txt
 
     steps:
     - uses: actions/checkout@v4

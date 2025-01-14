@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
-    "pandas>=1.5",
+    "pandas",
     "pyluach",
     "toolz",
     "tzdata",
