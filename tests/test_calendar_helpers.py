@@ -454,9 +454,7 @@ class TestTradingIndex:
 
     @staticmethod
     @st.composite
-    def _st_times_different(
-        draw, ans
-    ) -> st.SearchStrategy[tuple[pd.Timestamp, pd.Timestamp]]:
+    def _st_times_different(draw, ans) -> tuple[pd.Timestamp, pd.Timestamp]:
         """SearchStrategy for two consecutive sessions with different times."""
         session = draw(st.sampled_from(ans.sessions_next_time_different.to_list()))
         next_session = ans.get_next_session(session)
@@ -464,9 +462,7 @@ class TestTradingIndex:
 
     @staticmethod
     @st.composite
-    def _st_start_end(
-        draw, ans
-    ) -> st.SearchStrategy[tuple[pd.Timestamp, pd.Timestamp]]:
+    def _st_start_end(draw, ans) -> tuple[pd.Timestamp, pd.Timestamp]:
         """SearchStrategy for start and end dates in calendar range and
         a calendar specific maximum distance."""
         first = ans.first_session
@@ -502,7 +498,7 @@ class TestTradingIndex:
         draw,
         minimum: pd.Timedelta = pd.Timedelta(1, "min"),
         maximum: pd.Timedelta = pd.Timedelta(1, "D") - pd.Timedelta(1, "min"),
-    ) -> st.SearchStrategy[pd.Timedelta]:
+    ) -> pd.Timedelta:
         """SearchStrategy for a period between a `minimum` and `maximum`."""
         period = draw(st.integers(minimum.seconds // 60, maximum.seconds // 60))
         return pd.Timedelta(period, "min")

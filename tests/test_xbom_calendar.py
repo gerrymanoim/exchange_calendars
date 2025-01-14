@@ -38,4 +38,5 @@ class TestXBOMCalendar(ExchangeCalendarTestBase):
             "2017-10-02",
             "2017-10-20",
             "2017-12-25",
+            "2025-05-01",
         ]
