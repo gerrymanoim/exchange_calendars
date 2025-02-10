@@ -338,6 +338,10 @@ chinese_new_year_extras = pd.to_datetime(
         "2022-01-27",
         "2023-01-26",
         "2023-01-27",
+        "2024-02-06",
+        "2024-02-07",
+        "2025-01-23",
+        "2025-01-24",
     ]
 )
 
@@ -363,6 +367,7 @@ typhoons = pd.to_datetime(
         "2024-10-02",
         "2024-07-25",
         "2024-07-24",
+        "2023-08-03",
         "2019-09-30",
         "2019-08-09",
         "2016-09-28",
@@ -390,6 +395,7 @@ typhoons = pd.to_datetime(
 class XTAIExchangeCalendar(ExchangeCalendar):
     """
     Exchange calendar for the Taiwan Stock Exchange Corporation (XTAI).
+    https://www.twse.com.tw/en/trading/holiday.html
 
     Open Time: 9:00 AM, CST
     Close Time: 1:30 PM, CST
