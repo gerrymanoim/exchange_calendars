@@ -1,4 +1,8 @@
-from datetime import time
+from datetime import (
+    time,
+    datetime,
+    timedelta,
+)
 from itertools import chain
 from zoneinfo import ZoneInfo
 
@@ -17,12 +21,37 @@ from .exchange_calendar import (
 )
 
 
+def weekend_plus_two_days(dt: datetime) -> datetime:
+    """
+    If the holiday falls on a Saturday or Sunday,
+    it is observed two days later.
+    Otherwise, no holiday is observed.
+    """
+    if dt.weekday() == 5 or dt.weekday() == 6:
+        return dt + timedelta(2)
+    return None
+
+
 NewYearsDay = new_years_day()
 
 NewYearHoliday = Holiday(
     "New Year Holiday",
     month=1,
     day=2,
+)
+
+DayOffForNewYearsDay = Holiday(
+    "Day off for New Year's Day",
+    month=1,
+    day=1,
+    observance=weekend_plus_two_days,
+)
+
+DayOffForNewYearHoliday = Holiday(
+    "Day off for New Year Holiday",
+    month=1,
+    day=2,
+    observance=weekend_plus_two_days,
 )
 
 OrthodoxChristmasDay = Holiday(
@@ -35,7 +64,7 @@ InternationalWomensDay = Holiday(
     "International Women's Day",
     month=3,
     day=8,
-    observance=nearest_workday,
+    observance=next_monday,
 )
 
 NauryzHoliday1 = Holiday(
@@ -95,14 +124,6 @@ ConstitutionDay = Holiday(
     observance=next_monday,
 )
 
-RepublicDayHoliday = Holiday(
-    "Republic Day Holiday",
-    month=10,
-    day=24,
-    observance=next_monday,
-    start_date=pd.Timestamp("2022-01-01"),
-)
-
 RepublicDay = Holiday(
     "Republic Day",
     month=10,
@@ -138,7 +159,7 @@ IndependenceDayHoliday = Holiday(
 
 class AIXKExchangeCalendar(ExchangeCalendar):
     """
-    Exchange calendar for the Astana International Exchange (XIST).
+    Exchange calendar for the Astana International Exchange (AIXK).
                 Available here: https://www.aix.kz/trading/trading-calendar/
 
 
@@ -157,7 +178,6 @@ class AIXKExchangeCalendar(ExchangeCalendar):
       - Capital City Day
       - Kurban Ait Holiday (Eid-al-Adha)
       - Constitution Day
-      - Republic Day Holiday
       - Republic Day
       - First President Day
       - Independence Day
@@ -192,6 +212,8 @@ class AIXKExchangeCalendar(ExchangeCalendar):
             [
                 NewYearsDay,
                 NewYearHoliday,
+                DayOffForNewYearsDay,
+                DayOffForNewYearHoliday,
                 OrthodoxChristmasDay,
                 InternationalWomensDay,
                 NauryzHoliday1,
@@ -202,7 +224,6 @@ class AIXKExchangeCalendar(ExchangeCalendar):
                 VictoryDayHoliday,
                 CapitalCityDay,
                 ConstitutionDay,
-                RepublicDayHoliday,
                 RepublicDay,
                 FirstPresidentDay,
                 IndependenceDay,
@@ -233,14 +254,19 @@ class AIXKExchangeCalendar(ExchangeCalendar):
             pd.Timestamp("2020-12-18"),
             # Bridge Day between Weekend - Capital City day
             pd.Timestamp("2021-06-05"),
-            # New Year holiday
-            pd.Timestamp("2022-01-03"),
-            pd.Timestamp("2022-01-04"),
             # Bridge Day between Weekend - Women's day
             pd.Timestamp("2022-03-07"),
             # Defender's day
             pd.Timestamp("2022-05-10"),
             # Bridge Day between Weekend - Constitution day
             pd.Timestamp("2022-08-29"),
+            # Bridge Day between Weekend - Republic Day
+            pd.Timestamp("2022-10-24"),
+            # Bridge Day between Weekend - Capital City day
+            pd.Timestamp("2023-07-07"),
+            # Defender's Day (extra holiday)
+            pd.Timestamp("2024-05-08"),
+            # Bridge Day between New Year's day - Weekend
+            pd.Timestamp("2025-01-03"),
         ]
         return list(chain(misc_holidays, eid_al_adha_first_day))
