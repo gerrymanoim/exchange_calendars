@@ -1116,7 +1116,7 @@ class ExchangeCalendar(ABC):
         """
         if _parse:
             session = parse_session(self, session)
-        return pd.notna(self.session_break_start(session))
+        return bool(pd.notna(self.session_break_start(session)))
 
     def next_session(self, session: Session, _parse: bool = True) -> pd.Timestamp:
         """Return session that immediately follows a given session.
@@ -1493,7 +1493,7 @@ class ExchangeCalendar(ABC):
         if not self.has_break or ignore_breaks:
             # only one check requried
             bv = op_left(self.opens_nanos, nano) & op_right(nano, self.closes_nanos)
-            return bv.any()
+            return bool(bv.any())
 
         break_starts_nanos = self.break_starts_nanos.copy()
         bv_missing = self.break_starts.isna()
@@ -1504,7 +1504,7 @@ class ExchangeCalendar(ABC):
 
         bv_am = op_left(self.opens_nanos, nano) & op_right(nano, break_starts_nanos)
         bv_pm = op_left(break_ends_nanos, nano) & op_right(nano, self.closes_nanos)
-        return (bv_am | bv_pm).any()
+        return bool((bv_am | bv_pm).any())
 
     def next_open(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
         """Return next open that follows a given minute.
