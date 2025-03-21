@@ -36,6 +36,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r etc/${{matrix.requirements_file}}
         pip install -e .
+    - if: runner.os != 'Windows'
+      name: Set up Python tzdata on Linux and macOS
+      run: |
+        PYTHONTZPATH=$(python -c "import os; print(os.path.dirname(os.__file__))")
+        echo "PYTHONTZPATH=$PYTHONTZPATH" >> $GITHUB_ENV
+    - if: runner.os == 'Windows'
+      name: Set up Python tzdata on Windows
+      run: |
+        $PYTHONTZPATH = python -c "import os; print(os.path.dirname(os.__file__))"
+        echo "PYTHONTZPATH=$PYTHONTZPATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
     - name: Lint with flake8
       run: |
         flake8

@@ -13,6 +13,9 @@ RUN pip3 --disable-pip-version-check --no-cache-dir install ipython \
    && pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements_dev.txt \
    && rm -rf /tmp/pip-tmp
 
+# Set the PYTHONTZPATH environment variable to use Python's tzdata package instead of the operating system's timezone data.
+RUN python -c 'import os; print("export PYTHONTZPATH=\"" + os.path.dirname(os.__file__) + "\"")' >> /home/vscode/.profile
+
 # [Optional] Uncomment this section to install additional OS packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 #     && apt-get -y install --no-install-recommends <your-package-list-here>
