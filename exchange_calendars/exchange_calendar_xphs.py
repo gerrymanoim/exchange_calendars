@@ -294,6 +294,7 @@ class XPHSExchangeCalendar(ExchangeCalendar):
             "2013-10-28",
             "2011-06-20",
             # Election Day
+            "2025-05-12",
             "2023-10-30",
             "2022-05-09",
             "2019-05-13",
