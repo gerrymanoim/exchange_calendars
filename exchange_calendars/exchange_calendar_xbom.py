@@ -437,7 +437,7 @@ precomputed_bse_holidays = pd.to_datetime(
         "2024-10-02",
         "2024-11-01",
         "2024-11-15",
-        "2024-11-20", # Maharashtra Assembly Elections
+        "2024-11-20",  # Maharashtra Assembly Elections
         "2024-12-25",
         "2025-02-26",
         "2025-03-14",
