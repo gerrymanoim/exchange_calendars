@@ -123,7 +123,14 @@ def date(calendar) -> abc.Iterator[str]:
     yield date_
 
 
-@pytest.fixture(params=["2021-06-05", pd.Timestamp("2021-06-05")])
+@pytest.fixture(
+    params=[
+        "2021-06-05",
+        pd.Timestamp("2021-06-05"),
+        datetime.datetime(2021, 6, 5),
+        datetime.date(2021, 6, 5),
+    ]
+)
 def date_mult(request, calendar) -> abc.Iterator[str | pd.Timestamp]:
     """Date that does not represent a session of `calendar`."""
     date = request.param
