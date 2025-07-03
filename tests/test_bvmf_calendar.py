@@ -55,6 +55,7 @@ class TestBVMFCalendar(ExchangeCalendarTestBase):
         yield [
             "1997-07-09",  # year prior to first Constitutionalist Revolution holiday
             "2003-11-20",  # year prior to first Day of Black Awareness holiday
+            "2020-11-20",  # year of the special open
         ]
 
     @pytest.fixture(scope="class")
