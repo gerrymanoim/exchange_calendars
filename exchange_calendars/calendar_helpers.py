@@ -575,7 +575,7 @@ class _TradingIndex:
 
         # evaluate number of indices for each session
         num_intervals = (end_nanos - start_nanos) / self.interval_nanos
-        num_indices = np.ceil(num_intervals).astype("int64")
+        num_indices = np.ceil(num_intervals).astype(np.intp)
 
         if force_close:
             if self.closed_right:
