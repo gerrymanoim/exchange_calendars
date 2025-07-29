@@ -12,8 +12,8 @@ class TestXBUECalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def max_session_hours(self):
-        # The XBUE is open from 11:00AM to 5:00PM
-        yield 6
+        # The XBUE is open from 10:30AM to 5:00PM
+        yield 6.5
 
     @pytest.fixture
     def regular_holidays_sample(self):
