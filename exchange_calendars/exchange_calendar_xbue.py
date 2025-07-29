@@ -218,7 +218,7 @@ class XBUEExchangeCalendar(ExchangeCalendar):
     """
     Exchange calendar for the Buenos Aires Stock Exchange (XBUE).
 
-    Open Time: 11:00 AM, AST
+    Open Time: 10:30 AM, AST
     Close Time: 5:00 PM, AST
 
     Regularly-Observed Holidays:
@@ -253,7 +253,7 @@ class XBUEExchangeCalendar(ExchangeCalendar):
 
     tz = ZoneInfo("America/Argentina/Buenos_Aires")
 
-    open_times = ((None, datetime.time(11)),)
+    open_times = ((None, datetime.time(10, 30)),)
 
     close_times = ((None, datetime.time(17, 00)),)
 
