@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import time, timedelta
+from datetime import time
 from itertools import chain
 from zoneinfo import ZoneInfo
 
@@ -27,7 +27,10 @@ from .common_holidays import (
     epiphany,
     european_labour_day,
     new_years_day,
-    orthodox_easter,
+    orthodox_ash_monday,
+    orthodox_good_friday,
+    orthodox_easter_monday,
+    orthodox_whit_monday,
 )
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 
@@ -36,7 +39,7 @@ NewYearsDay = new_years_day()
 
 Epiphany = epiphany()
 
-OrthodoxAshMonday = orthodox_easter() - timedelta(48)
+OrthodoxAshMonday = orthodox_ash_monday()
 
 NationalHoliday1 = Holiday(
     "Independence Day",
@@ -44,13 +47,13 @@ NationalHoliday1 = Holiday(
     day=25,
 )
 
-OrthodoxGoodFriday = orthodox_easter() - timedelta(2)
+OrthodoxGoodFriday = orthodox_good_friday()
 
-OrthodoxEasterMonday = orthodox_easter() + timedelta(1)
+OrthodoxEasterMonday = orthodox_easter_monday()
 
 LabourDay = european_labour_day()
 
-OrthodoxWhitMonday = orthodox_easter() + timedelta(50)
+OrthodoxWhitMonday = orthodox_whit_monday()
 
 AssumptionDay = assumption_day()
 
@@ -114,10 +117,14 @@ class ASEXExchangeCalendar(ExchangeCalendar):
             [
                 NewYearsDay,
                 Epiphany,
+                OrthodoxEasterMonday,
                 NationalHoliday1,
                 GoodFriday,
                 EasterMonday,
+                OrthodoxGoodFriday,
+                OrthodoxAshMonday,
                 LabourDay,
+                OrthodoxWhitMonday,
                 AssumptionDay,
                 NationalHoliday2,
                 ChristmasEve,
@@ -152,10 +159,5 @@ class ASEXExchangeCalendar(ExchangeCalendar):
             chain(
                 debt_crisis_holidays,
                 misc_adhoc_holidays,
-                # TODO: Investigate making orthodox easter adhocs actual holidays
-                OrthodoxGoodFriday,
-                OrthodoxEasterMonday,
-                OrthodoxWhitMonday,
-                OrthodoxAshMonday,
             )
         )

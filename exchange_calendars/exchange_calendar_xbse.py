@@ -1,16 +1,19 @@
-from datetime import time, timedelta
-from itertools import chain
+from datetime import time
 from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import Holiday
+from pandas.tseries.offsets import Day
 
 from .common_holidays import (
     christmas,
+    orthodox_good_friday,
+    orthodox_easter_monday,
     european_labour_day,
+    orthodox_pentecost,
     new_years_day,
-    orthodox_easter,
 )
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
+from .pandas_extensions.offsets import OrthodoxEaster
 
 NewYearsDay = new_years_day()
 
@@ -20,9 +23,9 @@ RomanianPrincipalitiesUnificationDay = Holiday(
     "Romanian Principalities Unification Day", month=1, day=24
 )
 
-OrthodoxGoodFriday = orthodox_easter() - timedelta(2)
+OrthodoxGoodFriday = orthodox_good_friday()
 
-OrthodoxEasterMonday = orthodox_easter() + timedelta(1)
+OrthodoxEasterMonday = orthodox_easter_monday()
 
 LabourDay = european_labour_day()
 
@@ -33,9 +36,14 @@ ChildrensDay = Holiday(
     day=1,
 )
 
-OrthodoxPentecost = orthodox_easter() + timedelta(49)
+OrthodoxPentecost = orthodox_pentecost()
 
-DescentOfTheHolySpirit = orthodox_easter() + timedelta(50)
+DescentOfTheHolySpirit = Holiday(
+    "Descent of the Holy Spirit",
+    month=1,
+    day=1,
+    offset=[OrthodoxEaster(), Day(50)],
+)
 
 StMarysDay = Holiday(
     "St. Mary's day",
@@ -66,7 +74,7 @@ SecondDayOfChristmas = Holiday(
 
 class XBSEExchangeCalendar(ExchangeCalendar):
     """
-    Exchange calendar for the BUCHAREST Stock Exchange (XBSE).
+    Exchange calendar for the Bucharest Stock Exchange (XBSE).
 
     Open Time: 10:00 AM, EET
     Close Time: 5:45 PM, EET
@@ -76,9 +84,10 @@ class XBSEExchangeCalendar(ExchangeCalendar):
       - Day after New Year's Day
       - Romanian Principalities Unification Day
       - Orthodox Good Friday
-      - Orthodox Easter
+      - Orthodox Easter Monday
       - Labour Day
       - Orthodox Pentecost
+      - Descent of the Holy Spirit
       - Children's Day
       - Assumption of Virgin Mary
       - St Andrew's day
@@ -104,7 +113,11 @@ class XBSEExchangeCalendar(ExchangeCalendar):
                 NewYearsDay,
                 DayAfterNewYearsDay,
                 RomanianPrincipalitiesUnificationDay,
+                OrthodoxGoodFriday,
+                OrthodoxEasterMonday,
                 LabourDay,
+                OrthodoxPentecost,
+                DescentOfTheHolySpirit,
                 ChildrensDay,
                 StMarysDay,
                 StAndrewsDay,
@@ -112,15 +125,4 @@ class XBSEExchangeCalendar(ExchangeCalendar):
                 ChristmasDay,
                 SecondDayOfChristmas,
             ]
-        )
-
-    @property
-    def adhoc_holidays(self):
-        return list(
-            chain(
-                OrthodoxGoodFriday,
-                OrthodoxEasterMonday,
-                OrthodoxPentecost,
-                DescentOfTheHolySpirit,
-            )
         )

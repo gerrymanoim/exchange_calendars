@@ -1,5 +1,4 @@
 import pandas as pd
-from dateutil.easter import EASTER_ORTHODOX, easter
 from pandas.tseries.holiday import FR, DateOffset, Easter, Holiday
 from pandas.tseries.offsets import Day
 
@@ -144,6 +143,17 @@ def corpus_christi(start_date=None, end_date=None):
     )
 
 
+def orthodox_ash_monday(start_date=None, end_date=None):
+    return Holiday(
+        "Ash Monday",
+        month=1,
+        day=1,
+        offset=[OrthodoxEaster(), -Day(48)],
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
 def orthodox_good_friday(start_date=None, end_date=None):
     return Holiday(
         "Good Friday",
@@ -172,6 +182,28 @@ def orthodox_easter_tuesday(start_date=None, end_date=None):
         month=1,
         day=1,
         offset=[OrthodoxEaster(), Day(2)],
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
+def orthodox_pentecost(start_date=None, end_date=None):
+    return Holiday(
+        "Pentecost",
+        month=1,
+        day=1,
+        offset=[OrthodoxEaster(), Day(49)],
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
+def orthodox_whit_monday(start_date=None, end_date=None):
+    return Holiday(
+        "Whit Monday",
+        month=1,
+        day=1,
+        offset=[OrthodoxEaster(), Day(50)],
         start_date=start_date,
         end_date=end_date,
     )
@@ -467,15 +499,3 @@ eid_al_adha_first_day = pd.to_datetime(
         "2049-09-08",
     ]
 )
-
-
-def orthodox_easter(start_date="1980", end_date="2030"):
-    """
-    This function gives a DatetimeIndex of Orthodox Easter dates from start_date to end_date
-    """
-    return pd.to_datetime(
-        [
-            easter(year, method=EASTER_ORTHODOX)
-            for year in range(int(start_date), int(end_date) + 1)
-        ]
-    )
