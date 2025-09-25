@@ -39,12 +39,12 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 dev = [
-    "flake8",
     "hypothesis",
-    "pytest",
+    "pytest==8.3.5",
     "pytest-benchmark",
     "pytest-xdist",
     "pip-tools",
+    "ruff",
 ]
 
 [project.scripts]
