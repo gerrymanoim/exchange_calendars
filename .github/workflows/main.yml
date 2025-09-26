@@ -18,6 +18,7 @@ jobs:
     - uses: pre-commit/action@v3.0.1
 
   build-and-test:
+    needs: pre-commit
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

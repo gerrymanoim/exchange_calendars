@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding=utf-8
 """Lunisolar calendar calculations.
 
 Utilities for computing the dates of holidays based on lunar or solar events.
@@ -18,7 +17,9 @@ I also found the following book very helpful to understand the underlying
 concepts for these predictions:
 Jean H. Meeus. 1991. Astronomical Algorithms. Willmann-Bell, Incorporated.
 """
+
 import contextlib
+import io
 import operator as op
 import pathlib
 import re
@@ -31,6 +32,8 @@ import toolz
 from novas.compat import eph_manager
 
 from exchange_calendars.calendar_helpers import UTC
+
+# ruff: noqa: T201
 
 
 @contextlib.contextmanager
@@ -184,7 +187,7 @@ def utc_to_jd_tt(ts):
     return jd_utc + corrections["julian_days"][correction_ix]
 
 
-def T(year, month, day):
+def T(year, month, day):  # noqa: N802
     return np.datetime64(f"{year}-{month:02d}-{day:02d}", "D")
 
 
@@ -835,7 +838,7 @@ def print_dates(dates, *, weekday):
     if weekday:
         weekdays = pd.to_datetime(dates).weekday_name
 
-        for d, weekday in zip(dates, weekdays):
+        for d, weekday in zip(dates, weekdays, strict=True):  # noqa: PLR1704
             print(d, weekday)
     else:
         for d in dates:
@@ -878,7 +881,7 @@ def lunar_ecliptic_longitude(root_dir, verbose, start, stop):
 
     with ephemeris():
         minutes = np.arange(start, stop, dtype="M8[m]")
-        for minutes in toolz.partition_all(60 * 24 * 365, minutes):
+        for minutes in toolz.partition_all(60 * 24 * 365, minutes):  # noqa: B020
             if verbose:
                 print(f"start={minutes[0]}; stop={minutes[-1]}")
 
@@ -1025,7 +1028,7 @@ def solar_solar_ecliptic_longitude(root_dir, verbose, start, stop):
 
     with ephemeris():
         minutes = np.arange(start, stop, dtype="M8[m]")
-        for minutes in toolz.partition_all(60 * 24 * 365, minutes):
+        for minutes in toolz.partition_all(60 * 24 * 365, minutes):  # noqa: B020
             if verbose:
                 print(f"start={minutes[0]}; stop={minutes[-1]}")
 
@@ -1492,8 +1495,6 @@ def double_ninth_festival(
 
 
 def _render_month(year, months, month, *, print_year):
-    import io
-
     out = io.StringIO()
 
     # subtract one from month because it is 1-indexed
@@ -1502,7 +1503,7 @@ def _render_month(year, months, month, *, print_year):
     days = pd.date_range(month_start, month_end, closed="left")
 
     is_leap_month = len(days) > 30
-    title = f'Lunar Month {month}{"(+)" if is_leap_month else ""}'
+    title = f"Lunar Month {month}{'(+)' if is_leap_month else ''}"
     if print_year:
         title += f" {year}"
     print(f"{title:^20}".rstrip(), file=out)
@@ -1513,13 +1514,13 @@ def _render_month(year, months, month, *, print_year):
 
     for d in days:
         if d.weekday() == 6:
-            print("", file=out)
+            print("", file=out)  # noqa: FURB105
         else:
             print(" ", end="", file=out)
 
         print(f"{d.day:>2}", end="", file=out)
 
-    print("", file=out)
+    print("", file=out)  # noqa: FURB105
     return out.getvalue()
 
 
@@ -1532,8 +1533,8 @@ def _concat_lines(strings, width):
             lines.extend([" " * width] * missing_lines)
 
     rows = []
-    for row_parts in zip(*as_lines):
-        row_parts = list(row_parts)
+    for row_parts in zip(*as_lines):  # noqa: B905
+        row_parts = list(row_parts)  # noqa: PLW2901
         for n, row_part in enumerate(row_parts):
             missing_space = width - len(row_part)
             if missing_space:
