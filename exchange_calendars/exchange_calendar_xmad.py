@@ -76,10 +76,7 @@ Christmas = christmas()
 BoxingDay = boxing_day()
 
 NewYearsEveThrough2010 = new_years_eve(end_date="2011")
-NewYearsEve2021to2023 = new_years_eve(
-    start_date="2021",
-    end_date="2024"
-)
+NewYearsEve2021to2023 = new_years_eve(start_date="2021", end_date="2024")
 NewYearsEveEarlyClose2012To2020 = new_years_eve(
     start_date="2012",
     end_date="2021",

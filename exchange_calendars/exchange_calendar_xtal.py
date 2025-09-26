@@ -56,20 +56,22 @@ class XTALExchangeCalendar(ExchangeCalendar):
 
     @property
     def regular_holidays(self):
-        return HolidayCalendar([
-            NewYearsDay,
-            IndependenceDay,
-            GoodFriday,
-            EasterMonday,
-            SpringDay,
-            AscensionDay,
-            VictoryDay,
-            MidsummerDay,
-            RestorationOfIndependence,
-            ChristmasEve,
-            BoxingDay,
-            NewYearsEve,
-        ])
+        return HolidayCalendar(
+            [
+                NewYearsDay,
+                IndependenceDay,
+                GoodFriday,
+                EasterMonday,
+                SpringDay,
+                AscensionDay,
+                VictoryDay,
+                MidsummerDay,
+                RestorationOfIndependence,
+                ChristmasEve,
+                BoxingDay,
+                NewYearsEve,
+            ]
+        )
 
     @property
     def adhoc_holidays(self):

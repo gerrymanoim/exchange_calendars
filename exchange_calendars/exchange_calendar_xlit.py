@@ -65,23 +65,25 @@ class XLITExchangeCalendar(ExchangeCalendar):
 
     @property
     def regular_holidays(self):
-        return HolidayCalendar([
-            NewYearsDay,
-            RestorationOfTheState,
-            RestorationOfIndependence,
-            GoodFriday,
-            EasterMonday,
-            LabourDay,
-            AscensionDay,
-            StJohnsDay,
-            StatehoodDay,
-            AssumptionDay,
-            AllSaintsDay,
-            AllSoulsDay,
-            ChristmasEve,
-            BoxingDay,
-            NewYearsEve,
-        ])
+        return HolidayCalendar(
+            [
+                NewYearsDay,
+                RestorationOfTheState,
+                RestorationOfIndependence,
+                GoodFriday,
+                EasterMonday,
+                LabourDay,
+                AscensionDay,
+                StJohnsDay,
+                StatehoodDay,
+                AssumptionDay,
+                AllSaintsDay,
+                AllSoulsDay,
+                ChristmasEve,
+                BoxingDay,
+                NewYearsEve,
+            ]
+        )
 
     @property
     def adhoc_holidays(self):

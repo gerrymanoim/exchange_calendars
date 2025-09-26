@@ -13,7 +13,6 @@ from pandas._libs.tslibs.conversion import localize_pydatetime
 
 
 class CompositeCustomBusinessDay(CustomBusinessDay):
-
     _prefix = "C"
     _attributes = tuple(
         [
@@ -88,8 +87,9 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
             for left, right in toolz.sliding_window(
                 2, toolz.concatv(self._business_days_index)
             ):
-                if pd.Timestamp((right.left - left.right).days,
-                                unit="D") > pd.Timestamp(1, unit="D"):
+                if pd.Timestamp(
+                    (right.left - left.right).days, unit="D"
+                ) > pd.Timestamp(1, unit="D"):
                     interval = pd.Interval(
                         left.right + pd.Timedelta(1, unit="D"),
                         right.left - pd.Timedelta(1, unit="D"),
@@ -247,7 +247,6 @@ def _get_calendar(weekmask, holidays, calendar):
 
 
 class MultipleWeekmaskCustomBusinessDay(CompositeCustomBusinessDay):
-
     _prefix = "C"
     _attributes = tuple(
         [
@@ -309,8 +308,7 @@ class MultipleWeekmaskCustomBusinessDay(CompositeCustomBusinessDay):
 
 
 class SingleConstructorOffset(BaseOffset):
-    def __reduce__(self):
-        ...
+    def __reduce__(self): ...
 
 
 class OrthodoxEaster(SingleConstructorOffset):
@@ -357,4 +355,6 @@ class OrthodoxEaster(SingleConstructorOffset):
         from dateutil.easter import easter, EASTER_ORTHODOX
         from datetime import date
 
-        return date(dt.year, dt.month, dt.day) == easter(dt.year, method=EASTER_ORTHODOX)
+        return date(dt.year, dt.month, dt.day) == easter(
+            dt.year, method=EASTER_ORTHODOX
+        )

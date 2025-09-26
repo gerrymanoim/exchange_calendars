@@ -56,13 +56,15 @@ def summer_solstice(dt: datetime.datetime) -> datetime.datetime:
     return dt.replace(month=6, day=day)
 
 
-def national_day_of_indigenous_peoples_observed(dt: datetime.datetime) -> datetime.datetime | None:
+def national_day_of_indigenous_peoples_observed(
+    dt: datetime.datetime,
+) -> datetime.datetime | None:
     """
     Observed on the summer solstice, but in 2021 it was moved to June 21st.
     """
-    if (dt.year == 2021):
+    if dt.year == 2021:
         dt = dt.replace(month=6, day=21)
-    elif (dt.year > 2021):
+    elif dt.year > 2021:
         dt = summer_solstice(dt)
     else:
         dt = None

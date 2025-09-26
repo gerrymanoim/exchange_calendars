@@ -27,30 +27,14 @@ BoxingDay = boxing_day()
 NewYearsEve = new_years_eve()
 
 RestorationOfIndependence = Holiday(
-    "Restoration of Independence",
-    month=5,
-    day=4,
-    observance=next_monday
+    "Restoration of Independence", month=5, day=4, observance=next_monday
 )
 
-MidsummerEve = Holiday(
-    "Midsummer's Eve",
-    month=6,
-    day=23
-)
+MidsummerEve = Holiday("Midsummer's Eve", month=6, day=23)
 
-MidsummerDay = Holiday(
-    "Midsummer's Day",
-    month=6,
-    day=24
-)
+MidsummerDay = Holiday("Midsummer's Day", month=6, day=24)
 
-ProclamationDay = Holiday(
-    "Proclamation Day",
-    month=11,
-    day=18,
-    observance=next_monday
-)
+ProclamationDay = Holiday("Proclamation Day", month=11, day=18, observance=next_monday)
 
 
 class XRISExchangeCalendar(ExchangeCalendar):
@@ -83,31 +67,45 @@ class XRISExchangeCalendar(ExchangeCalendar):
 
     @property
     def regular_holidays(self):
-        return HolidayCalendar([
-            NewYearsDay,
-            GoodFriday,
-            EasterMonday,
-            LabourDay,
-            RestorationOfIndependence,
-            AscensionDay,
-            MidsummerEve,
-            MidsummerDay,
-            ProclamationDay,
-            ChristmasEve,
-            BoxingDay,
-            NewYearsEve,
-        ])
+        return HolidayCalendar(
+            [
+                NewYearsDay,
+                GoodFriday,
+                EasterMonday,
+                LabourDay,
+                RestorationOfIndependence,
+                AscensionDay,
+                MidsummerEve,
+                MidsummerDay,
+                ProclamationDay,
+                ChristmasEve,
+                BoxingDay,
+                NewYearsEve,
+            ]
+        )
 
     @property
     def adhoc_holidays(self):
         return [
-            pd.Timestamp("2028-07-10"),  # National Holiday - Latvian Song and Dance Festival (every 5 years)
+            pd.Timestamp(
+                "2028-07-10"
+            ),  # National Holiday - Latvian Song and Dance Festival (every 5 years)
             pd.Timestamp("2025-11-17"),  # Additional Day off - Latvia's National Day
             pd.Timestamp("2025-05-02"),  # Additional Day off
-            pd.Timestamp("2024-12-30"),  # Additional Day off - Compensation by 28 December
-            pd.Timestamp("2024-12-23"),  # Additional Day off - Compensation by 14 December
+            pd.Timestamp(
+                "2024-12-30"
+            ),  # Additional Day off - Compensation by 28 December
+            pd.Timestamp(
+                "2024-12-23"
+            ),  # Additional Day off - Compensation by 14 December
             pd.Timestamp("2023-12-25"),  # Additional Day off
-            pd.Timestamp("2023-07-10"),  # National Holiday - Latvian Song and Dance Festival (every 5 years)
-            pd.Timestamp("2023-05-05"),  # Additional Day off - Compensation by Saturday 20 May (bridge day)
-            pd.Timestamp("2018-05-09"),  # National Holiday - Latvian Song and Dance Festival (every 5 years)
+            pd.Timestamp(
+                "2023-07-10"
+            ),  # National Holiday - Latvian Song and Dance Festival (every 5 years)
+            pd.Timestamp(
+                "2023-05-05"
+            ),  # Additional Day off - Compensation by Saturday 20 May (bridge day)
+            pd.Timestamp(
+                "2018-05-09"
+            ),  # National Holiday - Latvian Song and Dance Festival (every 5 years)
         ]

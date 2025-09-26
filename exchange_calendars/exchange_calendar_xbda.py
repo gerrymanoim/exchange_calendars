@@ -179,21 +179,23 @@ class XBDAExchangeCalendar(ExchangeCalendar):
 
     @property
     def regular_holidays(self):
-        return HolidayCalendar([
-            NewYearsDay,
-            GoodFriday,
-            BermudaDay,
-            NationalHeroesDay,
-            QueensBirthday,
-            EmancipationDay,
-            CupMatchDay,
-            MaryPrinceDay,
-            SomersDay,
-            LabourDay,
-            RemembranceDay,
-            Christmas,
-            BoxingDay,
-        ])
+        return HolidayCalendar(
+            [
+                NewYearsDay,
+                GoodFriday,
+                BermudaDay,
+                NationalHeroesDay,
+                QueensBirthday,
+                EmancipationDay,
+                CupMatchDay,
+                MaryPrinceDay,
+                SomersDay,
+                LabourDay,
+                RemembranceDay,
+                Christmas,
+                BoxingDay,
+            ]
+        )
 
     @property
     def special_closes(self):

@@ -124,7 +124,7 @@ ConscienciaNegraNacional = Holiday(
     "Dia Nacional de Zumbi e da Consciencia Negra",
     month=11,
     day=20,
-    start_date="2024-01-01"
+    start_date="2024-01-01",
 )
 # Christmas Eve
 VesperaNatal = Holiday(

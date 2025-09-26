@@ -33,7 +33,7 @@ class TestXDUSCalendar(ExchangeCalendarTestBase):
             # Whit Monday
             "2015-05-25",  # regularly observed from 2015
             "2016-05-16",
-            "2021-05-24"
+            "2021-05-24",
         ]
 
     @pytest.fixture
@@ -58,7 +58,7 @@ class TestXDUSCalendar(ExchangeCalendarTestBase):
             "2016-10-31",
             "2018-10-31",
             # German Unity Day was not observed in 2022
-            "2022-10-03"
+            "2022-10-03",
         ]
 
     @pytest.fixture

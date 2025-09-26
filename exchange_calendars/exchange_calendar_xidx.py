@@ -102,8 +102,7 @@ class XIDXExchangeCalendar(ExchangeCalendar):
     chinese_new_year = chinese_lunar_new_year_dates[
         # The Indonesia Stock Exchange did not close for Chinese New
         # Year in 1998, 1999, or 2001. (It fell on a Saturday in 2000.)
-        chinese_lunar_new_year_dates.year
-        >= 2002
+        chinese_lunar_new_year_dates.year >= 2002
     ]
 
     common_leave = pd.to_datetime(

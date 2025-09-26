@@ -24,13 +24,17 @@ from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 NewYearsDay = new_years_day()
 Epiphany = epiphany()
 GreekIndependenceDay = Holiday("Greek Independence Day", month=3, day=25)
-GreenMonday = Holiday("Green Monday", month=1, day=1, offset=[OrthodoxEaster(), -Day(48)])
+GreenMonday = Holiday(
+    "Green Monday", month=1, day=1, offset=[OrthodoxEaster(), -Day(48)]
+)
 CyprusNationalDay = Holiday("Cyprus National Day", month=4, day=1)
 OrthodoxGoodFriday = orthodox_good_friday()
 OrthodoxEasterMonday = orthodox_easter_monday()
 OrthodoxEasterTuesday = orthodox_easter_tuesday()
 LabourDay = european_labour_day()
-HolySpiritDay = Holiday("Holy Spirit Day", month=1, day=1, offset=[OrthodoxEaster(), Day(50)])
+HolySpiritDay = Holiday(
+    "Holy Spirit Day", month=1, day=1, offset=[OrthodoxEaster(), Day(50)]
+)
 AssumptionDay = assumption_day()
 CyprusIndependenceDay = Holiday("Cyprus Independence Day", month=10, day=1)
 OkhiDay = Holiday("Okhi Day", month=10, day=28)
@@ -75,26 +79,28 @@ class XCYSExchangeCalendar(ExchangeCalendar):
 
     @property
     def regular_holidays(self):
-        return HolidayCalendar([
-            NewYearsDay,
-            Epiphany,
-            GreenMonday,
-            CyprusNationalDay,
-            GreekIndependenceDay,
-            GoodFriday,
-            EasterMonday,
-            OrthodoxGoodFriday,
-            OrthodoxEasterMonday,
-            OrthodoxEasterTuesday,
-            LabourDay,
-            HolySpiritDay,
-            AssumptionDay,
-            CyprusIndependenceDay,
-            OkhiDay,
-            ChristmasEve,
-            Christmas,
-            BoxingDay,
-        ])
+        return HolidayCalendar(
+            [
+                NewYearsDay,
+                Epiphany,
+                GreenMonday,
+                CyprusNationalDay,
+                GreekIndependenceDay,
+                GoodFriday,
+                EasterMonday,
+                OrthodoxGoodFriday,
+                OrthodoxEasterMonday,
+                OrthodoxEasterTuesday,
+                LabourDay,
+                HolySpiritDay,
+                AssumptionDay,
+                CyprusIndependenceDay,
+                OkhiDay,
+                ChristmasEve,
+                Christmas,
+                BoxingDay,
+            ]
+        )
 
     @property
     def adhoc_holidays(self):

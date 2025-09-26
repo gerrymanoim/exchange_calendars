@@ -45,8 +45,10 @@ class TestXNZECalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def adhoc_holidays_sample(self):
         yield [
-            "2022-06-24", "2035-06-29", "2049-06-25",  # Mataraki Day (a small selection)
-            "2022-09-26"  # National day of mourning for the queen
+            "2022-06-24",
+            "2035-06-29",
+            "2049-06-25",  # Mataraki Day (a small selection)
+            "2022-09-26",  # National day of mourning for the queen
         ]
 
     @pytest.fixture

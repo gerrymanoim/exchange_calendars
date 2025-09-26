@@ -76,12 +76,14 @@ df = pd.DataFrame(
 
 # Set the PYTHONTZPATH environment variable to use Python's tzdata package instead of the operating system's timezone data.
 # This ensures consistent timezone data across all platforms when running tests.
-python_tzdata_path = os.getenv('PYTHONTZPATH')
-print(f"Is environment variable PYTHONTZPATH set? {'Yes' if os.getenv('PYTHONTZPATH') else 'No'}")
+python_tzdata_path = os.getenv("PYTHONTZPATH")
+print(
+    f"Is environment variable PYTHONTZPATH set? {'Yes' if os.getenv('PYTHONTZPATH') else 'No'}"
+)
 if not python_tzdata_path:
     python_tzdata_path = os.path.dirname(os.__file__)
     print(f"Setting PYTHONTZPATH to {python_tzdata_path}")
-    os.putenv('PYTHONTZPATH', python_tzdata_path)
+    os.putenv("PYTHONTZPATH", python_tzdata_path)
 print(f"Using tzdata version: {tzdata.IANA_VERSION}")
 
 print(f"Writing test CSV file to {path}")

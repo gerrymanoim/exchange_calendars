@@ -41,11 +41,15 @@ MaundyThursday = maundy_thursday()
 
 LabourDay = european_labour_day()
 
-BattleOfAricaAndFlagDay = Holiday("Battle of Arica and Flag Day", month=6, day=7, start_date="2024")
+BattleOfAricaAndFlagDay = Holiday(
+    "Battle of Arica and Flag Day", month=6, day=7, start_date="2024"
+)
 
 SaintPeterAndSaintPaulDay = saint_peter_and_saint_paul_day()
 
-PeruvianAirForceDay = Holiday("Peruvian Air Force Day", month=7, day=23, start_date="2023")
+PeruvianAirForceDay = Holiday(
+    "Peruvian Air Force Day", month=7, day=23, start_date="2023"
+)
 
 IndependenceDay1 = Holiday("Independence Day", month=7, day=28)
 IndependenceDay2 = Holiday("Independence Day", month=7, day=29)
