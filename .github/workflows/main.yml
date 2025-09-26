@@ -53,9 +53,6 @@ jobs:
       run: |
         $PYTHONTZPATH = python -c "import os; print(os.path.dirname(os.__file__))"
         echo "PYTHONTZPATH=$PYTHONTZPATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-    - name: Lint with flake8
-      run: |
-        flake8
     - name: Test with pytest
       run: |
         pytest tests -n auto --dist loadscope

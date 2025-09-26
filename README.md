@@ -1,6 +1,6 @@
 # exchange_calendars
 
-[![PyPI](https://img.shields.io/pypi/v/exchange-calendars)](https://pypi.org/project/exchange-calendars/) ![Python Support](https://img.shields.io/pypi/pyversions/exchange_calendars) ![PyPI Downloads](https://img.shields.io/pypi/dd/exchange-calendars) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![PyPI](https://img.shields.io/pypi/v/exchange-calendars)](https://pypi.org/project/exchange-calendars/) ![Python Support](https://img.shields.io/pypi/pyversions/exchange_calendars) ![PyPI Downloads](https://img.shields.io/pypi/dd/exchange-calendars) [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 A Python library for defining and querying calendars for security exchanges.
 
@@ -261,9 +261,9 @@ See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanat
 | Tallinn Stock Exchange          | XTAL     | Estonia        | 4.11          | https://nasdaqbaltic.com                                     |
 | Riga Stock Exchange             | XRIS     | Latvia         | 4.11          | https://nasdaqbaltic.com                                     |
 | Vilnius Stock Exchange          | XLIT     | Lithuania      | 4.11          | https://nasdaqbaltic.com                                     |
-| Cyprus Stock Exchange           | XCYS     | Cyprus         | 4.12          | https://www.cse.com.cy/en-GB/home                            |
-| Bermuda Stock Exchange          | XBDA     | Bermuda        | 4.12          | https://www.bsx.com                                          |
-| Zagreb Stock Exchange           | XZAG     | Croatia        | 4.12          | https://www.zse.hr/en                                        |
+| Cyprus Stock Exchange           | XCYS     | Cyprus         | 4.11.1        | https://www.cse.com.cy/en-GB/home                            |
+| Bermuda Stock Exchange          | XBDA     | Bermuda        | 4.11.1        | https://www.bsx.com                                          |
+| Zagreb Stock Exchange           | XZAG     | Croatia        | 4.11.1        | https://www.zse.hr/en                                        |
 
 
 > Note that exchange calendars are defined by their [ISO-10383](https://www.iso20022.org/10383/iso-10383-market-identifier-codes) market identifier code.
