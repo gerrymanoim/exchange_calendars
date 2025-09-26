@@ -491,6 +491,9 @@ class XBOMExchangeCalendar(PrecomputedExchangeCalendar):
             # Special trading session on Saturday, January 20, 2024.
             # https://www.bseindia.com/downloads/SPDJ_ANN/MediaReleasePDF/1470003_mediareleasespecialtradingsessionfors&pbseindices20240105.pdf
             (pd.Timestamp("2024-01-15"), pd.Timestamp("2024-01-21"), "1111110"),
+            # Special trading session on Saturday, February 1, 2025
+            # https://www.angelone.in/news/will-bse-and-nse-be-open-on-budget-day-feb-1
+            (pd.Timestamp("2025-01-27"), pd.Timestamp("2025-02-02"), "1111110"),
         ]
 
     @functools.cached_property
