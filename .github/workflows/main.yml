@@ -9,8 +9,15 @@ on:
       - master
 
 jobs:
-  build-and-test:
 
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - uses: actions/setup-python@v6
+    - uses: pre-commit/action@v3.0.1
+
+  build-and-test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
