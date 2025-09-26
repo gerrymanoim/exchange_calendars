@@ -5,11 +5,6 @@ from exchange_calendars.exchange_calendar_xlit import XLITExchangeCalendar
 from .test_exchange_calendar import ExchangeCalendarTestBase
 
 
-
-
-
-
-
 class TestXLITExchangeCalendar(ExchangeCalendarTestBase):
     @pytest.fixture(scope="class")
     def calendar_cls(self):
