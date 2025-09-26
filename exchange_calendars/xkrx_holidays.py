@@ -12,6 +12,8 @@ from .pandas_extensions.korean_holiday import (
     last_business_day,
 )
 
+# ruff: noqa: E501
+
 # Original precomputed KRX holidays
 # that had been maintained formerly in exchange_calendar_xkrx.py.
 original_precomputed_krx_holidays = pd.DatetimeIndex(

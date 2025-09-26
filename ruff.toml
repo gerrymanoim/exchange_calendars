@@ -1,0 +1,111 @@
+# File as ruff default values except where noted via commented out default value.
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+# extend-exclude = []  # Default value
+extend-exclude = ["tutorials"]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.10
+target-version = "py310"
+
+[lint]  
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+# select = ["E4", "E7", "E9", "F"]  # Default value
+select = ["ALL"]
+# ignore = []  # Default value
+ignore = [
+    "ANN",  # flake8-annotations. TODO: fix / tighten up ignore.
+    "D",  # pydocstyle. TODO: fix / tighten up ignore.
+    "I",  # isort. TODO: fix / tighten up ignore.
+    "PT",  # flake8-pytest-style. TODO: fix / tighten up ignore.
+    "S",  # flake8-bandit. TODO: fix / tighten up ignore.
+    "TRY",  # tryceratops. TODO: fix / tighten up ignore.
+    "EM",  # flake8-errmsg. TODO: fix / tighten up ignore.
+    "DTZ",  # flake8-datetimez. TODO: fix / tighten up ignore.
+    "RUF012", # mutable-class-default. TODO: Fix.
+    "FBT001", # boolean-type-hint-position-argument. TODO: Review. Maybe tighten up with fixes and inline noqa.
+    "FBT002", # boolean-default-value-position-argument. TODO: Fix.
+    "PLR2004", # magic-value-comparison. TODO: Review. Maybe tighten up with fixes and inline noqa.
+    "ERA001",  # commented-out-code. TODO: Fix.
+    "PD011",  # pandas-use-of-dot-values. TODO: Fix.
+    # Actively ignore all these...
+    "COM812",  # missing-trailing-comma.  As recommended by ruff as conflicts with formatter.
+    "TD002",  # missing-todo-author
+    "TD003",  # missing-todo-issue
+    "FIX002",  # line-contains-todo.  Ignore here to pass CI tests.
+    "PLR0913",  # too-many-arguments
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[lint.pydocstyle]
+convention = "numpy"
+
+[lint.flake8-annotations]
+mypy-init-return = true
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+docstring-code-format = false
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+docstring-code-line-length = "dynamic"

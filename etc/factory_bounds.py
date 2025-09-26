@@ -13,7 +13,7 @@ import abc
 import dataclasses
 import pathlib
 import pickle
-from typing import Literal, Type
+from typing import Literal
 
 import pandas as pd
 
@@ -57,7 +57,7 @@ class FactoryBounds:
 class _FindFactoryBounds:
     """Find start and end bounds of a given calendar factory."""
 
-    def __init__(self, Factory: xcals.ExchangeCalendar, watch: bool = False):
+    def __init__(self, Factory: xcals.ExchangeCalendar, watch: bool = False):  # noqa: N803
         self.Factory = Factory
         self.watch = watch
         self._last_error: Exception | None
@@ -67,8 +67,7 @@ class _FindFactoryBounds:
         """Calendar name."""
         if isinstance(self.Factory.name, str):
             return self.Factory.name
-        else:
-            return self.Factory().name
+        return self.Factory().name
 
     @property
     def today(self) -> pd.Timestamp:
@@ -89,7 +88,7 @@ class _FindFactoryBounds:
         else:
             raise ValueError("`start` and `end` cannot both be None.")
         if self.watch:
-            print(f"getting calendar '{self.calendar_name}' with {insert}.")
+            print(f"getting calendar '{self.calendar_name}' with {insert}.")  # noqa: T201
         return self.Factory(start=start, end=end)
 
     def _is_valid_date(
@@ -98,7 +97,7 @@ class _FindFactoryBounds:
         kwargs = {bound: date}
         try:
             self._get_calendar(**kwargs)
-        except Exception as err:  # pylint: disable=broad-except
+        except Exception as err:  # pylint: disable=broad-except  # noqa: BLE001
             self._last_error = err
             return False
         else:
@@ -113,30 +112,28 @@ class _FindFactoryBounds:
         # recursively look for a valid date every offset, return first that's valid
         if self._is_valid_date(look_from, bound):
             return look_from
-        else:
-            next_look_from = look_from + offset
-            if (  # if start has move into the future or end into the past
-                look_from <= self.today < next_look_from
-                or look_from >= self.today > next_look_from
-            ):
-                return self.today
-            else:
-                return self._get_a_valid_date_by_trying_every_x_days(
-                    next_look_from, offset, bound
-                )
+        next_look_from = look_from + offset
+        if (  # if start has move into the future or end into the past
+            look_from <= self.today < next_look_from
+            or look_from >= self.today > next_look_from
+        ):
+            return self.today
+        return self._get_a_valid_date_by_trying_every_x_days(
+            next_look_from, offset, bound
+        )
 
     @property
     def _first_offset(self) -> pd.DateOffset:
         return pd.DateOffset(years=100)
 
     def _is_first_offset(self, offset: pd.DateOffset) -> bool:
-        return offset == self._first_offset or -offset == self._first_offset
+        return self._first_offset in (offset, -offset)
 
     def _offset_iterator(
         self, bound: Literal["start", "end"]
     ) -> abc.Iterator[pd.DateOffset]:
         sign = 1 if bound == "start" else -1
-        iterator = iter(
+        return iter(
             [
                 sign * self._first_offset,
                 sign * pd.DateOffset(years=30),
@@ -150,17 +147,15 @@ class _FindFactoryBounds:
                 sign * pd.DateOffset(days=1),
             ]
         )
-        return iterator
 
     def _is_valid_bound(
         self, date: pd.Timestamp, bound: Literal["start", "end"]
     ) -> bool:
         if not self._is_valid_date(date, bound):
             return False
-        else:
-            day_delta = 1 if bound == "end" else -1
-            date = date + pd.Timedelta(day_delta, "D")
-            return not self._is_valid_date(date, bound)
+        day_delta = 1 if bound == "end" else -1
+        date = date + pd.Timedelta(day_delta, "D")
+        return not self._is_valid_date(date, bound)
 
     def _try_short_cut(
         self, bound: Literal["start", "end"]
@@ -192,8 +187,7 @@ class _FindFactoryBounds:
     def _initial_value(bound: Literal["start", "end"]) -> pd.Timestamp:
         if bound == "start":
             return pd.Timestamp.min.ceil("D").tz_localize(UTC)
-        else:
-            return pd.Timestamp.max.floor("D").tz_localize(UTC)
+        return pd.Timestamp.max.floor("D").tz_localize(UTC)
 
     def _get_bound(
         self, bound: Literal["start", "end"]
@@ -242,7 +236,8 @@ class _FindFactoryBounds:
 
 
 def find_factory_bounds(
-    Factory: xcals.ExchangeCalendar, watch: bool = False
+    Factory: xcals.ExchangeCalendar,  # noqa: N803
+    watch: bool = False,
 ) -> FactoryBounds:
     """Return FactoryBounds for a factory.
 
@@ -282,7 +277,7 @@ def _find_bounds_all_factories(watch=False) -> dict[str, FactoryBounds]:
     proded.
     """
     cal_bounds = {}
-    for name, Factory in xcals.calendar_utils._default_calendar_factories.items():
+    for name, Factory in xcals.calendar_utils._default_calendar_factories.items():  # noqa: N806, SLF001
         cal_bounds[name] = find_factory_bounds(Factory, watch)
     return cal_bounds
 
@@ -307,24 +302,24 @@ def _bake_all_calendar_bounds(all_calendar_bounds: dict["str", FactoryBounds]):
     """
     assert isinstance(all_calendar_bounds, dict)
     assert len(all_calendar_bounds) > 20
-    key = list(all_calendar_bounds.keys())[0]
+    key = next(iter(all_calendar_bounds.keys()))
     assert isinstance(key, str)
     assert isinstance(all_calendar_bounds[key], FactoryBounds)
-    with open(_factory_bounds_resource_path(), "wb") as file:
+    with _factory_bounds_resource_path().open("wb") as file:
         pickle.dump(all_calendar_bounds, file)
 
 
 def _retrieve_all_calendars_bounds() -> dict["str", FactoryBounds]:
     """Retrieve `all_calendar_bounds` from resources."""
-    with open(_factory_bounds_resource_path(), "rb") as file:
+    with _factory_bounds_resource_path().open("rb") as file:
         all_calendar_bounds = pickle.load(file)
-    return all_calendar_bounds
+    return all_calendar_bounds  # noqa: RET504
 
 
 _all_calendars_bounds = _retrieve_all_calendars_bounds()
 
 
-def _get_all_calendars_bounds_exceptions() -> tuple[Type[Exception], ...]:
+def _get_all_calendars_bounds_exceptions() -> tuple[type[Exception], ...]:
     """Exceptions the can be raised when request calendar with oob date."""
     bounds = _all_calendars_bounds
     errors = []
@@ -356,12 +351,12 @@ def all_calendars_bounds() -> pd.DataFrame:
     cal_bounds = _all_calendars_bounds
     start_bounds = []
     end_bounds = []
-    for _, factory_bounds in cal_bounds.items():
+    for factory_bounds in cal_bounds.values():
         start_bounds.append(factory_bounds.start)
         end_bounds.append(factory_bounds.end)
 
     return pd.DataFrame(
-        dict(earliest_valid_start=start_bounds, latest_valid_end=end_bounds),
+        {"earliest_valid_start": start_bounds, "latest_valid_end": end_bounds},
         index=cal_bounds.keys(),
     )
 

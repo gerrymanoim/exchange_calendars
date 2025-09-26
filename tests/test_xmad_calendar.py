@@ -95,7 +95,7 @@ class TestXMADCalendar(ExchangeCalendarTestBase):
             "2020-12-24",
             "2024-12-24",
             "2025-12-24",
-            "2012-12-31",  # New Year's Eve was an early close from 2012 to 2020 and from 2024
+            "2012-12-31",  # New Year's Eve was an early close from 2012 to 2020 and from 2024  # noqa: E501
             "2020-12-31",
             "2024-12-31",
             "2025-12-31",

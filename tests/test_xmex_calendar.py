@@ -28,9 +28,7 @@ class TestXMEXCalendar(ExchangeCalendarTestBase):
             "2019-11-18",  # Revolution Day
             "2019-12-12",  # Banking Holiday
             "2019-12-25",  # Christmas Day
-            #
             "2006-11-02",  # first observance of regular holiday All Soul's Day.
-            #
             # Rule changes.
             # Consitution Day. Prior to 2007 observed strictly on February 5th.
             "2004-02-05",  # falls Thursday, otherwise a trading day
@@ -82,9 +80,7 @@ class TestXMEXCalendar(ExchangeCalendarTestBase):
             # Christmas on a Sunday.
             "2016-12-23",
             "2016-12-26",
-            #
             "2005-11-02",  # All Soul's Day not observed until 2006.
-            #
             # Rule changes.
             # Consitution Day. Prior to 2007 observed strictly on February 5th,
             # from 2007 observed on first Monday of February.

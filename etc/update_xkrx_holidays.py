@@ -1,5 +1,6 @@
-import os
+from pathlib import Path
 import requests
+
 import pandas as pd
 
 # Precomputed/adhoc KRX holidays can be checked here
@@ -17,8 +18,8 @@ def download_krx_holidays_as_dict(year=None, page_first_call=False):
 
     if year < download_holidays_as_dict_oldest_year_available:
         raise ValueError(
-            "Year cannot be older than %s but %s given"
-            % (download_holidays_as_dict_oldest_year_available, year)
+            "Year cannot be older than"
+            f" {download_holidays_as_dict_oldest_year_available} but {year} given"
         )
 
     def generate_otp():
@@ -27,7 +28,7 @@ def download_krx_holidays_as_dict(year=None, page_first_call=False):
             "Accept-Encoding": "gzip, deflate",
             "Host": "global.krx.co.kr",
             "Referer": "http://global.krx.co.kr/contents/GLB/05/0501/0501110000/GLB0501110000.jsp",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",  # noqa: E501
             "X-Requested-With": "XMLHttpRequest",
         }
         params = {
@@ -40,8 +41,7 @@ def download_krx_holidays_as_dict(year=None, page_first_call=False):
             headers=headers,
             params=params,
         )
-        code = response.content
-        return code
+        return response.content
 
     code = generate_otp()
     headers = {
@@ -50,7 +50,7 @@ def download_krx_holidays_as_dict(year=None, page_first_call=False):
         "Host": "global.krx.co.kr",
         "Origin": "http://global.krx.co.kr",
         "Referer": "http://global.krx.co.kr/contents/GLB/05/0501/0501110000/GLB0501110000.jsp",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36",  # noqa: E501
         "X-Requested-With": "XMLHttpRequest",
     }
     data = {
@@ -67,7 +67,7 @@ def download_krx_holidays_as_dict(year=None, page_first_call=False):
         data=data,
     )
     body = response.json()
-    return body
+    return body  # noqa: RET504
 
 
 def get_precomputed_krx_holidays_online(from_year=None, to_year=None):
@@ -84,16 +84,13 @@ def get_precomputed_krx_holidays_online(from_year=None, to_year=None):
         for item in result["block1"]:
             holiday = item["calnd_dd"]
             precomputed_holidays.append(holiday)
-    precomputed_holidays = pd.to_datetime(precomputed_holidays)
-    return precomputed_holidays
+    return pd.to_datetime(precomputed_holidays)
 
 
 def update_dupmed_precomputed_krx_holidays():
-    xkrx_holidays_py = os.path.join(
-        os.path.dirname(__file__), "../exchange_calendars/xkrx_holidays.py"
-    )
-    with open(xkrx_holidays_py, "r") as f:
-        lines = [line for line in f]
+    xkrx_holidays_py = Path(__file__).parent / "../exchange_calendars/xkrx_holidays.py"
+    with xkrx_holidays_py.open("r") as f:
+        lines = list(f)
     start_line = "dumped_precomputed_krx_holidays = pd.DatetimeIndex("
     end_line = ")"
     start_line_index = 0
@@ -107,13 +104,13 @@ def update_dupmed_precomputed_krx_holidays():
     if start_line_index > 0 and end_line_index > 0:
         precomputed_holidays = get_precomputed_krx_holidays_online()
         precomputed_lines = [
-            '        "%s",\n' % pd.Timestamp(holiday).strftime("%Y-%m-%d")
+            '        "{}",\n'.format(pd.Timestamp(holiday).strftime("%Y-%m-%d"))
             for holiday in precomputed_holidays
         ]
         replaced_lines = (
             lines[:start_line_index] + precomputed_lines + lines[end_line_index + 1 :]
         )
-        with open(xkrx_holidays_py, "w") as f:
+        with xkrx_holidays_py.open("w") as f:
             f.write("".join(replaced_lines))
 
 

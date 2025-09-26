@@ -27,9 +27,7 @@ class TestXTSECalendar(ExchangeCalendarTestBase):
             "2012-10-08",  # Thanksgiving
             "2012-12-25",  # Christmas
             "2012-12-26",  # Boxing Day
-            #
             "2015-05-18",  # Victoria Day observed Monday before 25th, never Mon 25th.
-            #
             # Holidays falling on a weekend and made up.
             "2010-12-27",  # Christmas Day 25th fell on Saturday, made up Monday.
             "2010-12-28",  # Boxing Day 26th fell on Sunday, made up Tuesday.
@@ -51,7 +49,6 @@ class TestXTSECalendar(ExchangeCalendarTestBase):
             # Make sure made up holidays do not extend beyond last made up date.
             "2010-12-29",  # First day (Wed) post Boxing Day that is not a holiday.
             "2016-12-28",  # First day (Wed) post Boxing Day that is not a holiday.
-            #
             "2015-05-25",  # Victoria Day observed Monday before 25th, never Mon 25th.
         ]
 

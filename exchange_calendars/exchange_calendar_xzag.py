@@ -23,8 +23,6 @@ from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 
 NewYearsDay = new_years_day()
 Epiphany = epiphany()
-GoodFriday = GoodFriday
-EasterMonday = EasterMonday
 LabourDay = european_labour_day()
 NationalDayFrom2020 = Holiday("National Day", month=5, day=30, start_date="2020")
 NationalDayFrom2002To2020 = Holiday(

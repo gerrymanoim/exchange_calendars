@@ -30,7 +30,7 @@ class TimestampType(click.ParamType):
             return pd.Timestamp(value, tz=self.tz)
         except ValueError:
             self.fail(
-                "%s is not a valid timestamp." % value,
+                f"{value} is not a valid timestamp.",
                 param,
                 ctx,
             )
@@ -77,9 +77,7 @@ def check_holidays(
             _check_range(start, end, holidays, cal, calendar_name)
         else:
             click.secho(
-                "No holidays found for {} in the holiday key.".format(
-                    calendar_name,
-                ),
+                f"No holidays found for {calendar_name} in the holiday key.",
                 fg="yellow",
             )
 
@@ -87,12 +85,9 @@ def check_holidays(
 
 
 def _check_range(start, end, holidays, cal, calendar_name):
-    msg = ("Checking {} holidays on the {} ({}) calendar between {} and {}.").format(
-        len(holidays),
-        type(cal).__name__,
-        calendar_name,
-        start.date(),
-        end.date(),
+    msg = (
+        f"Checking {len(holidays)} holidays on the {type(cal).__name__}"
+        f" ({calendar_name}) calendar between {start.date()} and {end.date()}."
     )
     click.echo(msg)
 
@@ -107,7 +102,7 @@ def _check_range(start, end, holidays, cal, calendar_name):
     if unexpected_sessions.size:
         click.echo(
             "\nThese dates are holidays in the given key, but trading days in "
-            "the {} exchange calendar:".format(calendar_name)
+            f"the {calendar_name} exchange calendar:"
         )
         for session in unexpected_sessions:
             click.secho(str(session.date()), fg="red")
@@ -115,14 +110,14 @@ def _check_range(start, end, holidays, cal, calendar_name):
     if unexpected_holidays.size:
         click.echo(
             "\nThese dates are trading days in the given key, but holidays in "
-            "the {} exchange calendar:".format(calendar_name)
+            f"the {calendar_name} exchange calendar:"
         )
         for holiday in unexpected_holidays:
             click.secho(str(holiday.date()), fg="red")
 
     if not unexpected_sessions.size and not unexpected_holidays.size:
         click.secho(
-            "{} calendar matches the holiday key.".format(calendar_name),
+            f"{calendar_name} calendar matches the holiday key.",
             fg="green",
         )
 

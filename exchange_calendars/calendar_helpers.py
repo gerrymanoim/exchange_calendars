@@ -43,8 +43,7 @@ def next_divider_idx(dividers: np.ndarray, minute_val: int) -> int:
     if minute_val == target:
         # if dt is exactly on the divider, go to the next value
         return divider_idx + 1
-    else:
-        return divider_idx
+    return divider_idx
 
 
 def previous_divider_idx(dividers: np.ndarray, minute_val: int) -> int:
@@ -71,7 +70,7 @@ def compute_minutes(
 
     pieces = []
     for open_time, break_start_time, break_end_time, close_time in zip(
-        opens_in_ns, break_starts_in_ns, break_ends_in_ns, closes_in_ns
+        opens_in_ns, break_starts_in_ns, break_ends_in_ns, closes_in_ns, strict=True
     ):
         if break_start_time != NP_NAT:
             pieces.append(
@@ -96,8 +95,7 @@ def compute_minutes(
                     NANOSECONDS_PER_MINUTE,
                 )
             )
-    out = np.concatenate(pieces).view("datetime64[ns]")
-    return out
+    return np.concatenate(pieces).view("datetime64[ns]")
 
 
 def one_minute_earlier(arr: np.ndarray) -> np.ndarray:
@@ -150,7 +148,7 @@ def to_utc(ts: pd.Timestamp) -> pd.Timestamp:
         return ts.tz_localize(UTC)
 
 
-def parse_timestamp(
+def parse_timestamp(  # noqa: C901, PLR0912
     timestamp: Date | Minute,
     param_name: str = "minute",
     calendar: ExchangeCalendar | None = None,
@@ -220,8 +218,7 @@ def parse_timestamp(
             )
             if isinstance(e, TypeError):
                 raise TypeError(msg) from e
-            else:
-                raise ValueError(msg) from e
+            raise ValueError(msg) from e
 
     if utc and ts.tz is not UTC:
         ts = ts.tz_localize(UTC) if ts.tz is None else ts.tz_convert(UTC)
@@ -247,7 +244,7 @@ def parse_timestamp(
     if raise_oob:
         if calendar is None:
             raise ValueError("`calendar` must be passed if `raise_oob` is True.")
-        if calendar._minute_oob(ts):
+        if calendar._minute_oob(ts):  # noqa: SLF001
             raise errors.MinuteOutOfBounds(calendar, ts, param_name)
 
     return ts
@@ -283,9 +280,9 @@ def parse_date_or_minute(
     ts = parse_timestamp(ts, param_name, calendar, raise_oob=False, utc=False)
     is_time = not is_date(ts)
     ts = to_utc(ts) if is_time else ts
-    if is_time and calendar._minute_oob(ts):
+    if is_time and calendar._minute_oob(ts):  # noqa: SLF001
         raise errors.MinuteOutOfBounds(calendar, ts, param_name)
-    elif not is_time and calendar._date_oob(ts):
+    if not is_time and calendar._date_oob(ts):  # noqa: SLF001
         raise errors.DateOutOfBounds(calendar, ts, param_name)
     return ts, is_time
 
@@ -317,7 +314,7 @@ def parse_trading_minute(
     """
     # let out-of-bounds be handled by more specific NotTradingMinuteError message.
     minute = parse_timestamp(minute, param_name, raise_oob=False, calendar=calendar)
-    if calendar._minute_oob(minute) or not calendar.is_trading_minute(
+    if calendar._minute_oob(minute) or not calendar.is_trading_minute(  # noqa: SLF001
         minute, _parse=False
     ):
         raise errors.NotTradingMinuteError(calendar, minute, param_name)
@@ -388,7 +385,7 @@ def parse_date(
     if raise_oob:
         if calendar is None:
             raise ValueError("`calendar` must be passed if `raise_oob` is True.")
-        if calendar._date_oob(ts):
+        if calendar._date_oob(ts):  # noqa: SLF001
             raise errors.DateOutOfBounds(calendar, ts, param_name)
 
     return ts
@@ -428,7 +425,7 @@ def parse_session(
     """
     # let out-of-bounds be handled by more specific NotSessionError message.
     ts = parse_date(session, param_name, raise_oob=False)
-    if calendar._date_oob(ts) or not calendar.is_session(ts, _parse=False):
+    if calendar._date_oob(ts) or not calendar.is_session(ts, _parse=False):  # noqa: SLF001
         raise errors.NotSessionError(calendar, ts, param_name)
     return ts
 
@@ -540,17 +537,16 @@ class _TradingIndex:
             num_intervals = np.ceil((end_nanos - start_nanos) / self.interval_nanos)
             right = start_nanos + num_intervals * self.interval_nanos
             if self.closed == "right" and (right > next_start_nanos).any():
-                raise errors.IndicesOverlapError()
+                raise errors.IndicesOverlapError
             if self.closed == "both" and (right >= next_start_nanos).any():
-                raise errors.IndicesOverlapError()
+                raise errors.IndicesOverlapError
 
-        if self.has_break:
-            if not self.force_break_close:
-                _check(
-                    self.opens[self.mask],
-                    self.break_starts[self.mask],
-                    self.break_ends[self.mask],
-                )
+        if self.has_break and not self.force_break_close:
+            _check(
+                self.opens[self.mask],
+                self.break_starts[self.mask],
+                self.break_ends[self.mask],
+            )
 
         if not self.force_close:
             opens, closes, next_opens = (
@@ -712,7 +708,7 @@ class _TradingIndex:
             if self.curtail_overlaps:
                 right[:-1][overlaps_next] = left[1:][overlaps_next]
             else:
-                raise errors.IntervalsOverlapError()
+                raise errors.IntervalsOverlapError
 
         left = pd.DatetimeIndex(left, tz=UTC)
         right = pd.DatetimeIndex(right, tz=UTC)

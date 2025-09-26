@@ -83,7 +83,9 @@ class TestXTKSCalendar(ExchangeCalendarTestBase):
         consitution_memorial_days = ConstitutionMemorialDay.dates(start, end)
         childrens_days = ChildrensDay.dates(start, end)
         citizens_days = []
-        for cm_day, childrens_day in zip(consitution_memorial_days, childrens_days):
+        for cm_day, childrens_day in zip(
+            consitution_memorial_days, childrens_days, strict=False
+        ):
             # if there is only one day between Constitution Memorial
             # Day and Children's Day, that day should be a holiday
             if childrens_day - cm_day != pd.Timedelta(days=2):
@@ -269,7 +271,6 @@ class TestXTKSCalendar(ExchangeCalendarTestBase):
             "2019-05-01",  # Accession Day
             "2019-05-02",  # Citizen's Holiday
             "2019-10-22",  # Enthronment Ceremony
-            #
             "2020-10-01",  # equity trading system failure
         ]
 
@@ -337,7 +338,7 @@ class TestXTKSCalendar(ExchangeCalendarTestBase):
         expected_birthdays = EmperorAkihitoBirthday.dates("1990-01-01", "2020-01-01")
 
         for year in range(1990, 2019):
-            birthday = pd.Timestamp("{}-12-23".format(year))
+            birthday = pd.Timestamp(f"{year}-12-23")
             if birthday.dayofweek == SUNDAY:
                 birthday += pd.Timedelta(days=1)
             assert birthday in expected_birthdays

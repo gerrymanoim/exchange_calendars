@@ -23,14 +23,17 @@ from exchange_calendars.calendar_utils import XTAEExchangeCalendar
 
 from .test_exchange_calendar import Answers
 
-# TODO tests for next_divider_idx, previous_divider_idx, compute_minutes (#15)
+# TODO: tests for next_divider_idx, previous_divider_idx, compute_minutes (#15)
+
+ONE_MINUTE = pd.Timedelta(1, "min")
+ONE_DAY = pd.Timedelta(1, "D")
 
 
 def test_constants():
     # Just to make sure they aren't inadvertently changed
     assert m.UTC is ZoneInfo("UTC")
-    assert m.NANOSECONDS_PER_MINUTE == int(6e10)
-    assert m.NP_NAT == pd.NaT.value
+    assert m.NANOSECONDS_PER_MINUTE == int(6e10)  # noqa: SIM300
+    assert m.NP_NAT == pd.NaT.value  # noqa: SIM300
 
 
 @pytest.fixture(scope="class")
@@ -40,7 +43,7 @@ def one_min() -> abc.Iterator[pd.Timedelta]:
 
 def test_is_date(one_min):
     f = m.is_date
-    T = pd.Timestamp
+    T = pd.Timestamp  # noqa: N806
 
     assert f(T("2021-11-02"))
     assert f(T("2021-11-02 00:00"))
@@ -62,7 +65,7 @@ def test_is_date(one_min):
 
 def test_is_utc():
     f = m.to_utc
-    T = pd.Timestamp
+    T = pd.Timestamp  # noqa: N806
 
     expected = T("2021-11-02", tz=UTC)
     assert f(T("2021-11-02", tz=UTC)) == expected
@@ -328,7 +331,9 @@ def test_parse_date_errors(calendar, param_name, date_too_early, date_too_late):
         m.parse_date(dt, param_name, raise_oob=False)
 
     dt = pd.Timestamp("2021-06-02 13:33")
-    with pytest.raises(ValueError, match="a Date must have a time component of 00:00."):
+    with pytest.raises(
+        ValueError, match=r"a Date must have a time component of 00:00."
+    ):
         m.parse_date(dt, param_name, raise_oob=False)
 
     # by default raises error if oob
@@ -446,7 +451,7 @@ class TestTradingIndex:
         """Dict of tested calendars, key as name, value as calendar."""
         d = {}
         for name, ans in answers.items():
-            cls = calendar_utils._default_calendar_factories[name]
+            cls = calendar_utils._default_calendar_factories[name]  # noqa: SLF001
             d[name] = cls(start=ans.first_session, end=ans.last_session)
         return d
 
@@ -485,7 +490,6 @@ class TestTradingIndex:
         end = pd.Timestamp(end).floor("D")
         start = draw(st.datetimes(max(end - distance, first), end - one_day))
         start = pd.Timestamp(start).floor("D")
-        start, end = start, end
         assume(not ans.answers[start:end].empty)
         return start, end
 
@@ -503,8 +507,8 @@ class TestTradingIndex:
     @st.composite
     def st_periods(
         draw,
-        minimum: pd.Timedelta = pd.Timedelta(1, "min"),
-        maximum: pd.Timedelta = pd.Timedelta(1, "D") - pd.Timedelta(1, "min"),
+        minimum: pd.Timedelta = ONE_MINUTE,
+        maximum: pd.Timedelta = ONE_DAY - ONE_MINUTE,
     ) -> pd.Timedelta:
         """SearchStrategy for a period between a `minimum` and `maximum`."""
         period = draw(st.integers(minimum.seconds // 60, maximum.seconds // 60))
@@ -753,7 +757,7 @@ class TestTradingIndex:
             sessions_gap = ans.opens[slc].shift(-1).dt.ceil(align) - ans.closes[slc]
             assume(not op(overrun, sessions_gap).any())
 
-        ti = m._TradingIndex(
+        ti = m._TradingIndex(  # noqa: SLF001
             cal,
             start,
             end,
@@ -781,8 +785,8 @@ class TestTradingIndex:
         assert upper_bounds.isin(index).all()
 
         # verify that all indices are within bounds of a session or subsession.
-        bv = pd.Series(False, index)
-        for lower_bound, upper_bound in zip(lower_bounds, upper_bounds):
+        bv = pd.Series(data=False, index=index)
+        for lower_bound, upper_bound in zip(lower_bounds, upper_bounds, strict=True):
             bv = bv | ((index >= lower_bound) & (index <= upper_bound))
         assert bv.all()
 
@@ -853,7 +857,7 @@ class TestTradingIndex:
             sessions_gap = ans.opens[slc].shift(-1).dt.ceil(align) - ans.closes[slc]
             assume(not (overrun > sessions_gap).any())
 
-        ti = m._TradingIndex(
+        ti = m._TradingIndex(  # noqa: SLF001
             cal,
             start,
             end,
@@ -889,8 +893,8 @@ class TestTradingIndex:
         assert upper_bounds.isin(index.right).all()
 
         # verify that all intervals are within bounds of a session or subsession
-        bv = pd.Series(False, index)
-        for lower_bound, upper_bound in zip(lower_bounds, upper_bounds):
+        bv = pd.Series(data=False, index=index)
+        for lower_bound, upper_bound in zip(lower_bounds, upper_bounds, strict=True):
             bv = bv | ((index.left >= lower_bound) & (index.right <= upper_bound))
 
     @given(data=st.data(), calendar_name=st.sampled_from(["XLON", "XHKG"]))
@@ -920,8 +924,17 @@ class TestTradingIndex:
         closed = "neither"
         forces = [False, False]
 
-        ti = m._TradingIndex(
-            cal, start, end, period, closed, *forces, False, False, one_min, one_min
+        ti = m._TradingIndex(  # noqa: SLF001
+            cal,
+            start,
+            end,
+            period,
+            closed,
+            *forces,
+            False,  # noqa: FBT003
+            False,  # noqa: FBT003
+            one_min,
+            one_min,
         )
         index = ti.trading_index()
         assert index.empty
@@ -1008,7 +1021,7 @@ class TestTradingIndex:
             sessions_gap = ans.opens[slc].shift(-1) - ans.closes[slc]
             assume(op(overrun, sessions_gap).any())
 
-        ti = m._TradingIndex(
+        ti = m._TradingIndex(  # noqa: SLF001
             cal,
             start,
             end,
@@ -1057,7 +1070,7 @@ class TestTradingIndex:
         cal, start, end = cal_start_end
         period, closed = request.param
         period = pd.Timedelta(period)
-        yield m._TradingIndex(
+        yield m._TradingIndex(  # noqa: SLF001
             cal,
             start,
             end,
@@ -1107,7 +1120,7 @@ class TestTradingIndex:
         """
         cal, start, end = cal_start_end
         period, closed = pd.Timedelta("104min"), request.param
-        yield m._TradingIndex(
+        yield m._TradingIndex(  # noqa: SLF001
             cal,
             start,
             end,
@@ -1136,7 +1149,7 @@ class TestTradingIndex:
     def test_force(self, cal_start_end):
         """Verify `force` option overrides `force_close` and `force_break_close`."""
         cal, start, end = cal_start_end
-        kwargs = dict(start=start, end=end, period="1h", intervals=True)
+        kwargs = {"start": start, "end": end, "period": "1h", "intervals": True}
 
         expected_true = cal.trading_index(
             **kwargs, force_close=True, force_break_close=True
@@ -1169,7 +1182,7 @@ class TestTradingIndex:
         """Verify effect of ignore_breaks option."""
         cal, start, end = cal_start_end
         assert cal.sessions_has_break(start, end)
-        kwargs = dict(start=start, end=end, period="1h", intervals=True)
+        kwargs = {"start": start, "end": end, "period": "1h", "intervals": True}
 
         # verify a difference
         index_false = cal.trading_index(**kwargs, ignore_breaks=False)
@@ -1182,7 +1195,7 @@ class TestTradingIndex:
         start_ = start - delta
         end_ = end + delta
 
-        cal_amended = calendar_utils._default_calendar_factories[cal.name](start_, end_)
+        cal_amended = calendar_utils._default_calendar_factories[cal.name](start_, end_)  # noqa: SLF001
         cal_amended.break_starts_nanos[:] = pd.NaT.value
         cal_amended.break_ends_nanos[:] = pd.NaT.value
         cal_amended.schedule.loc[:, "break_start"] = pd.NaT
@@ -1237,7 +1250,7 @@ class TestTradingIndex:
         ignore_breaks=st.booleans(),
     )
     @settings(deadline=None)
-    def test_align(
+    def test_align(  # noqa: C901, PLR0915
         self,
         data,
         cal_with_ans_align,
@@ -1294,7 +1307,7 @@ class TestTradingIndex:
             forces: list[bool],
         ) -> pd.DatetimeIndex:
             index_ = pd.DatetimeIndex([], tz=tz)
-            for start, end, force in zip(starts, ends, forces):
+            for start, end, force in zip(starts, ends, forces, strict=True):
                 index = pd.date_range(start, end, freq=period, tz=tz)
                 if not closed_left:
                     index = index[1:]
@@ -1315,7 +1328,7 @@ class TestTradingIndex:
         ) -> pd.DatetimeIndex:
             left_ = pd.DatetimeIndex([], tz=tz)
             right_ = pd.DatetimeIndex([], tz=tz)
-            for start, end, force in zip(starts, ends, forces):
+            for start, end, force in zip(starts, ends, forces, strict=True):
                 left = pd.date_range(start, end - one_min, freq=period, tz=tz)
                 right = left + period
                 if force and right[-1] > end:
@@ -1348,14 +1361,14 @@ class TestTradingIndex:
         )
 
         args = (from_, to, period)
-        kwargs = dict(
-            closed=closed,
-            align=align,
-            align_pm=align_pm,
-            ignore_breaks=ignore_breaks,
-            force_close=force_close,
-            force_break_close=force_break_close,
-        )
+        kwargs = {
+            "closed": closed,
+            "align": align,
+            "align_pm": align_pm,
+            "ignore_breaks": ignore_breaks,
+            "force_close": force_close,
+            "force_break_close": force_break_close,
+        }
 
         intervals = False
         expected = create_expected(starts, ends, period, forces)
@@ -1384,7 +1397,7 @@ class TestTradingIndex:
         """
         cal, _ = cal_with_ans_align
 
-        kwargs = dict(closed="right", align="-5min")
+        kwargs = {"closed": "right", "align": "-5min"}
         align_pm = "-1h"
 
         intervals = True
@@ -1443,7 +1456,7 @@ class TestTradingIndex:
         )
         assert not rtrn.empty
 
-    def test_start_end_times(self, one_min, calendars):
+    def test_start_end_times(self, one_min, calendars):  # noqa: PLR0915
         """Test effect of passing start and/or end as a time.
 
         Tests passing start / end as combinations of dates and/or times.
@@ -1525,11 +1538,11 @@ class TestTradingIndex:
             All other parameters will be passed thorugh to `trading_index`.
             """
             args_dates = (start_s, end_s, period)
-            kwargs = dict(
-                force=force,
-                ignore_breaks=ignore_breaks,
-                curtail_overlaps=curtail_overlaps,
-            )
+            kwargs = {
+                "force": force,
+                "ignore_breaks": ignore_breaks,
+                "curtail_overlaps": curtail_overlaps,
+            }
             for (start, slc_start, ssl, ssr, ssb, ssn), (
                 end,
                 slc_end,

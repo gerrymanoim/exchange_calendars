@@ -29,7 +29,6 @@ class TestXNZECalendar(ExchangeCalendarTestBase):
             "2014-10-27",  # Labour Day
             "2014-12-25",  # Christmas
             "2014-12-26",  # Boxing Day
-            #
             # Holidays falling on a weekend and subsequently made up.
             "2010-12-27",  # Christmas Day fell on Saturday
             "2010-12-28",  # Boxing Day fell on Sunday
@@ -71,7 +70,6 @@ class TestXNZECalendar(ExchangeCalendarTestBase):
             # Christmas Day and New Year's Day
             "2011-12-23",  # NB Christmas Day was a Sunday, so Friday an early close
             "2011-12-30",  # NB New Year's Day was a Sunday, so Friday an early close
-            #
             "2014-12-24",  # Christmas Eve
             "2014-12-31",  # New Year's Eve
         ]

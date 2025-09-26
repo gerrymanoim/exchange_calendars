@@ -172,7 +172,7 @@ class AIXKExchangeCalendar(ExchangeCalendar):
       - Nauryz Holiday
       - Nauryz Holiday
       - Kazakhstan People Solidarity Day
-      - Defender’s Day
+      - Defender's Day
       - Victory Day Holiday
       - Capital City Day
       - Capital City Day

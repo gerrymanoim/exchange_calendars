@@ -23,6 +23,8 @@ where:
             "default" to use calendar's default end date.
 """
 
+# ruff: noqa: T201
+
 import os
 import sys
 import pathlib
@@ -40,11 +42,11 @@ path = pathlib.Path(__file__).parents[1].joinpath("tests/resources", filename)
 if len(sys.argv) > 2:
     start_arg = sys.argv[2]
 else:
-    start_arg = "existing" if path.is_file else "default"
+    start_arg = "existing" if path.is_file() else "default"
 end_arg = sys.argv[3] if len(sys.argv) > 3 else "default"
 
 if start_arg == "existing" or end_arg == "existing":
-    assert path.is_file
+    assert path.is_file()
     df = pd.read_csv(
         path,
         index_col=0,
@@ -69,19 +71,21 @@ else:
 cal = get_calendar(cal_name, start=start, end=end)
 
 df = pd.DataFrame(
-    list(zip(cal.opens, cal.closes, cal.break_starts, cal.break_ends)),
+    list(zip(cal.opens, cal.closes, cal.break_starts, cal.break_ends, strict=True)),
     columns=["open", "close", "break_start", "break_end"],
     index=cal.closes.index,
 )
 
-# Set the PYTHONTZPATH environment variable to use Python's tzdata package instead of the operating system's timezone data.
-# This ensures consistent timezone data across all platforms when running tests.
+# Set the PYTHONTZPATH environment variable to use Python's tzdata package
+# instead of the operating system's timezone data. This ensures consistent
+# timezone data across all platforms when running tests.
 python_tzdata_path = os.getenv("PYTHONTZPATH")
 print(
-    f"Is environment variable PYTHONTZPATH set? {'Yes' if os.getenv('PYTHONTZPATH') else 'No'}"
+    "Is environment variable PYTHONTZPATH set?"
+    f" {'Yes' if os.getenv('PYTHONTZPATH') else 'No'}"
 )
 if not python_tzdata_path:
-    python_tzdata_path = os.path.dirname(os.__file__)
+    python_tzdata_path = pathlib.Path(os.__file__).parent
     print(f"Setting PYTHONTZPATH to {python_tzdata_path}")
     os.putenv("PYTHONTZPATH", python_tzdata_path)
 print(f"Using tzdata version: {tzdata.IANA_VERSION}")

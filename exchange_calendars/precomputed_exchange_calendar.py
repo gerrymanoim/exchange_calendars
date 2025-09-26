@@ -13,12 +13,12 @@ class PrecomputedExchangeCalendar(ExchangeCalendar):
     """
 
     @abstractmethod
-    def precomputed_holidays(cls) -> pd.DatetimeIndex | list[pd.Timestamp]:
+    def precomputed_holidays(self) -> pd.DatetimeIndex | list[pd.Timestamp]:
         """Precomputed holidays.
 
         Subclass should implement as a classmethod.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def adhoc_holidays(self) -> pd.DatetimeIndex | list[pd.Timestamp]:

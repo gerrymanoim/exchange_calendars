@@ -68,7 +68,7 @@ class CMESExchangeCalendar(ExchangeCalendar):
     @property
     def regular_holidays(self):
         # The CME has different holiday rules depending on the type of
-        # instrument. For example, http://www.cmegroup.com/tools-information/holiday-calendar/files/2016-4th-of-july-holiday-schedule.pdf # noqa
+        # instrument. For example, http://www.cmegroup.com/tools-information/holiday-calendar/files/2016-4th-of-july-holiday-schedule.pdf
         # shows that Equity, Interest Rate, FX, Energy, Metals & DME Products
         # close at 1200 CT on July 4, 2016, while Grain, Oilseed & MGEX
         # Products and Livestock, Dairy & Lumber products are completely

@@ -77,8 +77,7 @@ class Holiday(PandasHoliday):
         if self.observance is not None:
             info += f", observance={self.observance}"
 
-        repr = f"{self.__class__.__name__}: {self.name} ({info})"
-        return repr
+        return f"{self.__class__.__name__}: {self.name} ({info})"
 
     def dates(self, start_date, end_date, return_name=False):
         start_date = Timestamp(start_date)
@@ -114,9 +113,9 @@ class Holiday(PandasHoliday):
                     offset = observance
 
                     def f(d):
-                        return d + offset
+                        return d + offset  # noqa: B023
 
-                    observance = f
+                    observance = f  # noqa: PLW2901
                 dates = dates.map(observance)
         return dates
 
@@ -189,5 +188,4 @@ class AbstractHolidayCalendar(PandasAbstractHolidayCalendar):
 
         if return_name:
             return holidays
-        else:
-            return holidays.index
+        return holidays.index

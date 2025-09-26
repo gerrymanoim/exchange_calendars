@@ -16,13 +16,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from calendar import day_name
 import collections
-from collections.abc import Sequence, Callable
-import datetime
 import functools
 import operator
 from typing import TYPE_CHECKING, Literal, Any
 import warnings
-from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -53,6 +50,9 @@ from .calendar_helpers import (
 from .utils.pandas_utils import days_at_time
 
 if TYPE_CHECKING:
+    from zoneinfo import ZoneInfo
+    import datetime
+    from collections.abc import Sequence, Callable
     from pandas._libs.tslibs.nattype import NaTType
 
 
@@ -61,6 +61,8 @@ GLOBAL_DEFAULT_START = pd.Timestamp.now().floor("D") - pd.DateOffset(years=20)
 # day or minute.
 GLOBAL_DEFAULT_END = pd.Timestamp.now().floor("D") + pd.DateOffset(years=1)
 
+ONE_MINUTE = pd.Timedelta(1, "min")
+ONE_HOUR = pd.Timedelta("1h")
 NANOS_IN_MINUTE = 60000000000
 MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY = range(7)
 WEEKDAYS = (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY)
@@ -105,7 +107,7 @@ def _group_times(
     return elements[0].append(elements[1:])
 
 
-class deprecate:
+class deprecate:  # noqa: N801
     """Decorator for deprecated ExchangeCalendar methods."""
 
     def __init__(
@@ -119,7 +121,7 @@ class deprecate:
     def __call__(self, f: Callable) -> Callable:
         @functools.wraps(f)
         def wrapped_f(*args, **kwargs):
-            warnings.warn(self._message(f), FutureWarning)
+            warnings.warn(self._message(f), FutureWarning)  # noqa: B028
             return f(*args, **kwargs)
 
         return wrapped_f
@@ -272,8 +274,7 @@ class ExchangeCalendar(ABC):
         bound_min = cls.bound_min()
         if bound_min is None:
             return GLOBAL_DEFAULT_START
-        else:
-            return max(GLOBAL_DEFAULT_START, bound_min)
+        return max(GLOBAL_DEFAULT_START, bound_min)
 
     @classmethod
     def default_end(cls) -> pd.Timestamp:
@@ -285,8 +286,7 @@ class ExchangeCalendar(ABC):
         bound_max = cls.bound_max()
         if bound_max is None:
             return GLOBAL_DEFAULT_END
-        else:
-            return min(GLOBAL_DEFAULT_END, bound_max)
+        return min(GLOBAL_DEFAULT_END, bound_max)
 
     def __init__(
         self,
@@ -400,7 +400,7 @@ class ExchangeCalendar(ABC):
     @abstractmethod
     def name(self) -> str:
         """Calendar name."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _bound_min_error_msg(self, start: pd.Timestamp) -> str:
         """Return error message to handle `start` being out-of-bounds.
@@ -431,7 +431,7 @@ class ExchangeCalendar(ABC):
     @abstractmethod
     def tz(self) -> ZoneInfo:
         """Calendar timezone."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     @abstractmethod
@@ -464,7 +464,7 @@ class ExchangeCalendar(ABC):
                 (pd.Timestamp("1998-12-07"), datetime.time(9, 0)),
             )
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def break_start_times(
@@ -518,7 +518,7 @@ class ExchangeCalendar(ABC):
                 (pd.Timestamp("2016-08-01"), datetime.time(17, 30)),
             )
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def weekmask(self) -> str:
@@ -692,7 +692,10 @@ class ExchangeCalendar(ABC):
         return []
 
     def apply_special_offsets(
-        self, sessions: pd.DatetimeIndex, start: pd.Timestamp, end: pd.Timestamp
+        self,
+        sessions: pd.DatetimeIndex,  # noqa: ARG002
+        start: pd.Timestamp,  # noqa: ARG002
+        end: pd.Timestamp,  # noqa: ARG002
     ) -> None:
         """Hook for subclass to apply changes.
 
@@ -713,7 +716,7 @@ class ExchangeCalendar(ABC):
         -----
         Incorporated to provide hook to `exchange_calendar_xkrx`.
         """
-        return None
+        return
 
     # ------------------------------------------------------------------
     # -- NO method below this line should be overriden on a subclass! --
@@ -735,8 +738,7 @@ class ExchangeCalendar(ABC):
         """List of valid `side` options."""
         if cls.close_times == cls.open_times:
             return ["left", "right"]
-        else:
-            return ["both", "left", "right", "neither"]
+        return ["both", "left", "right", "neither"]
 
     @property
     def side(self) -> Literal["left", "right", "both", "neither"]:
@@ -837,32 +839,28 @@ class ExchangeCalendar(ABC):
         """Each session's first minute as an integer."""
         if self.side in self._LEFT_SIDES:
             return self.opens_nanos
-        else:
-            return one_minute_later(self.opens_nanos)
+        return one_minute_later(self.opens_nanos)
 
     @functools.cached_property
     def last_minutes_nanos(self) -> np.ndarray:
         """Each session's last minute as an integer."""
         if self.side in self._RIGHT_SIDES:
             return self.closes_nanos
-        else:
-            return one_minute_earlier(self.closes_nanos)
+        return one_minute_earlier(self.closes_nanos)
 
     @functools.cached_property
     def last_am_minutes_nanos(self) -> np.ndarray:
         """Each morning subsessions's last minute as an integer."""
         if self.side in self._RIGHT_SIDES:
             return self.break_starts_nanos
-        else:
-            return one_minute_earlier(self.break_starts_nanos)
+        return one_minute_earlier(self.break_starts_nanos)
 
     @functools.cached_property
     def first_pm_minutes_nanos(self) -> np.ndarray:
         """Each afternoon subsessions's first minute as an integer."""
         if self.side in self._LEFT_SIDES:
             return self.break_ends_nanos
-        else:
-            return one_minute_later(self.break_ends_nanos)
+        return one_minute_later(self.break_ends_nanos)
 
     def _minutes_as_series(self, nanos: np.ndarray, name: str) -> pd.Series:
         """Convert trading minute nanos to pd.Series."""
@@ -984,13 +982,13 @@ class ExchangeCalendar(ABC):
         """Return open time for a given session."""
         if _parse:
             session = parse_session(self, session, "session")
-        return self.schedule.at[session, "open"]
+        return self.schedule.loc[session, "open"]
 
     def session_close(self, session: Session, _parse: bool = True) -> pd.Timestamp:
         """Return close time for a given session."""
         if _parse:
             session = parse_session(self, session, "session")
-        return self.schedule.at[session, "close"]
+        return self.schedule.loc[session, "close"]
 
     def session_break_start(
         self, session: Session, _parse: bool = True
@@ -1001,8 +999,7 @@ class ExchangeCalendar(ABC):
         """
         if _parse:
             session = parse_session(self, session, "session")
-        break_start = self.schedule.at[session, "break_start"]
-        return break_start
+        return self.schedule.loc[session, "break_start"]
 
     def session_break_end(
         self, session: Session, _parse: bool = True
@@ -1013,8 +1010,7 @@ class ExchangeCalendar(ABC):
         """
         if _parse:
             session = parse_session(self, session, "session")
-        break_end = self.schedule.at[session, "break_end"]
-        return break_end
+        return self.schedule.loc[session, "break_end"]
 
     def session_open_close(
         self, session: Session, _parse: bool = True
@@ -1140,9 +1136,10 @@ class ExchangeCalendar(ABC):
             return self.schedule.index[idx + 1]
         except IndexError:
             if idx == len(self.schedule.index) - 1:
-                raise errors.RequestedSessionOutOfBounds(self, False) from None
-            else:
-                raise
+                raise errors.RequestedSessionOutOfBounds(
+                    self, too_early=False
+                ) from None
+            raise
 
     def previous_session(self, session: Session, _parse: bool = True) -> pd.Timestamp:
         """Return session that immediately preceeds a given session.
@@ -1163,7 +1160,7 @@ class ExchangeCalendar(ABC):
         """
         idx = self._get_session_idx(session, _parse=_parse)
         if not idx:
-            raise errors.RequestedSessionOutOfBounds(self, True)
+            raise errors.RequestedSessionOutOfBounds(self, too_early=True)
         return self.schedule.index[idx - 1]
 
     def session_minutes(
@@ -1212,7 +1209,7 @@ class ExchangeCalendar(ABC):
         idx = self._get_session_idx(session, _parse=_parse) + count
         if idx >= len(self.sessions):
             raise errors.RequestedSessionOutOfBounds(self, too_early=False)
-        elif idx < 0:
+        if idx < 0:
             raise errors.RequestedSessionOutOfBounds(self, too_early=True)
         return self.sessions[idx]
 
@@ -1285,21 +1282,20 @@ class ExchangeCalendar(ABC):
             date = parse_date(date, calendar=self)
         if self.is_session(date, _parse=False):
             return date
-        elif direction in ["next", "previous"]:
+        if direction in ["next", "previous"]:
             idx = self._get_date_idx(date, _parse=False)
             if direction == "previous":
                 idx -= 1
             return self.sessions[idx]
-        elif direction == "none":
+        if direction == "none":
             raise ValueError(
                 f"`date` '{date}' does not represent a session. Consider passing"
                 " a `direction`."
             )
-        else:
-            raise ValueError(
-                f"'{direction}' is not a valid `direction`. Valid `direction`"
-                ' values are "next", "previous" and "none".'
-            )
+        raise ValueError(
+            f"'{direction}' is not a valid `direction`. Valid `direction`"
+            ' values are "next", "previous" and "none".'
+        )
 
     # Methods that interrogate a given minute (trading or non-trading).
 
@@ -1413,9 +1409,8 @@ class ExchangeCalendar(ABC):
         is_trading_minute = self.is_trading_minute(minute, _parse=False)
         if is_trading_minute or not ignore_breaks:
             return is_trading_minute
-        else:
-            # not a trading minute although should return True if in break
-            return self.is_break_minute(minute, _parse=False)
+        # not a trading minute although should return True if in break
+        return self.is_break_minute(minute, _parse=False)
 
     def is_open_at_time(
         self,
@@ -1532,8 +1527,7 @@ class ExchangeCalendar(ABC):
                     "Minute cannot be the last open or later (received `minute`"
                     f" parsed as '{minute}'.)"
                 ) from None
-            else:
-                raise
+            raise
 
         return pd.Timestamp(self.opens_nanos[idx], tz=UTC)
 
@@ -1563,8 +1557,7 @@ class ExchangeCalendar(ABC):
                     "Minute cannot be the last close (received `minute` parsed as"
                     f" '{minute}'.)"
                 ) from None
-            else:
-                raise
+            raise
         return pd.Timestamp(self.closes_nanos[idx], tz=UTC)
 
     def previous_open(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
@@ -1593,8 +1586,7 @@ class ExchangeCalendar(ABC):
                     "Minute cannot be the first open (received `minute` parsed as"
                     f" '{minute}'.)"
                 ) from None
-            else:
-                raise
+            raise
 
         return pd.Timestamp(self.opens_nanos[idx], tz=UTC)
 
@@ -1624,8 +1616,7 @@ class ExchangeCalendar(ABC):
                     "Minute cannot be the first close or earlier (received"
                     f" `minute` parsed as '{minute}'.)"
                 ) from None
-            else:
-                raise
+            raise
 
         return pd.Timestamp(self.closes_nanos[idx], tz=UTC)
 
@@ -1655,7 +1646,7 @@ class ExchangeCalendar(ABC):
         except IndexError:
             # dt > last_minute handled via parsing
             if minute == self.last_minute:
-                raise errors.RequestedMinuteOutOfBounds(self, False) from None
+                raise errors.RequestedMinuteOutOfBounds(self, too_early=False) from None
         return self.minutes[idx]
 
     def previous_minute(self, minute: Minute, _parse: bool = True) -> pd.Timestamp:
@@ -1684,10 +1675,10 @@ class ExchangeCalendar(ABC):
         except ValueError:
             # dt < first_minute handled via parsing
             if minute == self.first_minute:
-                raise errors.RequestedMinuteOutOfBounds(self, True) from None
+                raise errors.RequestedMinuteOutOfBounds(self, too_early=True) from None
         return self.minutes[idx]
 
-    def minute_to_session(
+    def minute_to_session(  # noqa: C901
         self,
         minute: Minute,
         direction: Literal["next", "previous", "none"] = "next",
@@ -1731,30 +1722,28 @@ class ExchangeCalendar(ABC):
             # Resolve call here.
             if direction == "next":
                 return self.first_session
-            else:
-                raise ValueError(
-                    f"Received `minute` as '{minute}' although this is earlier than the"
-                    f" calendar's first trading minute ({self.first_minute}). Consider"
-                    " passing `direction` as 'next' to get first session."
-                )
+            raise ValueError(
+                f"Received `minute` as '{minute}' although this is earlier than the"
+                f" calendar's first trading minute ({self.first_minute}). Consider"
+                " passing `direction` as 'next' to get first session."
+            )
 
         if minute.value > self.minutes_nanos[-1]:
             # Resolve call here.
             if direction == "previous":
                 return self.last_session
-            else:
-                raise ValueError(
-                    f"Received `minute` as '{minute}' although this is later than the"
-                    f" calendar's last trading minute ({self.last_minute}). Consider"
-                    " passing `direction` as 'previous' to get last session."
-                )
+            raise ValueError(
+                f"Received `minute` as '{minute}' although this is later than the"
+                f" calendar's last trading minute ({self.last_minute}). Consider"
+                " passing `direction` as 'previous' to get last session."
+            )
 
         idx = np.searchsorted(self.last_minutes_nanos, minute.value)
         current_or_next_session = self.schedule.index[idx]
 
         if direction == "next":
             return current_or_next_session
-        elif direction == "previous":
+        if direction == "previous":
             if not self.is_open_on_minute(minute, ignore_breaks=True, _parse=False):
                 return self.schedule.index[idx - 1]
         elif direction == "none":
@@ -1899,15 +1888,14 @@ class ExchangeCalendar(ABC):
             minute = parse_timestamp(minute, calendar=self)
         if self.is_trading_minute(minute, _parse=False):
             return minute
-        elif direction == "next":
+        if direction == "next":
             return self.next_minute(minute, _parse=False)
-        elif direction == "previous":
+        if direction == "previous":
             return self.previous_minute(minute, _parse=False)
-        else:
-            raise ValueError(
-                f"`minute` '{minute}' is not a trading minute. Consider passing"
-                " `direction` as 'next' or 'previous'."
-            )
+        raise ValueError(
+            f"`minute` '{minute}' is not a trading minute. Consider passing"
+            " `direction` as 'next' or 'previous'."
+        )
 
     def minute_offset(
         self, minute: TradingMinute, count: int, _parse: bool = True
@@ -1939,11 +1927,11 @@ class ExchangeCalendar(ABC):
         idx = self._get_minute_idx(minute) + count
         if idx >= len(self.minutes_nanos):
             raise errors.RequestedMinuteOutOfBounds(self, too_early=False)
-        elif idx < 0:
+        if idx < 0:
             raise errors.RequestedMinuteOutOfBounds(self, too_early=True)
         return self.minutes[idx]
 
-    def minute_offset_by_sessions(
+    def minute_offset_by_sessions(  # noqa: C901, PLR0912
         self,
         minute: TradingMinute,
         count: int = 1,
@@ -1999,22 +1987,23 @@ class ExchangeCalendar(ABC):
             if minute.value > self.minutes_nanos[-1]:
                 raise errors.RequestedMinuteOutOfBounds(self, too_early=False)
 
-        if self.is_trading_minute(minute, _parse=False):
+        if self.is_trading_minute(minute, _parse=False) and (
+            self.minute_to_session(minute, _parse=False) == target_session
+        ):
             # this guard is necessary as minute can be for a different session than the
             # intended if the gap between sessions is less than any difference in the
             # open or close times (i.e. only relevant if base and target sessions have
             # different open/close times.
-            if self.minute_to_session(minute, _parse=False) == target_session:
-                return minute
+            return minute
         first_minute = self.session_first_minute(target_session, _parse=False)
         if minute < first_minute:
             return first_minute
         last_minute = self.session_last_minute(target_session, _parse=False)
         if minute > last_minute:
             return last_minute
-        elif self.is_break_minute(minute, _parse=False):
+        if self.is_break_minute(minute, _parse=False):
             return self.session_last_am_minute(target_session, _parse=False)
-        assert False, "offset minute should have resolved!"
+        raise AssertionError("offset minute should have resolved!")
 
     # Methods that evaluate or interrogate a range of minutes.
 
@@ -2075,7 +2064,7 @@ class ExchangeCalendar(ABC):
                 f" ({self.first_minute}). `count` cannot be lower than"
                 f" {count - end_idx} for `minute` '{minute}'."
             )
-        elif end_idx >= len(self.minutes_nanos):
+        if end_idx >= len(self.minutes_nanos):
             raise ValueError(
                 f"Minutes window cannot end after the calendar's last minute"
                 f" ({self.last_minute}). `count` cannot be higher than"
@@ -2251,7 +2240,7 @@ class ExchangeCalendar(ABC):
                 f" ({self.first_session}). `count` cannot be lower than"
                 f" {count - end_idx} for `session` '{session}'."
             )
-        elif end_idx >= len(self.sessions):
+        if end_idx >= len(self.sessions):
             raise ValueError(
                 f"Sessions window cannot end after the last calendar session"
                 f" ({self.last_session}). `count` cannot be higher than"
@@ -2336,7 +2325,7 @@ class ExchangeCalendar(ABC):
         nanos = session_diff - break_diff
         return (nanos // NANOSECONDS_PER_MINUTE).sum()
 
-    def trading_index(
+    def trading_index(  # noqa: C901
         self,
         start: Date | Minute,
         end: Date | Minute,
@@ -2348,7 +2337,7 @@ class ExchangeCalendar(ABC):
         force: bool | None = None,
         curtail_overlaps: bool = False,
         ignore_breaks: bool = False,
-        align: pd.Timedelta | str = pd.Timedelta(1, "min"),
+        align: pd.Timedelta | str = ONE_MINUTE,
         align_pm: pd.Timedelta | bool = True,
         parse: bool = True,
     ) -> pd.DatetimeIndex | pd.IntervalIndex:
@@ -2551,9 +2540,9 @@ class ExchangeCalendar(ABC):
             forwards, -ve values to shift indices backwards.
 
             Valid values are (or equivalent):
-                "2min", "3min", "4min", "5min", "6min", "10min", "12min", "15min", "20min",
-                "30min", "-2min", "-4min", "-5min", "-6min", "-10min", "-12min", "-15min",
-                "-20min", "-30min"
+                "2min", "3min", "4min", "5min", "6min", "10min", "12min",
+                "15min", "20min", "30min", "-2min", "-4min", "-5min",
+                "-6min", "-10min", "-12min", "-15min", "-20min", "-30min"
 
             For example, if `intervals` is True and `period` is '5T' then
             the first interval of a session with open time as 07:59 would
@@ -2666,7 +2655,6 @@ class ExchangeCalendar(ABC):
                 )
                 raise ValueError(msg) from None
 
-            ONE_HOUR = pd.Timedelta("1h")
             if value > ONE_HOUR or value < -ONE_HOUR or not value or (ONE_HOUR % value):
                 raise ValueError(
                     f"`{name}` must be factor of 1H although received '{value}'."
@@ -2706,8 +2694,7 @@ class ExchangeCalendar(ABC):
 
         if not intervals:
             return _trading_index.trading_index()
-        else:
-            return _trading_index.trading_index_intervals()
+        return _trading_index.trading_index_intervals()
 
     # Internal methods called by constructor.
 
@@ -2723,7 +2710,8 @@ class ExchangeCalendar(ABC):
         Parameters
         ----------
         regular_dates
-            Regular non-standard times and corresponding HolidayCalendars or Int day-of-week.
+            Regular non-standard times and corresponding HolidayCalendars
+            or Int day-of-week.
 
         ad_hoc_dates
             Adhoc non-standard times and corresponding sessions.
@@ -2759,7 +2747,7 @@ class ExchangeCalendar(ABC):
         # List of Series for ad-hoc times.
         ad_hoc = []
         for time_, dti in ad_hoc_dates:
-            dti = dti[(dti >= start_date) & (dti <= end_date)]
+            dti = dti[(dti >= start_date) & (dti <= end_date)]  # noqa: PLW2901
             srs = pd.Series(index=dti, data=days_at_time(dti, time_, self.tz, 0))
             ad_hoc.append(srs)
 
@@ -2807,7 +2795,7 @@ class ExchangeCalendar(ABC):
 
 def _check_breaks_match(break_starts_nanos: np.ndarray, break_ends_nanos: np.ndarray):
     """Checks that break_starts_nanos and break_ends_nanos match."""
-    nats_match = np.equal(NP_NAT == break_starts_nanos, NP_NAT == break_ends_nanos)
+    nats_match = np.equal(break_starts_nanos == NP_NAT, break_ends_nanos == NP_NAT)
     if not nats_match.all():
         raise ValueError(
             f"""

@@ -8,6 +8,8 @@ from korean_lunar_calendar import KoreanLunarCalendar
 from .holiday import Holiday
 from .offsets import _is_normalized
 
+# ruff: noqa: SLF001
+
 
 def is_naive(dt):
     return dt.tzinfo is None
@@ -40,8 +42,7 @@ def to_korean_datetime(dt):
     dt = pd.to_datetime(dt)
     if dt.tz is None:
         dt = dt.tz_localize(KoreanHoliday._local_timezone)
-    dt = dt.tz_convert(KoreanHoliday._timezone)
-    return dt
+    return dt.tz_convert(KoreanHoliday._timezone)
 
 
 def is_saturday(dt):
@@ -154,8 +155,7 @@ def korean_lunar_to_solar(year, month, day, is_intercalation=False):
     is_valid = calendar.setLunarDate(year, month, day, is_intercalation)
     if not is_valid:
         raise ValueError(
-            "Invalid date for lunar date: (year=%r, month=%r, day=%r, is_intercalation=%r)"
-            % (year, month, day, is_intercalation)
+            f"Invalid date for lunar date: ({year}, {month}, {day}, {is_intercalation})"
         )
     return (calendar.solarYear, calendar.solarMonth, calendar.solarDay)
 
@@ -171,21 +171,21 @@ def korean_solar_to_lunar(year, month, day):
     calendar = KoreanLunarCalendar()
     is_valid = calendar.setSolarDate(year, month, day)
     if not is_valid:
-        raise ValueError(
-            "Invalid date for solar date: (year=%r, month=%r, day=%r)"
-            % (year, month, day)
-        )
+        raise ValueError(f"Invalid date for solar date: ({year}, {month}, {day})")
     return (calendar.lunarYear, calendar.lunarMonth, calendar.lunarDay)
 
 
 def korean_solar_to_lunar_datetime(dt, round_down: bool):
-    """This method sets the year, month and day fields on a pd.Timestamp to the equivalent lunar ones.
+    """This method sets the year, month and day fields on a pd.Timestamp to
+    the equivalent lunar ones.
 
-    The problem is that not all lunar calendar dates can be stored in a Gregorian date.
-    For example, 2022-03-31 (Gregorian) corresponds to 2022-02-29 (Korean lunar). The latter
-    is not a valid Gregorian date. So, we introduce a rounding flag. If round_down is True,
-    then this method will decrement the solar date until the lunar date happens to be a valid
-    Gregorian one. If round_down is False, then the solar date will be incremented analogously.
+    The problem is that not all lunar calendar dates can be stored in a
+    Gregorian date. For example, 2022-03-31 (Gregorian) corresponds to
+    2022-02-29 (Korean lunar). The latter is not a valid Gregorian date.
+    So, we introduce a rounding flag. If round_down is True, then this
+    method will decrement the solar date until the lunar date happens to be
+    a valid Gregorian one. If round_down is False, then the solar date will
+    be incremented analogously.
     """
     while True:
         year, month, day = korean_solar_to_lunar(dt.year, dt.month, dt.day)
@@ -208,14 +208,15 @@ class KoreanLunarHoliday(KoreanHoliday):
         solar_start_date = start_date
         solar_end_date = end_date
 
-        # Restrict date range to fall into supported range of korean_lunar_calendar library
+        # Restrict date range to fall into supported range of
+        # korean_lunar_calendar library
         if solar_end_date > self._max_solar_end_date:
             if not strict and solar_start_date < self._max_solar_end_date:
                 solar_end_date = self._max_solar_end_date
             else:
                 raise ValueError(
-                    "Cannot support date range after %r, but %r ~ %r given"
-                    % (self._max_solar_end_date, start_date, end_date)
+                    f"Cannot support date range after {self._max_solar_end_date},"
+                    f" but {start_date} ~ {end_date} given"
                 )
 
         # Get lunar reference dates
@@ -227,7 +228,8 @@ class KoreanLunarHoliday(KoreanHoliday):
         )
         dates = super()._reference_dates(lunar_start_date, lunar_end_date)
 
-        # Still restrict date range to fall into supported range of korean_lunar_calendar library
+        # Still restrict date range to fall into supported range of
+        # korean_lunar_calendar library
         dates = dates[dates <= self._max_lunar_end_date]
 
         # Convert lunar dates to solar dates

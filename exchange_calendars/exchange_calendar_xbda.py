@@ -108,7 +108,8 @@ EmancipationDay = Holiday(
     start_date=pd.Timestamp("2000-01-01"),
 )
 
-# Cup Match Day: Thursday before the first Monday in August. Cup Match was renamed to Emancipation Day from 2000.
+# Cup Match Day: Thursday before the first Monday in August. Cup Match was
+# renamed to Emancipation Day from 2000.
 CupMatchDay = Holiday(
     "Cup Match Day",
     month=8,
@@ -126,7 +127,8 @@ MaryPrinceDay = Holiday(
     start_date=pd.Timestamp("2020-01-01"),
 )
 
-# Somers Day: Friday after Emancipation Day. Somers Day was renamed to Mary Prince Day from 2020.
+# Somers Day: Friday after Emancipation Day. Somers Day was renamed to Mary
+# Prince Day from 2020.
 SomersDay = Holiday(
     "Somers Day",
     month=8,

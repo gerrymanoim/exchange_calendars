@@ -53,7 +53,7 @@ class TestCalendarRegistration:
         dispatcher.clear_calendars()
 
     @pytest.fixture
-    def dummy_cal_type(self) -> abc.Iterator[typing.Type[FakeCalendar]]:
+    def dummy_cal_type(self) -> abc.Iterator[type[FakeCalendar]]:
         yield FakeCalendar
 
     @pytest.fixture
@@ -78,7 +78,7 @@ class TestCalendarRegistration:
     def test_register_calendar_type(self, dispatcher, dummy_cal_type):
         dispatcher.register_calendar_type("DMY", dummy_cal_type)
         retr_cal = dispatcher.get_calendar("DMY")
-        assert dummy_cal_type == type(retr_cal)
+        assert dummy_cal_type is type(retr_cal)
 
     def test_both_places_are_checked(self, dispatcher, dummy_cal):
         # if instance is registered, can't register type with same name
@@ -320,7 +320,7 @@ class Answers:
             | (sessions > sessions[-1] - pd.DateOffset(years=2))
             | (sessions.day <= 3)
             | (sessions.day >= 28)
-            | (14 <= sessions.day) & (sessions.day <= 16)
+            | (sessions.day >= 14) & (sessions.day <= 16)
         )
         return sessions[mask]
 
@@ -352,6 +352,7 @@ class Answers:
             self.last_minutes[indexer],
             self.last_am_minutes[indexer],
             self.first_pm_minutes[indexer],
+            strict=True,
         ):
             if pd.isna(last_am):
                 dtis.append(pd.date_range(first, last, freq="min"))
@@ -382,18 +383,16 @@ class Answers:
 
         if pd.isna(last_am):
             return (pd.date_range(first, last, freq="min"),)
-        else:
-            return (
-                pd.date_range(first, last_am, freq="min"),
-                pd.date_range(first_pm, last, freq="min"),
-            )
+        return (
+            pd.date_range(first, last_am, freq="min"),
+            pd.date_range(first_pm, last, freq="min"),
+        )
 
     def get_session_break_minutes(self, session: pd.Timestamp) -> pd.DatetimeIndex:
         """Get break minutes for single `session`."""
         if not self.session_has_break(session):
             return pd.DatetimeIndex([], tz=UTC)
-        else:
-            am_minutes, pm_minutes = self.get_session_minutes(session)
+        am_minutes, pm_minutes = self.get_session_minutes(session)
         first = am_minutes[-1] + self.ONE_MIN
         last = pm_minutes[0] - self.ONE_MIN
         return pd.date_range(first, last, freq="min")
@@ -634,34 +633,32 @@ class Answers:
         if self.side == "neither":
             # will always have gap after if neither open or close are trading
             # minutes (assuming sessions cannot overlap)
-            return pd.Series(False, index=self.sessions)
+            return pd.Series(data=False, index=self.sessions)
 
-        elif self.side == "both":
+        if self.side == "both":
             # a trading minute cannot be a minute of more than one session.
             assert not (self.closes == self.opens.shift(-1)).any()
             # there will be no gap if next open is one minute after previous close
             closes_plus_min = self.closes + pd.Timedelta(1, "min")
             return self.opens.shift(-1) == closes_plus_min
 
-        else:
-            return self.opens.shift(-1) == self.closes
+        return self.opens.shift(-1) == self.closes
 
     @property
     def _mask_sessions_without_gap_before(self) -> pd.Series:
         if self.side == "neither":
             # will always have gap before if neither open or close are trading
             # minutes (assuming sessions cannot overlap)
-            return pd.Series(False, index=self.sessions)
+            return pd.Series(data=False, index=self.sessions)
 
-        elif self.side == "both":
+        if self.side == "both":
             # a trading minute cannot be a minute of more than one session.
             assert not (self.closes == self.opens.shift(-1)).any()
             # there will be no gap if previous close is one minute before next open
             opens_minus_one = self.opens - pd.Timedelta(1, "min")
             return self.closes.shift(1) == opens_minus_one
 
-        else:
-            return self.closes.shift(1) == self.opens
+        return self.closes.shift(1) == self.opens
 
     @functools.cached_property
     def sessions_without_gap_after(self) -> pd.DatetimeIndex:
@@ -704,7 +701,7 @@ class Answers:
         s = pd.Series(bv, index=self.sessions)
         return pandas_utils.longest_run(s)
 
-    @functools.lru_cache(maxsize=16)
+    @functools.lru_cache(maxsize=16)  # noqa: B019
     def _get_sessions_with_times_different_to_next_session(
         self,
         column: Literal["opens", "closes", "break_starts", "break_ends"],
@@ -905,10 +902,11 @@ class Answers:
         end_idx = start_idx + 21
 
         def times_equal(*s):
-            for elems in zip(*s):
-                if not set(elems) == {pd.NaT}:
-                    if not len({elem.time() for elem in elems}) == 1:
-                        return False
+            for elems in zip(*s, strict=False):
+                if (set(elems) != {pd.NaT}) and (
+                    len({elem.time() for elem in elems}) != 1
+                ):
+                    return False
             return True
 
         for i in range(start_idx, end_idx):
@@ -1169,8 +1167,7 @@ class Answers:
         non_sessions_run = self.non_sessions_run
         if non_sessions_run.empty:
             return None
-        else:
-            return self.non_sessions_run[0], self.non_sessions_run[-1]
+        return self.non_sessions_run[0], self.non_sessions_run[-1]
 
     # --- Evaluated sets of minutes ---
 
@@ -1203,7 +1200,14 @@ class Answers:
 
         for session, mins_ in zip(
             sessions,
-            zip(first_mins, first_mins_plus_one, last_mins, last_mins_less_one),
+            zip(
+                first_mins,
+                first_mins_plus_one,
+                last_mins,
+                last_mins_less_one,
+                strict=True,
+            ),
+            strict=True,
         ):
             trading_mins.append((mins_, session))
 
@@ -1227,7 +1231,9 @@ class Answers:
                     last_am_mins_less_one,
                     first_pm_mins,
                     first_pm_mins_plus_one,
+                    strict=True,
                 ),
+                strict=True,
             ):
                 trading_mins.append((mins_, session))
 
@@ -1238,7 +1244,9 @@ class Answers:
                     last_am_mins_plus_two,
                     first_pm_mins_less_one,
                     first_pm_mins_less_two,
+                    strict=True,
                 ),
+                strict=True,
             ):
                 break_mins.append((mins_, session))
 
@@ -1267,8 +1275,7 @@ class Answers:
     def trading_minutes_only(self) -> abc.Iterator[pd.Timestamp]:
         """Generator of trading minutes of `self.trading_minutes`."""
         for mins, _ in self.trading_minutes:
-            for minute in mins:
-                yield minute
+            yield from mins
 
     @property
     def trading_minute(self) -> pd.Timestamp:
@@ -1295,8 +1302,7 @@ class Answers:
     def break_minutes_only(self) -> abc.Iterator[pd.Timestamp]:
         """Generator of break minutes of `self.break_minutes`."""
         for mins, _ in self.break_minutes:
-            for minute in mins:
-                yield minute
+            yield from mins
 
     @functools.cached_property
     def non_trading_minutes(
@@ -1336,7 +1342,10 @@ class Answers:
         first_mins_less_one = self.first_minutes[next_sessions] - self.ONE_MIN
 
         for prev_session, next_session, mins_ in zip(
-            prev_sessions, next_sessions, zip(last_mins_plus_one, first_mins_less_one)
+            prev_sessions,
+            next_sessions,
+            zip(last_mins_plus_one, first_mins_less_one, strict=True),
+            strict=True,
         ):
             non_trading_mins.append((mins_, prev_session, next_session))
 
@@ -1345,8 +1354,7 @@ class Answers:
     def non_trading_minutes_only(self) -> abc.Iterator[pd.Timestamp]:
         """Generator of non-trading minutes of `self.non_trading_minutes`."""
         for mins, _, _ in self.non_trading_minutes:
-            for minute in mins:
-                yield minute
+            yield from mins
 
     # --- Evaluated minutes of a specific circumstance ---
 
@@ -1360,7 +1368,9 @@ class Answers:
         )
 
         minutes = []
-        for session, break_session in zip(sessions[mask], break_sessions[mask]):
+        for session, break_session in zip(
+            sessions[mask], break_sessions[mask], strict=True
+        ):
             break_minutes = self.get_session_break_minutes(break_session)
             trading_minutes = self.get_session_minutes(session)[0]
             bv = np.isin(trading_minutes.time, break_minutes.time)
@@ -1394,7 +1404,9 @@ class Answers:
         # only include offset minute if verified as break minute of target
         # (it wont be if the break has shifted by more than the break duration)
         mask = offset_minutes.values > self.last_am_minutes[target_sessions].values
-        lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
+        lst.extend(
+            list(zip(minutes[mask], sessions[mask], target_sessions[mask], strict=True))
+        )
 
         sessions = self.sessions_next_break_start_earlier
         idxr = self.sessions.get_indexer(sessions) + 1
@@ -1403,7 +1415,9 @@ class Answers:
         offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
         mask = offset_minutes.values < self.first_pm_minutes[target_sessions].values
-        lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
+        lst.extend(
+            list(zip(minutes[mask], sessions[mask], target_sessions[mask], strict=True))
+        )
         return lst
 
     @property
@@ -1433,7 +1447,9 @@ class Answers:
         # only include offset minute if verified as break minute of target
         # (it wont be if the break has shifted by more than the break duration)
         mask = offset_minutes.values > self.last_am_minutes[target_sessions].values
-        lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
+        lst.extend(
+            list(zip(minutes[mask], sessions[mask], target_sessions[mask], strict=True))
+        )
 
         target_sessions = self.sessions_next_break_start_later
         idxr = self.sessions.get_indexer(target_sessions) + 1
@@ -1442,13 +1458,15 @@ class Answers:
         offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
         mask = offset_minutes.values < self.first_pm_minutes[target_sessions].values
-        lst.extend(list(zip(minutes[mask], sessions[mask], target_sessions[mask])))
+        lst.extend(
+            list(zip(minutes[mask], sessions[mask], target_sessions[mask], strict=True))
+        )
 
         return lst
 
     # --- method-specific inputs/outputs ---
 
-    def prev_next_open_close_minutes(
+    def prev_next_open_close_minutes(  # noqa: PLR0915
         self,
     ) -> abc.Iterator[
         tuple[
@@ -1552,6 +1570,7 @@ class Answers:
             opens_after_next,
             close_is_next_open_bv[1:-2],
             open_was_prev_close_bv[1:-2],
+            strict=False,
         ):
             if not open_was_prev_close:
                 # only include open minutes if not otherwise duplicating
@@ -1566,7 +1585,7 @@ class Answers:
                 next_open_ = open_after_next if close_is_next_open else next_open
                 yield (close, (open_, prev_close, next_open_, next_close))
 
-                open_ = next_open if close_is_next_open else open_
+                open_ = next_open if close_is_next_open else open_  # noqa: PLW2901
                 yield (close + self.ONE_MIN, (open_, close, next_open_, next_close))
 
         # close and 'close + one_min' for session -2
@@ -1671,7 +1690,7 @@ class ExchangeCalendarTestBase:
     # subclass must override the following fixtures
 
     @pytest.fixture(scope="class")
-    def calendar_cls(self) -> abc.Iterator[typing.Type[ExchangeCalendar]]:
+    def calendar_cls(self) -> abc.Iterator[type[ExchangeCalendar]]:
         """ExchangeCalendar class to be tested.
 
         Examples:
@@ -1878,7 +1897,7 @@ class ExchangeCalendarTestBase:
             (2, 3)  # Thursday and Friday sessions have an early close.
             (6,)  # Sunday sessions have an early close
         """
-        yield tuple()
+        yield ()
 
     @pytest.fixture
     def early_closes_weekdays_sample(self):
@@ -2109,7 +2128,7 @@ class ExchangeCalendarTestBase:
             for name in dir(ExchangeCalendar)
             if name not in valid_overrides
             and not name.startswith("__")
-            and not name == "_abc_impl"
+            and name != "_abc_impl"
         ]
 
     @pytest.fixture(scope="class")
@@ -2406,7 +2425,7 @@ class ExchangeCalendarTestBase:
 
     # Tests for properties covering all minutes.
 
-    def test_minutes(self, all_calendars_with_answers, one_minute):
+    def test_minutes(self, all_calendars_with_answers, one_minute):  # noqa: PLR0915
         """Test trading minutes at sessions' bounds."""
         calendar, ans = all_calendars_with_answers
 
@@ -2754,7 +2773,9 @@ class ExchangeCalendarTestBase:
             f_prev(ans.first_session)
 
         # middle sessions (and m_prev for last session)
-        for session, next_session in zip(ans.sessions[:-1], ans.sessions[1:]):
+        for session, next_session in zip(
+            ans.sessions[:-1], ans.sessions[1:], strict=True
+        ):
             assert f_next(session) == next_session
             assert f_prev(next_session) == session
 
@@ -2833,7 +2854,7 @@ class ExchangeCalendarTestBase:
         date_is_session = dates.isin(sessions)
 
         last_session = None
-        for date, is_session in zip(dates, date_is_session):
+        for date, is_session in zip(dates, date_is_session, strict=False):
             session_label = f(date, "previous")
             if is_session:
                 assert session_label == date
@@ -2843,8 +2864,8 @@ class ExchangeCalendarTestBase:
 
         # direction as "next"
         last_session = None
-        for date, is_session in zip(
-            dates.sort_values(ascending=False), date_is_session[::-1]
+        for date, is_session in zip(  # noqa: B007
+            dates.sort_values(ascending=False), date_is_session[::-1], strict=False
         ):
             session_label = f(date, "next")
             if date in sessions:
@@ -2921,7 +2942,7 @@ class ExchangeCalendarTestBase:
             rtrn = f(break_min)
             assert rtrn is False
 
-    def test_is_open_at_time(self, all_calendars_with_answers, one_minute):
+    def test_is_open_at_time(self, all_calendars_with_answers, one_minute):  # noqa: C901, PLR0912
         cal, ans = all_calendars_with_answers
 
         one_min = one_minute
@@ -3063,7 +3084,7 @@ class ExchangeCalendarTestBase:
             else:
                 assert cal.next_close(minute, _parse=False) == next_close
 
-    def test_prev_next_minute(self, all_calendars_with_answers, one_minute):
+    def test_prev_next_minute(self, all_calendars_with_answers, one_minute):  # noqa: PLR0915
         """Test methods that return previous/next minute.
 
         Test focuses on and inside of edge cases.
@@ -3112,7 +3133,8 @@ class ExchangeCalendarTestBase:
             ans.last_minutes[1:],
             ans.last_minutes_plus_one[1:],
             ans.last_minutes_less_one[1:],
-            ~ans._mask_sessions_without_gap_before[1:],
+            ~ans._mask_sessions_without_gap_before[1:],  # noqa: SLF001
+            strict=False,
         ):
             assert f_next(prev_last_min) == first_min
             assert f_prev(first_min) == prev_last_min
@@ -3152,6 +3174,7 @@ class ExchangeCalendarTestBase:
                 ans.first_pm_minutes,
                 ans.first_pm_minutes_less_one,
                 ans.first_pm_minutes_plus_one,
+                strict=False,
             ):
                 if pd.isna(last_am_min):
                     continue
@@ -3167,7 +3190,7 @@ class ExchangeCalendarTestBase:
                 assert f_next(first_pm_min) == first_pm_min_plus_one
                 assert f_prev(first_pm_min_plus_one) == first_pm_min
 
-    def test_minute_to_session(self, all_calendars_with_answers, all_directions):
+    def test_minute_to_session(self, all_calendars_with_answers, all_directions):  # noqa: C901, PLR0912
         direction = all_directions
         calendar, ans = all_calendars_with_answers
         f = no_parsing(calendar.minute_to_session)
@@ -3314,9 +3337,9 @@ class ExchangeCalendarTestBase:
         for minutes, session in ans.break_minutes[:1]:
             for minute in minutes:
                 if direction == "previous":
-                    f(minute, direction) == ans.last_am_minutes[session]
+                    assert f(minute, direction) == ans.last_am_minutes[session]
                 elif direction == "next":
-                    f(minute, direction) == ans.first_pm_minutes[session]
+                    assert f(minute, direction) == ans.first_pm_minutes[session]
                 else:
                     error_msg = (
                         f"`minute` '{minute}' is not a trading minute. Consider passing"
@@ -3385,7 +3408,7 @@ class ExchangeCalendarTestBase:
         with pytest.raises(errors.RequestedMinuteOutOfBounds, match="after"):
             f(ans.last_minute, 1)
 
-    def test_minute_offset_by_sessions(self, all_calendars_with_answers):
+    def test_minute_offset_by_sessions(self, all_calendars_with_answers):  # noqa: C901, PLR0912, PLR0915
         cal, ans = all_calendars_with_answers
         f = no_parsing(cal.minute_offset_by_sessions)
         delta_int = 20
@@ -3628,7 +3651,7 @@ class ExchangeCalendarTestBase:
             f(minute, count=4)
 
         # verify raises ValueError if `count` passed as 0
-        with pytest.raises(ValueError, match="`count` cannot be 0."):
+        with pytest.raises(ValueError, match=r"`count` cannot be 0."):
             f(ans.first_minute, count=0)
 
     def test_minutes_distance(self, all_calendars_with_answers, one_minute):
@@ -3638,7 +3661,7 @@ class ExchangeCalendarTestBase:
         for mins in ans.session_block_minutes.values():
             if mins.empty:
                 continue
-            mins = mins[7:-7]
+            mins = mins[7:-7]  # noqa: PLW2901
             distance = len(mins)
             assert f(mins[0], mins[-1]) == distance
             assert f(mins[-1], mins[0]) == -distance
@@ -3764,7 +3787,7 @@ class ExchangeCalendarTestBase:
             f(ans.sessions[-3], count=4)
 
         # verify raises ValueError if `count` passed as 0
-        with pytest.raises(ValueError, match="`count` cannot be 0."):
+        with pytest.raises(ValueError, match=r"`count` cannot be 0."):
             f(ans.sessions[0], count=0)
 
     def test_sessions_distance(self, default_calendar_with_answers):
@@ -3831,7 +3854,7 @@ class ExchangeCalendarTestBase:
         # Additional belt-and-braces test to reconcile with cal.minutes
         assert f(ans.first_session, ans.last_session) == len(cal.minutes)
 
-    def test_trading_index(self, calendars, answers):
+    def test_trading_index(self, calendars, answers):  # noqa: C901, PLR0915
         """Test trading index with options as default values.
 
         Tests multitude of concrete cases covering product of all
@@ -3860,14 +3883,14 @@ class ExchangeCalendarTestBase:
                         else:
                             ends = ans.closes
                         # index for a 'left' calendar, add end so evaluated as if 'both'
-                        index = index.append(pd.DatetimeIndex([ends[session]], tz=UTC))
+                        index = index.append(pd.DatetimeIndex([ends[session]], tz=UTC))  # noqa: PLW2901
 
-                        index = index[::mins]  # only want every period
-                        if not index[-1] == ends[session]:
+                        index = index[::mins]  # only want every period  # noqa: PLW2901
+                        if index[-1] != ends[session]:
                             # if period doesn't coincide with end, add right side of
                             # last interval which lies beyond end.
                             last_indice = index[-1] + period
-                            index = index.append(
+                            index = index.append(  # noqa: PLW2901
                                 pd.DatetimeIndex([last_indice], tz=UTC)
                             )
                         dtis.append(index)
@@ -3882,42 +3905,49 @@ class ExchangeCalendarTestBase:
                     both_overlaps = overlaps
                 else:
                     both_overlaps = False
-                    for dti, next_dti in zip(dtis, dtis[1:]):
+                    for dti, next_dti in itertools.pairwise(dtis):
                         if dti[-1] == next_dti[0]:
                             both_overlaps = True
                             break
 
                 def get_index(closed: str, intervals: bool):
-                    start, end = sessions[0], sessions[-1]
+                    start, end = sessions[0], sessions[-1]  # noqa: B023
                     return cal.trading_index(
-                        start, end, period, intervals, closed, parse=False
+                        start,
+                        end,
+                        period,  # noqa: B023
+                        intervals,
+                        closed,
+                        parse=False,
                     )
 
                 def tst_indices_index(
                     expected: pd.DatetimeIndex, closed: str, overlaps: bool
                 ):
                     if not overlaps:
-                        rtrn = get_index(closed, False)
+                        rtrn = get_index(closed, intervals=False)
                         pd.testing.assert_index_equal(expected, rtrn)
                     else:
                         with pytest.raises(errors.IndicesOverlapError):
-                            get_index(closed, False)
+                            get_index(closed, intervals=False)
 
                 tst_indices_index(both_index, "both", both_overlaps)
-                tst_indices_index(left_index, "left", False)
+                tst_indices_index(left_index, "left", overlaps=False)
                 tst_indices_index(right_index, "right", overlaps)
-                tst_indices_index(neither_index, "neither", False)
+                tst_indices_index(neither_index, "neither", overlaps=False)
 
                 def tst_intervals_index(closed: str, overlaps: bool):
                     if not overlaps:
-                        rtrn = get_index(closed, True)
+                        rtrn = get_index(closed, intervals=True)
                         expected = pd.IntervalIndex.from_arrays(
-                            left_index, right_index, closed
+                            left_index,  # noqa: B023
+                            right_index,  # noqa: B023
+                            closed,
                         )
                         pd.testing.assert_index_equal(expected, rtrn)
                     else:
                         with pytest.raises(errors.IntervalsOverlapError):
-                            get_index(closed, True)
+                            get_index(closed, intervals=True)
 
                 tst_intervals_index("left", overlaps)
                 tst_intervals_index("right", overlaps)
@@ -3990,7 +4020,8 @@ class EuronextCalendarTestBase(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def regular_holidays_sample(self, additional_regular_holidays_sample):
-        yield additional_regular_holidays_sample + [
+        yield [
+            *additional_regular_holidays_sample,
             # 2014
             "2014-01-01",  # New Year's Day
             "2014-04-18",  # Good Friday
@@ -4002,7 +4033,8 @@ class EuronextCalendarTestBase(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def non_holidays_sample(self, additional_non_holidays_sample):
-        yield additional_non_holidays_sample + [
+        yield [
+            *additional_non_holidays_sample,
             # Holidays falling on a weekend that are not made up. Ensure
             # surrounding sessions are not holidays...
             # In 2010, Labor Day fell on a Saturday, so the market should be open...

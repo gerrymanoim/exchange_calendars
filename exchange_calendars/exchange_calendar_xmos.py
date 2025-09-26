@@ -389,9 +389,8 @@ class XMOSExchangeCalendar(ExchangeCalendar):
                 weekmask=self.weekmask,
                 weekmasks=self.special_weekmasks,
             )
-        else:
-            return CustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-            )
+        return CustomBusinessDay(
+            holidays=self.adhoc_holidays,
+            calendar=self.regular_holidays,
+            weekmask=self.weekmask,
+        )

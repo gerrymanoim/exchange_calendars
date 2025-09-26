@@ -102,7 +102,7 @@ class TestXBDACalendar(ExchangeCalendarTestBase):
             # Christmas Eve (early close at 2:00 PM)
             "2025-12-24",
             "2024-12-24",
-            "2023-12-22",  # In 2023, December 24th falls on a Sunday, so the early close for Christmas Eve is observed on Friday, December 22nd.
+            "2023-12-22",  # In 2023, December 24th falls on a Sunday, so the early close for Christmas Eve is observed on Friday, December 22nd.  # noqa: E501
         ]
 
     @pytest.fixture

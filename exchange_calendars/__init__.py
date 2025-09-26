@@ -28,34 +28,33 @@ from .calendar_utils import (
 from .exchange_calendar import ExchangeCalendar
 
 __all__ = [
+    "ExchangeCalendar",
+    "aliases_to_names",
     "clear_calendars",
     "deregister_calendar",
     "get_calendar",
     "get_calendar_names",
+    "names_to_aliases",
     "register_calendar",
     "register_calendar_alias",
     "register_calendar_type",
     "resolve_alias",
-    "names_to_aliases",
-    "aliases_to_names",
-    "ExchangeCalendar",
 ]
 
 __version__ = None
 
+import contextlib
 from importlib.metadata import version
 
-try:
+with contextlib.suppress(ImportError):
     # get version from installed package
     __version__ = version("exchange_calendars")
-except ImportError:
-    pass
 
 if __version__ is None:
     try:
         # if package not installed, get version as set when package built
         from ._version import version
-    except Exception:
+    except Exception:  # noqa: BLE001
         # If package not installed and not built, leave __version__ as None
         pass
     else:

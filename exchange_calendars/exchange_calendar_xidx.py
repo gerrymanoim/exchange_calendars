@@ -75,7 +75,7 @@ class XIDXExchangeCalendar(ExchangeCalendar):
                     day=1,
                     start_date="2014-05-01",
                 ),
-                # XXX: The Indonesia Stock Exchange was open on Ascension
+                # NOTE: The Indonesia Stock Exchange was open on Ascension
                 # Day 2003, but closed the next day. We are not sure why.
                 # (The 2003-05-30 closure is listed in adhoc_holidays.)
                 ascension_day(end_date="2003"),

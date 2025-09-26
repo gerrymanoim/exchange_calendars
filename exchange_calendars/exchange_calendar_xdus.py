@@ -27,8 +27,9 @@ EuropeanLabourDay = european_labour_day()
 # starting in 2015.
 WhitMonday2007AdHoc = Timestamp("2007-05-28")
 
-# Whit Monday and the Day of German Unity have been observed regularly, but in 2022 regular trading took place instead.
-#  It's unclear if it will be observed in 2023.
+# Whit Monday and the Day of German Unity have been observed regularly, but
+# in 2022 regular trading took place instead. It's unclear if it will be
+# observed in 2023.
 WhitMondayUntil2022 = whit_monday(start_date="2015-01-01", end_date="2022-01-01")
 
 DayOfGermanUnityUntil2022 = Holiday(

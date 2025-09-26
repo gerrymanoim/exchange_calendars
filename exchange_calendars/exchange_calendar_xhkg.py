@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright 2018 Quantopian, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +64,7 @@ def process_queen_birthday(dt):
     # before 1983
     if dt.year in [1974, 1981]:
         return dt + pd.DateOffset(weekday=6)
-    elif dt.year < 1983:
+    if dt.year < 1983:
         return sunday_to_monday(dt)
     # after 1983
     wom = WeekOfMonth(week=2, weekday=0)
@@ -233,7 +231,7 @@ HKAdhocClosures = [
     #  this pattern. We'll have to wait and see before we generalise this into a rule.
     pd.Timestamp("2022-09-12"),
     pd.Timestamp("2023-07-17"),  # 8号台风泰利, 全天休市
-    pd.Timestamp("2024-09-06"),  # 八號颱風，全天休市
+    pd.Timestamp("2024-09-06"),  # 八號颱風, 全天休市
 ]
 
 
@@ -275,7 +273,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
     Additional Irregularities:
     - Closes frequently for severe weather.
 
-    See https://www.hkex.com.hk/Services/Trading-hours-and-Severe-Weather-Arrangements/Trading-Hours/Securities-Market?sc_lang=en # noqa
+    See https://www.hkex.com.hk/Services/Trading-hours-and-Severe-Weather-Arrangements/Trading-Hours/Securities-Market?sc_lang=en
     """
 
     name = "XHKG"
@@ -303,7 +301,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
             dragon_boat_festival_dates,
             qingming_festival_dates,
         )
-        return lunisolar_holidays
+        return lunisolar_holidays  # noqa: RET504
 
     @classmethod
     def _earliest_precomputed_year(cls) -> int:

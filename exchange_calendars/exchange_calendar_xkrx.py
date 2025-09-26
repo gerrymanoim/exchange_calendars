@@ -156,9 +156,11 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
         """
         Returns
         -------
-        list: List of (timedelta, timedelta, timedelta, timedelta, AbstractHolidayCalendar) tuples
-         that represent special open, break_start, break_end, close offsets
-         and corresponding HolidayCalendars.
+        list:
+            List of (timedelta, timedelta, timedelta, timedelta,
+            AbstractHolidayCalendar) tuples that represent, respectively,
+            special open, break_start, break_end, close offsets and
+            corresponding HolidayCalendars.
         """
         return [
             (
@@ -354,12 +356,11 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
                 weekmask=self.weekmask,
                 weekmasks=self.special_weekmasks,
             )
-        else:
-            return CustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-            )
+        return CustomBusinessDay(
+            holidays=self.adhoc_holidays,
+            calendar=self.regular_holidays,
+            weekmask=self.weekmask,
+        )
 
 
 class PrecomputedXKRXExchangeCalendar(PrecomputedExchangeCalendar):

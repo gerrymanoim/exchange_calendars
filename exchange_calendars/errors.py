@@ -16,10 +16,12 @@
 from __future__ import annotations
 
 import typing
-import pandas as pd
 
 if typing.TYPE_CHECKING:
+    import pandas as pd
     from exchange_calendars import ExchangeCalendar
+
+# ruff: noqa: N818
 
 
 class CalendarError(Exception):
@@ -29,8 +31,7 @@ class CalendarError(Exception):
         self.kwargs = kwargs
 
     def __str__(self):
-        msg = self.msg.format(**self.kwargs)
-        return msg
+        return self.msg.format(**self.kwargs)
 
     __unicode__ = __str__
     __repr__ = __str__
@@ -314,7 +315,7 @@ class IntervalsOverlapError(IndexOverlapError):
     """Intervals of requested trading index would overlap."""
 
     # pylint: disable=missing-return-type-doc
-    def __str__(self):  # noqa: D105
+    def __str__(self):
         return (
             "Unable to create trading index as intervals would overlap."
             " This can occur when the frequency is longer than a break or"
@@ -329,7 +330,7 @@ class IndicesOverlapError(IndexOverlapError):
     """Indices of requested trading index would overlap."""
 
     # pylint: disable=missing-return-type-doc
-    def __str__(self):  # noqa: D105
+    def __str__(self):
         return (
             "Unable to create trading index as an indice would fall to the"
             " right of (later than) the subsequent indice. This can occur"

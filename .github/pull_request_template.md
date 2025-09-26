@@ -6,7 +6,7 @@ It's recommended that whilst working through the process reference be made to ex
   - [ ] Name subclass `{Exchange MIC}ExchangeCalendar`.
   - [ ] Override methods and properties as required, being guided by ExchangeCalendar documentation and in-code comments. All abstract properties must be overriden.
   - [ ] Include references / links for holidays and timings (either to class documentation or as comments).
-- [ ] Import calendar class to `exchange_calendars/calendar_utils.py` and add class to `_default_calendar_factories`. 
+- [ ] Import calendar class to `exchange_calendars/calendar_utils.py` and add class to `_default_calendar_factories`.
 - [ ] Add calendar test module `tests/test_{Exchange MIC}_calendar.py` Module should contain a subclass of the test base class `ExchangeCalendarTestBase` (in `tests/test_exchange_calendars.py`).
   - [ ] Name subclass `Test{Exchange MIC}Calendar`.
   - [ ] Override fixtures as required, being guided by ExchangeCalendarTestBase documentation and in-code comments. The `calendar_cls` and `max_session_hours` fixtures must be overriden.
@@ -16,7 +16,7 @@ It's recommended that whilst working through the process reference be made to ex
 
 **Workflow to modify an existing Exchange Calendar**
 
-- [ ] Modify calendar class as required. 
+- [ ] Modify calendar class as required.
 - [ ] Modify the test resources file (e.g `tests/resources/{Exchange MIC}.csv`), either manually or by executing `python etc/make_exchange_calendar_test_csv.py {Exchange MIC}`.
 - [ ] Check if any of the fixtures in `tests/test_{Exchange MIC}_calendar.py` need updating to reflect your changes.
 - [ ] Add references to any new/modified holidays in `exchange_calendars/exchange_calendar_{Exchange MIC}.py`.

@@ -75,10 +75,10 @@ MayBank_post_2020 = Holiday(
 )
 
 
-# Spring bank holiday has three exceptions based on the Golden, Diamond & Platinum Jubilee
+# Spring bank holiday has three exceptions based on the Golden, Diamond & Platinum Jubilee  # noqa: E501
 # 2002-05-27 Spring bank holiday removed for Golden Jubilee
 # 2012-05-28 Spring bank holiday removed for Diamond Jubilee
-# 2022-05-30 Spring bank holiday moved to 2022-06-02 to be adjacent to the Platinum Jubilee day 2022-06-03
+# 2022-05-30 Spring bank holiday moved to 2022-06-02 to be adjacent to the Platinum Jubilee day 2022-06-03  # noqa: E501
 
 # Spring bank holiday
 SpringBank_pre_2002 = Holiday(

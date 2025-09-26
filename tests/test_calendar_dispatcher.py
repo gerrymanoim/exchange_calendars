@@ -21,23 +21,23 @@ from exchange_calendars.errors import (
 class CalendarDispatcherTestCase(TestCase):
     @classmethod
     def setup_class(cls):
-        cls.dispatcher_kwargs = dict(
-            calendars={},
-            calendar_factories={"IEPA": IEPAExchangeCalendar},
-            aliases={
+        cls.dispatcher_kwargs = {
+            "calendars": {},
+            "calendar_factories": {"IEPA": IEPAExchangeCalendar},
+            "aliases": {
                 "IEPA_ALIAS": "IEPA",
                 "IEPA_ALIAS_ALIAS": "IEPA_ALIAS",
             },
-        )
+        }
 
-    def setup_method(self, method):
+    def setup_method(self, method):  # noqa: ARG002
         self.dispatcher = ExchangeCalendarDispatcher(
             # Make copies here so that tests that mutate the dispatcher dicts
             # are isolated from one another.
             **{k: v.copy() for k, v in self.dispatcher_kwargs.items()}
         )
 
-    def teardown_method(self, method):
+    def teardown_method(self, method):  # noqa: ARG002
         self.dispatcher = None
 
     @classmethod

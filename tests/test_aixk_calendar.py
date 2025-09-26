@@ -24,14 +24,14 @@ class TestAIXKCalendar(ExchangeCalendarTestBase):
             # 2013
             "2013-12-01",  # First President Day
             # 2021
-            "2021-01-01",  # New Year’s Day
+            "2021-01-01",  # New Year's Day
             "2021-01-07",  # Orthodox Christmas Day
-            "2021-03-08",  # International Women’s Day
+            "2021-03-08",  # International Women's Day
             "2021-03-22",  # Nauryz Holiday
             "2021-03-23",  # Nauryz Holiday
             "2021-03-24",  # Nauryz Holiday
             "2021-05-03",  # Kazakhstan People Solidarity Day
-            "2021-05-07",  # Defender’s Day
+            "2021-05-07",  # Defender's Day
             "2021-05-10",  # Victory Day Holiday
             "2021-07-06",  # Capital City Day
             "2021-07-20",  # Kurban Ait Holiday

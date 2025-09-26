@@ -81,7 +81,7 @@ def nearest_monday(dt: datetime.datetime) -> datetime.datetime:
 
     if day in (TUESDAY, WEDNESDAY, THURSDAY):
         return dt - datetime.timedelta(day - MONDAY)
-    elif day == FRIDAY:
+    if day == FRIDAY:
         return dt + datetime.timedelta(3)
     return dt
 
@@ -96,7 +96,7 @@ def tuesday_and_wednesday_to_friday(dt: datetime.datetime) -> datetime.datetime:
 
     if day == TUESDAY:
         return dt - datetime.timedelta(4)
-    elif day == WEDNESDAY:
+    if day == WEDNESDAY:
         return dt + datetime.timedelta(2)
     return dt
 
@@ -311,5 +311,5 @@ class XSGOExchangeCalendar(ExchangeCalendar):
     def _starting_dates_and_close_times(self):
         yield ((None, datetime.time(17)))
         for year in range(1980, 2050):
-            yield (pd.Timestamp("{}-03-01".format(year)), datetime.time(16))
-            yield (pd.Timestamp("{}-11-01".format(year)), datetime.time(17))
+            yield (pd.Timestamp(f"{year}-03-01"), datetime.time(16))
+            yield (pd.Timestamp(f"{year}-11-01"), datetime.time(17))

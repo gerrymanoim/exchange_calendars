@@ -14,7 +14,8 @@ References for precomputed BSE/NSE holidays:
     NSE: https://www.nseindia.com/products-services/equity-market-timings-holidays
     BSE: https://www.bseindia.com/static/markets/marketinfo/listholi.aspx
     Zerodha: https://zerodha.com/z-connect/category/traders-zone/holidays
-Although NSE/BSE provides only current year's dates, Zerodha provides holidays since 2013.
+Although NSE/BSE provides only current year's dates, Zerodha provides
+holidays since 2013.
 """
 
 precomputed_bse_holidays = pd.to_datetime(
@@ -501,9 +502,8 @@ class XBOMExchangeCalendar(PrecomputedExchangeCalendar):
                 weekmask=self.weekmask,
                 weekmasks=self.special_weekmasks,
             )
-        else:
-            return CustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-            )
+        return CustomBusinessDay(
+            holidays=self.adhoc_holidays,
+            calendar=self.regular_holidays,
+            weekmask=self.weekmask,
+        )

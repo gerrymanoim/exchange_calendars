@@ -124,8 +124,7 @@ def longest_run(ser: pd.Series) -> pd.Index:
     group_sizes = trues_grouped.value_counts()  # count each run
     max_run_size = group_sizes.max()
     max_run_group_id = group_sizes[group_sizes == max_run_size].index[0]
-    run = trues_grouped[trues_grouped == max_run_group_id].index
-    return run
+    return trues_grouped[trues_grouped == max_run_group_id].index
 
 
 def indexes_union(indexes: list[pd.Index]) -> pd.Index:

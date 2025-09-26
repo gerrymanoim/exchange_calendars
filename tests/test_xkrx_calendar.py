@@ -47,14 +47,12 @@ class TestXKRXCalendar(ExchangeCalendarTestBase):
             "2017-10-09",
             "2017-12-25",
             "2017-12-29",
-            #
             "2010-06-06",  # Memorial Day on Sunday
             #
             # Chuseok holidays falling on a weekend and subsequently made up.
             "2014-09-10",  # falls on Sunday, made up following Wednesday
             "2015-09-29",  # falls on Saturday, made up following Tuesday
             "2017-10-06",
-            #
             "2013-10-09",  # Hangeul_day, observance commenced this year
             #
             # Revised alternate holiday rule
@@ -97,7 +95,6 @@ class TestXKRXCalendar(ExchangeCalendarTestBase):
             # Same as Foundation Day idea
             "2010-12-24",
             "2010-12-27",
-            #
             "2012-10-09",  # Hangeul_day, last year before observance commenced.
         ]
 
@@ -108,8 +105,8 @@ class TestXKRXCalendar(ExchangeCalendarTestBase):
             "2025-01-27",
         ]
 
-    # TODO Issue #94
-    def test_late_opens(self, default_calendar, late_opens):
+    # TODO: Issue #94
+    def test_late_opens(self, default_calendar, late_opens):  # noqa: ARG002
         # overrides base to mark as xfail
         msg = "Calendar has late opens although `late_opens` is empty. Issue #94"
         pytest.xfail(msg)

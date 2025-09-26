@@ -29,7 +29,7 @@ class IEPAExchangeCalendar(ExchangeCalendar):
     Open Time: 8pm, America/New_York
     Close Time: 6pm, America/New_York
 
-    https://www.theice.com/publicdocs/futures_us/ICE_Futures_US_Regular_Trading_Hours.pdf # noqa
+    https://www.theice.com/publicdocs/futures_us/ICE_Futures_US_Regular_Trading_Hours.pdf
     """
 
     name = "IEPA"
@@ -75,5 +75,5 @@ class IEPAExchangeCalendar(ExchangeCalendar):
 
     @property
     def regular_holidays(self):
-        # https://www.theice.com/publicdocs/futures_us/exchange_notices/NewExNot2016Holidays.pdf # noqa
+        # https://www.theice.com/publicdocs/futures_us/exchange_notices/NewExNot2016Holidays.pdf
         return HolidayCalendar([USNewYearsDay, GoodFriday, Christmas])

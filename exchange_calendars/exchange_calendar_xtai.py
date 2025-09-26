@@ -14,9 +14,9 @@
 
 
 import datetime
+from collections.abc import Callable
 from functools import partial
 from itertools import chain
-from typing import Callable
 from zoneinfo import ZoneInfo
 import pandas as pd
 from pandas.tseries.holiday import (

@@ -304,14 +304,10 @@ class XBUEExchangeCalendar(ExchangeCalendar):
         ]
 
         # There was a string of market closures in January, 2002
-        market_closures_2002_jan = [
-            "2002-01-{:02d}".format(day) for day in range(7, 17)
-        ]
+        market_closures_2002_jan = [f"2002-01-{day:02d}" for day in range(7, 17)]
 
         # There was a string of market closures in April, 2002
-        market_closures_2002_apr = [
-            "2002-04-{:02d}".format(day) for day in range(22, 27)
-        ]
+        market_closures_2002_apr = [f"2002-04-{day:02d}" for day in range(22, 27)]
 
         # There are occasionally "bridge days" that make long weekends when
         # a holiday falls on a Tuesday/Thursday, but these days are chosen

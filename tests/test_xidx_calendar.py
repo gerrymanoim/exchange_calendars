@@ -23,7 +23,7 @@ class TestXIDXCalendar(ExchangeCalendarTestBase):
             # year: (trading days in year, [trading days in each month])
             2016: (246, [20, 20, 21, 21, 20, 22, 16, 22, 21, 21, 22, 20]),
             2017: (238, [21, 19, 22, 17, 20, 15, 21, 22, 19, 22, 22, 18]),
-            # XXX: The website says only 21 trading days for July 2018.
+            # NOTE: The website says only 21 trading days for July 2018.
             2018: (240, [22, 19, 21, 21, 20, 13, 22, 21, 19, 23, 21, 18]),
             2019: (245, [22, 19, 20, 19, 21, 15, 23, 22, 21, 23, 21, 19]),
             2020: (242, [22, 20, 21, 21, 16, 21, 22, 18, 22, 19, 21, 19]),

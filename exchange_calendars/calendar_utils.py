@@ -177,7 +177,7 @@ _default_calendar_aliases = {
 default_calendar_names = sorted(_default_calendar_factories.keys())
 
 
-class ExchangeCalendarDispatcher(object):
+class ExchangeCalendarDispatcher:
     """
     A class for dispatching and caching exchange calendars.
 
@@ -199,7 +199,7 @@ class ExchangeCalendarDispatcher(object):
         self._calendar_factories = dict(calendar_factories)
         self._aliases = dict(aliases)
         # key: factory name, value: (calendar, dict of calendar kwargs)
-        self._factory_output_cache: dict(str, tuple(ExchangeCalendar, dict)) = {}
+        self._factory_output_cache: dict[str, tuple[ExchangeCalendar, dict]] = {}
 
     def _fabricate(self, name: str, **kwargs) -> ExchangeCalendar:
         """Fabricate calendar with `name` and `**kwargs`."""
@@ -222,8 +222,7 @@ class ExchangeCalendarDispatcher(object):
         calendar, calendar_kwargs = self._factory_output_cache.get(name, (None, None))
         if calendar is not None and calendar_kwargs == kwargs:
             return calendar
-        else:
-            return None
+        return None
 
     def get_calendar(
         self,
@@ -289,10 +288,11 @@ class ExchangeCalendarDispatcher(object):
         # will raise InvalidCalendarName if name not valid
         name = self.resolve_alias(name)
 
-        kwargs = {}
-        for k, v in zip(["start", "end", "side"], [start, end, side]):
-            if v is not None:
-                kwargs[k] = v
+        kwargs = {
+            k: v
+            for k, v in zip(["start", "end", "side"], [start, end, side], strict=True)
+            if v is not None
+        }
 
         if name in self._calendars:
             if kwargs:
@@ -301,8 +301,7 @@ class ExchangeCalendarDispatcher(object):
                     f" as a specific instance of class"
                     f" {self._calendars[name].__class__}, not as a calendar factory."
                 )
-            else:
-                return self._calendars[name]
+            return self._calendars[name]
 
         if kwargs.get("start"):
             kwargs["start"] = parse_date(kwargs["start"], "start", raise_oob=False)

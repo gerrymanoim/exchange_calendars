@@ -149,15 +149,14 @@ def memorial_day(year):
         # Falls on a Thursday, so Independency Day falls on the Friday.
         # Moved down by one day.
         return d - 1
-    elif d.weekday() == 6:
+    if d.weekday() == 6:
         # Falls on a Friday, so Independence Day falls on the Saturday.
         # Moved down by two days.
         return d - 2
-    elif d.weekday() == 7:
+    if d.weekday() == 7:
         # Falls on a Saturday, therefore moved up by one day.
         return d + 1
-    else:
-        return d
+    return d
 
 
 def pentecost(year):
@@ -179,8 +178,7 @@ def fast_day(year):
     if d.weekday() == 7:
         # Falls on a Saturday, therefore moved up by one day.
         return d + 1
-    else:
-        return d
+    return d
 
 
 def new_year(year):
@@ -234,7 +232,6 @@ class _HolidayOffset(Easter):
         Return the Gregorian date for the holiday in a given Gregorian calendar
         year.
         """
-        pass
 
     @apply_wraps
     def _apply(self, other):
@@ -252,7 +249,7 @@ class _HolidayOffset(Easter):
         # NOTE: self.holiday a dates.GregorianDate so we have to convert to
         # type of other
         new = self.holiday(other.year + n).to_pydate()
-        new = datetime(
+        return datetime(
             new.year,
             new.month,
             new.day,
@@ -261,7 +258,6 @@ class _HolidayOffset(Easter):
             other.second,
             other.microsecond,
         )
-        return new
 
     # backwards compat
     apply = _apply
@@ -391,8 +387,8 @@ SukkothInterimDay5 = Holiday(
     days_of_week=(0, 1, 2, 3, 6),
 )
 
-# Passover interim days are the days between beginning and end of passover. Any otherwise regular business day in that
-# period becomes an early close day.
+# Passover interim days are the days between beginning and end of passover.
+# Any otherwise regular business day in that period becomes an early close day.
 PassoverInterimDay1 = Holiday(
     "Passover Interim Day",
     month=1,

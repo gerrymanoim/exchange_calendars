@@ -1,6 +1,9 @@
-from __future__ import print_function
-
+import io
 import sys
+
+import pandas as pd
+
+# ruff: noqa: T201
 
 months = [
     "January",
@@ -20,34 +23,22 @@ months = [
 
 def error(msg):
     print(msg, file=sys.stderr)
-    exit(-1)
+    sys.exit(-1)
 
 
 def _render_month(calendar, year, month, print_year):
-    import pandas as pd
+    out = io.StringIO()
 
-    if sys.version_info[0] == 2:
-        import StringIO
-
-        out = StringIO.StringIO()
-    else:
-        import io
-
-        out = io.StringIO()
-
-    start = "{year}-{month}".format(year=year, month=month)
-    if month == 12:
-        end = "{year}-{month}".format(year=year + 1, month=1)
-    else:
-        end = "{year}-{month}".format(year=year, month=month + 1)
+    start = f"{year}-{month}"
+    end = f"{year + 1}-{1}" if month == 12 else f"{year}-{month + 1}"
 
     days = pd.date_range(start, end, inclusive="left")
 
     title = months[month - 1]
     if print_year:
-        title += " {year}".format(year=year)
+        title += f" {year}"
 
-    print("{title:^28}".format(title=title).rstrip(), file=out)
+    print(f"{title:^28}".rstrip(), file=out)
     print(" Su  Mo  Tu  We  Th  Fr  Sa", file=out)
     print(
         " " * (4 * ((days[0].weekday() + 1) % 7)),
@@ -57,7 +48,7 @@ def _render_month(calendar, year, month, print_year):
 
     for d in days:
         if d.weekday() == 6:
-            print("", file=out)
+            print("", file=out)  # noqa: FURB105
 
         if calendar.is_session(d):
             a = b = " "
@@ -66,12 +57,12 @@ def _render_month(calendar, year, month, print_year):
             b = "]"
 
         print(
-            "{a}{d.day:>2}{b}".format(a=a, d=d, b=b),
+            f"{a}{d.day:>2}{b}",
             end="",
             file=out,
         )
 
-    print("", file=out)
+    print("", file=out)  # noqa: FURB105
     return out.getvalue()
 
 
@@ -84,8 +75,8 @@ def _concat_lines(strings, width):
             lines.extend([" " * width] * missing_lines)
 
     rows = []
-    for row_parts in zip(*as_lines):
-        row_parts = list(row_parts)
+    for row_parts in zip(*as_lines, strict=False):
+        row_parts = list(row_parts)  # noqa: PLW2901
         for n, row_part in enumerate(row_parts):
             missing_space = width - len(row_part)
             if missing_space:
@@ -100,25 +91,25 @@ def _int_arg(v, name):
     try:
         return int(v)
     except ValueError:
-        error("%s must be an integer, got: %r" % (name, v))
+        error(f"{name} must be an integer, got: {v}")
 
 
 def parse_args(argv):
-    usage = "usage: %s CALENDAR [[[DAY] MONTH] YEAR]" % argv[0]
+    usage = f"usage: {argv[0]} CALENDAR [[[DAY] MONTH] YEAR]"
 
     if len(argv) == 1 or "--help" in argv or "-h" in argv:
         error(usage)
 
     if len(argv) > 1:
-        from exchange_calendars import get_calendar
+        from exchange_calendars import get_calendar  # noqa: PLC0415
 
         try:
             calendar = get_calendar(argv[1])
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             error(str(e))
 
     if len(argv) == 2:
-        import datetime
+        import datetime  # noqa: PLC0415
 
         now = datetime.datetime.now()
         year = now.year
@@ -158,7 +149,7 @@ def main(argv=None):
             ]
             for row in range(4)
         ]
-        print("{year:^88}\n".format(year=year).rstrip())
+        print(f"{year:^88}\n".rstrip())
         print("\n\n".join(_concat_lines(cs, 28) for cs in month_strings))
 
 

@@ -79,7 +79,6 @@ class TestXNYSCalendar(ExchangeCalendarTestBase):
             "2012-07-03",
             "2012-11-23",  # Day after Thanksgiving
             "2012-12-24",  # Christmas Eve
-            #
             "2013-11-29",  # Day after Thanksgiving, 4 Thursdays, 5 Fridays in month.
             #
             # Until 2013, if Independence Day fell on a Thursday, the market closed

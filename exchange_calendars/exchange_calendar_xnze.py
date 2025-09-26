@@ -124,7 +124,8 @@ NYDX03JAN92 = Timestamp("1992-01-03")
 XMAS31DEC99 = Timestamp("1999-12-31")
 QueenMourning2022 = Timestamp("2022-09-26")
 
-# Matariki Day. Is set by Maori Lunar system which fluctuates relative to Gregorian so no set date each year.
+# Matariki Day. Is set by Maori Lunar system which fluctuates relative to
+# Gregorian so no set date each year.
 # https://www.mbie.govt.nz/business-and-employment/employment-and-skills/employment-legislation-reviews/matariki/matariki-public-holiday/
 MatarikiDayDates = {}
 MatarikiDayDates["2022"] = Timestamp("2022-06-24")
