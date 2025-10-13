@@ -3,59 +3,51 @@ on:
   release:
     types: [published]
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build-n-publish:
     name: Build and publish Python 🐍 distributions 📦 to TestPyPI
     runs-on: ubuntu-latest
+    environment:
+      name: pipy
     steps:
     - uses: actions/checkout@v5
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.13"
-
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
-
-    - name: Build package
-      run: python -m build
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+    - name: Install Python
+      run: uv python install
+    - name: Build
+      run: uv build
 
     - name: Publish distribution 📦 to Test PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.test_pypi_password }}
-        repository-url: https://test.pypi.org/legacy/
-        skip-existing: true
-
-    - name: Install from testpypi and import
-      shell: bash
+      run: uv publish --index testpypi
+    - name: Check test install and import
       run: |
-        sleep 5
-        while [ "${{ github.ref_name }}" != $(pip index versions -i https://test.pypi.org/simple --pre exchange_calendars | cut -d'(' -f2 | cut -d')' -f1 | sed 1q) ];\
-          do echo "waiting for package to appear in test index, sleeping 5s"; sleep 5s; echo "woken up"; done
-        pip install --index-url https://test.pypi.org/simple exchange_calendars==${{ github.ref_name }} --no-deps
-        pip install -r etc/requirements.txt
-        python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
-
-    - name: Clean pip
-      run: |
-        pip uninstall -y exchange_calendars
-        pip cache purge
+        sleep 5  # Wait for Test Pypi to publish
+        # Include pypi index for deps not available from test pypi...
+        uv run \
+          --with exchange-calendars \
+          --refresh-package exchange-calendars \
+          --index https://test.pypi.org/simple \
+          --index https://pypi.org/simple \
+          --index-strategy unsafe-best-match \
+          --no-project \
+          --isolated \
+          -- \
+          python -c 'import exchange_calendars; print(f"{exchange_calendars.__version__=}")'
 
     - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_password }}
-
-    - name: Install and import
-      shell: bash
+      run: uv publish
+    - name: Check install and import
       run: |
-        sleep 5
-        while [ "${{ github.ref_name }}" != $(pip index versions -i https://pypi.org/simple --pre exchange_calendars | cut -d'(' -f2 | cut -d')' -f1 | sed 1q) ];\
-          do echo "waiting for package to appear in index, sleeping 5s"; sleep 5s; echo "woken up"; done
-        pip install --index-url https://pypi.org/simple exchange_calendars==${{ github.ref_name }}
-        python -c 'import exchange_calendars;print(exchange_calendars.__version__)'
+        sleep 5  # Wait for Pypi to publish
+        uv run \
+        --with exchange-calendars \
+        --refresh-package exchange-calendars \
+        --no-project \
+        --isolated \
+        -- \
+        python -c 'import exchange_calendars;print(f"{exchange_calendars.__version__=}")'

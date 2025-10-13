@@ -12,7 +12,7 @@ authors = [
 readme = "README.md"
 license = "APSL-2.0"
 keywords = ["finance", "security", "calendar", "exchange"]
-requires-python = "~=3.10"
+requires-python = ">=3.10, <4"
 classifiers = [
 	"Development Status :: 4 - Beta",
     "Programming Language :: Python",
@@ -27,23 +27,40 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "numpy",
-    "pandas",
-    "pyluach",
-    "toolz",
-    "tzdata",
-    "korean_lunar_calendar",
+    "numpy>=1.26.4",
+    "pandas>=1.5.0",
+    "pyluach>=2.3.0",
+    "toolz>=1.0.0",
+    "tzdata>=2025.2",
+    "korean_lunar_calendar>=0.3.1",
 ]
 dynamic = ["version"]
 
-[project.optional-dependencies]
-dev = [
-    "hypothesis",
+# Include minimum versions for 'minimum envionment' test in test workflow.
+[dependency-groups]
+test = [
+    "hypothesis>=6.140.3",
     "pytest==8.3.5",
-    "pytest-benchmark",
-    "pytest-xdist",
-    "pip-tools",
-    "ruff",
+    "pytest-benchmark>=5.1.0",
+    "pytest-xdist>=3.8.0",
+]
+test_min = [
+    {include-group = "test"},
+    "numpy==1.26.4",
+]
+# Separate group required for test jobs running on python 3.13.
+# Should be able to remove this provision once numpy and pandas officially support python 3.13, allowing uv to resolve accordingly
+test_py13 = [
+    {include-group = "test"},
+    "numpy>=2.1; python_version<'3.13'",
+    "numpy>=2.3.3; python_version>='3.13'",
+    "pandas>=2.3; python_version>='3.13'",
+]
+
+dev = [
+    {include-group = "test"},
+    "pre-commit >=4.3.0",
+    # "ruff",  # use local standalone install or ruff extension for editor.
 ]
 
 [project.scripts]
@@ -55,19 +72,25 @@ documentation = "https://github.com/gerrymanoim/exchange_calendars/tree/master/d
 "Issue Tracker" = "https://github.com/gerrymanoim/exchange_calendars/issues"
 "Source Code" = "https://github.com/gerrymanoim/exchange_calendars"
 
+[tool.uv]
+conflicts = [
+    [
+      { group = "test_min" },
+      { group = "test_py13" },
+    ],
+]
+
 [tool.setuptools.packages.find]
 include = ["exchange_calendars", "exchange_calendars.*"]
 
 [tool.setuptools_scm]
 write_to = "exchange_calendars/_version.py"
 
-[tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
-line_length = 88
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
 
 [tool.mypy]
 warn_unreachable = true
@@ -98,3 +121,11 @@ exclude = [
     "versioneer.py",
     "exchange_calendars/_version.py"
 ]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88

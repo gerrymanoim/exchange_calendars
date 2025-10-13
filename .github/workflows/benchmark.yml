@@ -13,15 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
-    - uses: actions/setup-python@v6
-      with:
-        python-version: "3.13"
-    - name: Install dependencies
-      run: |
-        pip install -e .[dev] -c etc/requirements_dev.txt
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+    - name: Install Python
+      run: uv python install
+    - name: Install the project
+      run: uv sync --locked --group test --no-cache
     - name: Run benchmark
-      run: |
-        pytest etc/bench.py --benchmark-json output.json
+      run: uv run -- pytest etc/bench.py --benchmark-json output.json
     - name: Download previous benchmark data
       uses: actions/cache@v4.3.0
       with:
