@@ -22,22 +22,22 @@ jobs:
     - name: Build
       run: uv build
 
-    # - name: Publish distribution 📦 to Test PyPI
-    #   run: uv publish --index testpypi
-    # - name: Check test install and import
-    #   run: |
-    #     sleep 5  # Wait for Test Pypi to publish
-    #     # Include pypi index for deps not available from test pypi...
-    #     uv run \
-    #       --with exchange-calendars \
-    #       --refresh-package exchange-calendars \
-    #       --index https://test.pypi.org/simple \
-    #       --index https://pypi.org/simple \
-    #       --index-strategy unsafe-best-match \
-    #       --no-project \
-    #       --isolated \
-    #       -- \
-    #       python -c 'import exchange_calendars; print(f"{exchange_calendars.__version__=}")'
+    - name: Publish distribution 📦 to Test PyPI
+      run: uv publish --index testpypi
+    - name: Check test install and import
+      run: |
+        sleep 5  # Wait for Test Pypi to publish
+        # Include pypi index for deps not available from test pypi...
+        uv run \
+          --with exchange-calendars \
+          --refresh-package exchange-calendars \
+          --index https://test.pypi.org/simple \
+          --index https://pypi.org/simple \
+          --index-strategy unsafe-best-match \
+          --no-project \
+          --isolated \
+          -- \
+          python -c 'import exchange_calendars; print(f"{exchange_calendars.__version__=}")'
 
     - name: Publish distribution 📦 to PyPI
       run: uv publish
