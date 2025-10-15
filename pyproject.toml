@@ -73,6 +73,7 @@ documentation = "https://github.com/gerrymanoim/exchange_calendars/tree/master/d
 "Source Code" = "https://github.com/gerrymanoim/exchange_calendars"
 
 [tool.uv]
+trusted-publishing = "always"
 conflicts = [
     [
       { group = "test_min" },
