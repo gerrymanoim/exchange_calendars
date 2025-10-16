@@ -12,7 +12,7 @@ jobs:
     name: Build and publish Python 🐍 distributions 📦 to TestPyPI
     runs-on: ubuntu-latest
     environment:
-      name: pipy
+      name: pypi
     steps:
     - uses: actions/checkout@v5
     - name: Install uv
