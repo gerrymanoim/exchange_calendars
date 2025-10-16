@@ -40,7 +40,7 @@ dynamic = ["version"]
 [dependency-groups]
 test = [
     "hypothesis>=6.140.3",
-    "pytest==8.3.5",
+    "pytest>=8.4.2",
     "pytest-benchmark>=5.1.0",
     "pytest-xdist>=3.8.0",
 ]

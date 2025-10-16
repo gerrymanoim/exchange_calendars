@@ -2010,7 +2010,7 @@ class ExchangeCalendarTestBase:
             "late_opens",
             "early_closes",
         ]:
-            if getattr(cls, fixture) != getattr(ExchangeCalendarTestBase, fixture):
+            if fixture in cls.__dict__:
                 raise RuntimeError(f"fixture '{fixture}' should not be overriden!")
 
     # Base class fixtures
@@ -2244,18 +2244,13 @@ class ExchangeCalendarTestBase:
     # Tests for calendar definition and construction methods.
 
     def test_base_integrity(self, calendar_cls, non_valid_overrides):
-        cls = calendar_cls
         for name in non_valid_overrides:
-            on_cls, on_base = getattr(cls, name), getattr(ExchangeCalendar, name)
             # covers properties, instance methods and class mathods...
-            try:
-                assert on_cls == on_base or on_cls.__qualname__ == on_base.__qualname__
-            except AttributeError:
-                if not (cls.name in ["XKRX", "XMOS", "XBOM"] and name == "day"):
-                    # allow exchange_calendar_xkrx to overwrite 'day'.
-                    # allow exchange_calendar_xmos to overwrite 'day'.
-                    # allow exchange_calendar_xbom to overwrite 'day'.
-                    raise
+            allowed = calendar_cls.name in ["XKRX", "XMOS", "XBOM"] and name == "day"
+            # allow exchange_calendar_xkrx to overwrite 'day'.
+            # allow exchange_calendar_xmos to overwrite 'day'.
+            # allow exchange_calendar_xbom to overwrite 'day'.
+            assert name not in calendar_cls.__dict__ or allowed
 
     def test_calculated_against_csv(self, default_calendar_with_answers):
         calendar, ans = default_calendar_with_answers
