@@ -593,6 +593,46 @@ precomputed_shanghai_holidays = pd.to_datetime(
         "2025-10-06",
         "2025-10-07",
         "2025-10-08",
+        # 2026 holidays - Source: Shanghai Stock Exchange notice dated 2025-12-22 （https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml）
+        "2026-01-01",  # New Year's Day (星期四)
+        "2026-01-02",  # New Year's Day holiday (星期五)
+        "2026-01-03",  # New Year's Day holiday (星期六)
+        "2026-01-04",  # Weekend (星期日)
+        "2026-02-14",  # Weekend (星期六)
+        "2026-02-15",  # Chinese New Year Eve (星期日)
+        "2026-02-16",  # Chinese New Year (星期一)
+        "2026-02-17",  # Chinese New Year (星期二)
+        "2026-02-18",  # Chinese New Year (星期三)
+        "2026-02-19",  # Chinese New Year (星期四)
+        "2026-02-20",  # Chinese New Year (星期五)
+        "2026-02-21",  # Weekend (星期六)
+        "2026-02-22",  # Weekend (星期日)
+        "2026-02-23",  # Chinese New Year extended holiday (星期一)
+        "2026-02-28",  # Weekend (星期六)
+        "2026-04-04",  # Weekend (星期六)
+        "2026-04-05",  # Weekend (星期日)
+        "2026-04-06",  # Qingming Festival (星期一)
+        "2026-05-01",  # Labor Day (星期五)
+        "2026-05-02",  # Weekend (星期六)
+        "2026-05-03",  # Weekend (星期日)
+        "2026-05-04",  # Labor Day holiday (星期一)
+        "2026-05-05",  # Labor Day holiday (星期二)
+        "2026-05-09",  # Weekend (星期六)
+        "2026-06-19",  # Dragon Boat Festival (星期五)
+        "2026-06-20",  # Weekend (星期六)
+        "2026-06-21",  # Weekend (星期日)
+        "2026-09-20",  # Weekend (星期日)
+        "2026-09-25",  # Mid-Autumn Festival (星期五)
+        "2026-09-26",  # Weekend (星期六)
+        "2026-09-27",  # Weekend (星期日)
+        "2026-10-01",  # National Day (星期四)
+        "2026-10-02",  # National Day (星期五)
+        "2026-10-03",  # Weekend (星期六)
+        "2026-10-04",  # Weekend (星期日)
+        "2026-10-05",  # National Day (星期一)
+        "2026-10-06",  # National Day (星期二)
+        "2026-10-07",  # National Day (星期三)
+        "2026-10-10",  # Weekend (星期六)
     ]
 )
 
@@ -607,8 +647,11 @@ class XSHGExchangeCalendar(PrecomputedExchangeCalendar):
     Close time: 15:00 Asia/Shanghai
 
     Due to the complexity around the Shanghai exchange holidays, we are
-    hardcoding a list of holidays covering 1999-2025, inclusive. There are
+    hardcoding a list of holidays covering 1999-2026, inclusive. There are
     no known early closes or late opens.
+
+    2026 holidays source: Shanghai Stock Exchange notice dated 2025-12-22.
+    https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml
     """
 
     name = "XSHG"

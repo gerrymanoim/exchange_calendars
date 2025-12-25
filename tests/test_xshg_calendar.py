@@ -21,7 +21,7 @@ class TestXSHGCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def end_bound(self):
-        yield T("2025-12-31")
+        yield T("2026-12-31")
 
     @pytest.fixture
     def regular_holidays_sample(self):
@@ -73,4 +73,44 @@ class TestXSHGCalendar(ExchangeCalendarTestBase):
             "2024-10-02",  # Part of National Day 2024
             "2024-10-03",  # Part of National Day 2024
             "2024-10-04",  # Part of National Day 2024
+            # 2026
+            "2026-01-01",  # New Year's Day
+            "2026-01-02",  # New Year's Day holiday
+            "2026-01-03",  # New Year's Day holiday
+            "2026-01-04",  # Weekend
+            "2026-02-14",  # Weekend
+            "2026-02-15",  # Chinese New Year Eve
+            "2026-02-16",  # Chinese New Year
+            "2026-02-17",  # Chinese New Year
+            "2026-02-18",  # Chinese New Year
+            "2026-02-19",  # Chinese New Year
+            "2026-02-20",  # Chinese New Year
+            "2026-02-21",  # Weekend
+            "2026-02-22",  # Weekend
+            "2026-02-23",  # Chinese New Year extended holiday
+            "2026-02-28",  # Weekend
+            "2026-04-04",  # Weekend
+            "2026-04-05",  # Weekend
+            "2026-04-06",  # Qingming Festival
+            "2026-05-01",  # Labor Day
+            "2026-05-02",  # Weekend
+            "2026-05-03",  # Weekend
+            "2026-05-04",  # Labor Day holiday
+            "2026-05-05",  # Labor Day holiday
+            "2026-05-09",  # Weekend
+            "2026-06-19",  # Dragon Boat Festival
+            "2026-06-20",  # Weekend
+            "2026-06-21",  # Weekend
+            "2026-09-20",  # Weekend
+            "2026-09-25",  # Mid-Autumn Festival
+            "2026-09-26",  # Weekend
+            "2026-09-27",  # Weekend
+            "2026-10-01",  # National Day
+            "2026-10-02",  # National Day
+            "2026-10-03",  # Weekend
+            "2026-10-04",  # Weekend
+            "2026-10-05",  # National Day
+            "2026-10-06",  # National Day
+            "2026-10-07",  # National Day
+            "2026-10-10",  # Weekend
         ]
