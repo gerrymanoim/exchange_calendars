@@ -21,7 +21,7 @@ class TestXSHGCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def end_bound(self):
-        yield T("2025-12-31")
+        yield T("2026-12-31")
 
     @pytest.fixture
     def regular_holidays_sample(self):
@@ -73,4 +73,24 @@ class TestXSHGCalendar(ExchangeCalendarTestBase):
             "2024-10-02",  # Part of National Day 2024
             "2024-10-03",  # Part of National Day 2024
             "2024-10-04",  # Part of National Day 2024
+            # 2026 - based on official announcement from Shanghai Stock Exchange
+            "2026-01-01",  # New Year's Day 2026
+            "2026-01-02",  # New Year's Day 2026
+            "2026-02-16",  # Part of Chinese New Year 2026
+            "2026-02-17",  # Part of Chinese New Year 2026
+            "2026-02-18",  # Part of Chinese New Year 2026
+            "2026-02-19",  # Part of Chinese New Year 2026
+            "2026-02-20",  # Part of Chinese New Year 2026
+            "2026-02-23",  # Part of Chinese New Year 2026
+            "2026-04-06",  # Part of Qingming Festival 2026
+            "2026-05-01",  # Part of Chinese Labor Day 2026
+            "2026-05-04",  # Part of Chinese Labor Day 2026
+            "2026-05-05",  # Part of Chinese Labor Day 2026
+            "2026-06-19",  # Part of Dragon Boat Festival 2026
+            "2026-09-25",  # Part of Mid-Autumn Festival 2026
+            "2026-10-01",  # Part of National Day 2026
+            "2026-10-02",  # Part of National Day 2026
+            "2026-10-05",  # Part of National Day 2026
+            "2026-10-06",  # Part of National Day 2026
+            "2026-10-07",  # Part of National Day 2026
         ]
