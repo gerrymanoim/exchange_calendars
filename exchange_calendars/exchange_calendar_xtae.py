@@ -17,7 +17,9 @@ from datetime import time
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+import functools
 
+from pandas.tseries.offsets import CustomBusinessDay
 from .tase_holidays import (
     FastDay,
     IndependenceDay,
@@ -28,14 +30,23 @@ from .tase_holidays import (
     Passover,
     Passover2,
     PassoverInterimDay1,
+    PassoverInterimDay1Before2026,
     PassoverInterimDay2,
+    PassoverInterimDay2Before2026,
     PassoverInterimDay3,
+    PassoverInterimDay3Before2026,
     PassoverInterimDay4,
+    PassoverInterimDay4Before2026,
     SukkothInterimDay1,
+    SukkothInterimDay1Before2026,
     SukkothInterimDay2,
+    SukkothInterimDay2Before2026,
     SukkothInterimDay3,
+    SukkothInterimDay3Before2026,
     SukkothInterimDay4,
+    SukkothInterimDay4Before2026,
     SukkothInterimDay5,
+    SukkothInterimDay5Before2026,
     Passover2Eve,
     PassoverEve,
     Pentecost,
@@ -47,14 +58,41 @@ from .tase_holidays import (
     SukkothEve,
     YomKippur,
     YomKippurEve,
+    YomKippurEveObserved,
 )
-from .exchange_calendar import HolidayCalendar, ExchangeCalendar, SUNDAY
+from .exchange_calendar import HolidayCalendar, ExchangeCalendar
+from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 
 # All holidays are defined as ad-hoc holidays for each year since there is
 # currently no support for Hebrew calendar holiday rules in pandas.
 
 HOLIDAY_EARLY_CLOSE = time(14, 15)
 SUNDAY_CLOSE = time(15, 40)
+FRIDAY_CLOSE = time(13, 50)
+
+
+class SundayUntil2026(HolidayCalendar):
+    def __init__(self):
+        super().__init__(rules=[])
+
+    def holidays(self, start, end):
+        limit = pd.Timestamp("2026-01-05")
+        effective_end = min(end, limit)
+        if start > effective_end:
+            return pd.DatetimeIndex([])
+        return pd.date_range(start, effective_end, freq="W-SUN")
+
+
+class FridayFrom2026(HolidayCalendar):
+    def __init__(self):
+        super().__init__(rules=[])
+
+    def holidays(self, start, end):
+        limit = pd.Timestamp("2026-01-05")
+        effective_start = max(start, limit)
+        if effective_start > end:
+            return pd.DatetimeIndex([])
+        return pd.date_range(effective_start, end, freq="W-FRI")
 
 
 class XTAEExchangeCalendar(ExchangeCalendar):
@@ -66,7 +104,7 @@ class XTAEExchangeCalendar(ExchangeCalendar):
 
     Open Time: 9:59 AM, Asia/Tel_Aviv (randomly between 9:59 and 10:00).
     Close Time: 5:15 PM, Asia/Tel_Aviv (randomly between 5:14 and 5:15).
-    Sunday close time: 3:40pm, Asia/Tel_Aviv (randomly between 3:39 and 3:40)
+    Friday close time: 1:50pm, Asia/Tel_Aviv
 
     Regularly-Observed Holidays (not necessarily in order):
     - Purim
@@ -89,14 +127,17 @@ class XTAEExchangeCalendar(ExchangeCalendar):
     - Simchat Torah Eve
     - Simchat Torah
 
-    Note these dates are only checked against 2019-2023.
+    Note these dates are only checked against 2019-2026.
 
-    https://info.tase.co.il/eng/about_tase/corporate/pages/vacation_schedule.aspx
+    https://www.tase.co.il/en/content/knowledge_center/trading_vacation_schedule
 
     Daylight Saving Time in Israel comes into effect on the Friday before the
     last Sunday in March, and lasts until the last Sunday in October. During the
     Daylight Saving time period the clock will be UTC+3, and UTC+2 for the rest
     of the year.
+
+    Transition to Monday-Friday Trading
+    https://www.tase.co.il/en/content/about/tradingdays_change
     """
 
     name = "XTAE"
@@ -125,6 +166,7 @@ class XTAEExchangeCalendar(ExchangeCalendar):
                 NewYear,
                 NewYear2,
                 YomKippurEve,
+                YomKippurEveObserved,
                 YomKippur,
                 SukkothEve,
                 Sukkoth,
@@ -159,17 +201,54 @@ class XTAEExchangeCalendar(ExchangeCalendar):
                         PassoverInterimDay2,
                         PassoverInterimDay3,
                         PassoverInterimDay4,
+                        PassoverInterimDay1Before2026,
+                        PassoverInterimDay2Before2026,
+                        PassoverInterimDay3Before2026,
+                        PassoverInterimDay4Before2026,
                         SukkothInterimDay1,
                         SukkothInterimDay2,
                         SukkothInterimDay3,
                         SukkothInterimDay4,
                         SukkothInterimDay5,
+                        SukkothInterimDay1Before2026,
+                        SukkothInterimDay2Before2026,
+                        SukkothInterimDay3Before2026,
+                        SukkothInterimDay4Before2026,
+                        SukkothInterimDay5Before2026,
                     ]
                 ),
             ),
-            (SUNDAY_CLOSE, SUNDAY),
+            (SUNDAY_CLOSE, SundayUntil2026()),
+            (FRIDAY_CLOSE, FridayFrom2026()),
         ]
 
     @property
     def weekmask(self):
-        return "1111001"
+        return "1111100"
+
+    @property
+    def special_weekmasks(self):
+        """
+        Returns
+        -------
+        list: List of (date, date, str) tuples that represent special
+         weekmasks that applies between dates.
+        """
+        return [
+            (None, pd.Timestamp("2026-01-04"), "1111001"),
+        ]
+
+    @functools.cached_property
+    def day(self):
+        if self.special_weekmasks:
+            return MultipleWeekmaskCustomBusinessDay(
+                holidays=self.adhoc_holidays,
+                calendar=self.regular_holidays,
+                weekmask=self.weekmask,
+                weekmasks=self.special_weekmasks,
+            )
+        return CustomBusinessDay(
+            holidays=self.adhoc_holidays,
+            calendar=self.regular_holidays,
+            weekmask=self.weekmask,
+        )
