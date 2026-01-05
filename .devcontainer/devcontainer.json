@@ -4,13 +4,18 @@
 		"dockerfile": "Dockerfile",
 		"context": "..",
 		"args": {
-			// Update 'VARIANT' to pick a Python version: 3, 3.10, 3.11, 3.12
-			"VARIANT": "3.10",
+			// Update 'VARIANT' to pick a Python version: 3, 3.11, 3.12, 3.13
+			"VARIANT": "3.13",
 			// Options
 			"INSTALL_NODE": "false",
 			"NODE_VERSION": "lts/*"
 		}
 	},
+
+	"features": {
+        "ghcr.io/va-h/devcontainers-features/uv:1": {},
+        "ghcr.io/devcontainers-extra/features/ruff:1": {}
+    },
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
