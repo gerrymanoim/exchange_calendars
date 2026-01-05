@@ -2246,10 +2246,13 @@ class ExchangeCalendarTestBase:
     def test_base_integrity(self, calendar_cls, non_valid_overrides):
         for name in non_valid_overrides:
             # covers properties, instance methods and class mathods...
-            allowed = calendar_cls.name in ["XKRX", "XMOS", "XBOM"] and name == "day"
+            allowed = (
+                calendar_cls.name in ["XKRX", "XMOS", "XBOM", "XTAE"] and name == "day"
+            )
             # allow exchange_calendar_xkrx to overwrite 'day'.
             # allow exchange_calendar_xmos to overwrite 'day'.
             # allow exchange_calendar_xbom to overwrite 'day'.
+            # allow exchange_calendar_xtae to overwrite 'day'.
             assert name not in calendar_cls.__dict__ or allowed
 
     def test_calculated_against_csv(self, default_calendar_with_answers):
