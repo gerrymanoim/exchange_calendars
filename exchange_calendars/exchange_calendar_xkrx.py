@@ -367,6 +367,7 @@ class PrecomputedXKRXExchangeCalendar(PrecomputedExchangeCalendar):
     """
     Calendar for the Korea exchange, and the primary calendar for
     the country of South Korea.
+    https://global.krx.co.kr/contents/GLB/05/0501/0501110000/GLB0501110000.jsp
 
     Open Time: 9:00 AM, KST (Korean Standard Time)
     Close Time: 3:30 PM, KST (Korean Standard Time)
