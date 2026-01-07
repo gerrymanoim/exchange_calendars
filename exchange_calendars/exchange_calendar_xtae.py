@@ -20,6 +20,8 @@ import pandas as pd
 import functools
 
 from pandas.tseries.offsets import CustomBusinessDay
+
+from exchange_calendars.pandas_extensions.holiday import AbstractHolidayCalendar
 from .tase_holidays import (
     FastDay,
     IndependenceDay,
@@ -75,8 +77,12 @@ class SundayUntil2026(HolidayCalendar):
     def __init__(self):
         super().__init__(rules=[])
 
-    def holidays(self, start, end):
+    def holidays(self, start=None, end=None, return_name=False):  # noqa: ARG002
         limit = pd.Timestamp("2026-01-05")
+        if start is None:
+            start = pd.Timestamp(AbstractHolidayCalendar.start_date)
+        if end is None:
+            end = pd.Timestamp(AbstractHolidayCalendar.end_date)
         effective_end = min(end, limit)
         if start > effective_end:
             return pd.DatetimeIndex([])
@@ -87,8 +93,12 @@ class FridayFrom2026(HolidayCalendar):
     def __init__(self):
         super().__init__(rules=[])
 
-    def holidays(self, start, end):
+    def holidays(self, start=None, end=None, return_name=False):  # noqa: ARG002
         limit = pd.Timestamp("2026-01-05")
+        if start is None:
+            start = pd.Timestamp(AbstractHolidayCalendar.start_date)
+        if end is None:
+            end = pd.Timestamp(AbstractHolidayCalendar.end_date)
         effective_start = max(start, limit)
         if effective_start > end:
             return pd.DatetimeIndex([])
@@ -221,10 +231,6 @@ class XTAEExchangeCalendar(ExchangeCalendar):
             (SUNDAY_CLOSE, SundayUntil2026()),
             (FRIDAY_CLOSE, FridayFrom2026()),
         ]
-
-    @property
-    def weekmask(self):
-        return "1111100"
 
     @property
     def special_weekmasks(self):
