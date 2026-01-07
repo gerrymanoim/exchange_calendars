@@ -16,7 +16,7 @@ class TestXBOMCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def end_bound(self):
-        yield T("2025-12-31")
+        yield T("2026-12-31")
 
     @pytest.fixture
     def max_session_hours(self):
@@ -47,4 +47,6 @@ class TestXBOMCalendar(ExchangeCalendarTestBase):
         yield [
             # Special trading session on Saturday, January 20, 2024.
             "2024-01-20",
+            # Special trading session on Saturday, February 1, 2025.
+            "2025-02-01",
         ]
