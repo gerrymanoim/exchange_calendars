@@ -271,8 +271,8 @@ See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanat
 
 > Note that exchange calendars are defined by their [ISO-10383](https://www.iso20022.org/10383/iso-10383-market-identifier-codes) market identifier code.
 
-## [`market-prices`](https://github.com/maread99/market_prices)
-Much of the post v3 development of `exchange_calendars` has been driven by the [`market_prices`](https://github.com/maread99/market_prices) library. Check it out if you like the idea of using `exchange_calendars` to create meaningful OHLCV datasets. It works out-the-box with freely available data!
+## market-prices
+Much of the post v3 development of `exchange_calendars` was driven by the [`market_prices`](https://github.com/maread99/market_prices) library. Check it out if you like the idea of using `exchange_calendars` to create meaningful OHLCV datasets. It works out-the-box with freely available data!
 
 ## Deprecations and Renaming
 
