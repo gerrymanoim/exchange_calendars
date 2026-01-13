@@ -6,7 +6,7 @@ numpy==2.2.6 ; python_full_version < '3.11'
     # via
     #   exchange-calendars
     #   pandas
-numpy==2.3.3 ; python_full_version >= '3.11'
+numpy==2.4.1 ; python_full_version >= '3.11'
     # via
     #   exchange-calendars
     #   pandas
@@ -20,9 +20,9 @@ pytz==2025.2
     # via pandas
 six==1.17.0
     # via python-dateutil
-toolz==1.0.0
+toolz==1.1.0
     # via exchange-calendars
-tzdata==2025.2
+tzdata==2025.3
     # via
     #   exchange-calendars
     #   pandas
