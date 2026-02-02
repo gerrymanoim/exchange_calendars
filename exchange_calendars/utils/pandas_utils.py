@@ -144,7 +144,7 @@ def indexes_union(indexes: list[pd.Index]) -> pd.Index:
     DatetimeIndex(['2021-05-01 12:20:00', '2021-05-01 13:20:00',
                    '2021-05-02 17:10:00', '2021-05-02 17:32:00',
                    '2021-05-03 00:00:00', '2021-05-04 00:00:00'],
-                  dtype='datetime64[ns]', freq=None)
+                  dtype='datetime64[us]', freq=None)
     """
     index = indexes[0]
     for indx in indexes[1:]:
