@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.13"]
+        python-version: ["3.10", "3.14"]
 
     steps:
     - uses: actions/checkout@v6
@@ -53,8 +53,8 @@ jobs:
     - name: Set up minimum environment and run tests
       shell: bash
       run: |
-        if [ "${{ matrix.python-version }}" == "3.13" ]; then
-          GROUP="test_py13"
+        if [ "${{ matrix.python-version }}" == "3.14" ]; then
+          GROUP="test_py14"
         else
           GROUP="test_min"
         fi

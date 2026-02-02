@@ -6,17 +6,19 @@ numpy==2.2.6 ; python_full_version < '3.11'
     # via
     #   exchange-calendars
     #   pandas
-numpy==2.4.1 ; python_full_version >= '3.11'
+numpy==2.4.2 ; python_full_version >= '3.11'
     # via
     #   exchange-calendars
     #   pandas
-pandas==2.3.3
+pandas==2.3.3 ; python_full_version < '3.11'
+    # via exchange-calendars
+pandas==3.0.0 ; python_full_version >= '3.11'
     # via exchange-calendars
 pyluach==2.3.0
     # via exchange-calendars
 python-dateutil==2.9.0.post0
     # via pandas
-pytz==2025.2
+pytz==2025.2 ; python_full_version < '3.11'
     # via pandas
 six==1.17.0
     # via python-dateutil

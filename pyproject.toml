@@ -10,7 +10,7 @@ authors = [
   {name = "Gerry Manoim"}
 ]
 readme = "README.md"
-license = "APSL-2.0"
+license = "Apache-2.0"
 keywords = ["finance", "security", "calendar", "exchange"]
 requires-python = ">=3.10, <4"
 classifiers = [
@@ -21,6 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Mathematics",
@@ -48,13 +49,13 @@ test_min = [
     {include-group = "test"},
     "numpy==1.26.4",
 ]
-# Separate group required for test jobs running on python 3.13.
-# Should be able to remove this provision once numpy and pandas officially support python 3.13, allowing uv to resolve accordingly
-test_py13 = [
+# Separate group required for test jobs running on python >= 3.14.
+# Might be able to remove this provision if/when bump min pandas to 2.0 and numpy to 2.0
+test_py14 = [
     {include-group = "test"},
-    "numpy>=2.1; python_version<'3.13'",
-    "numpy>=2.3.3; python_version>='3.13'",
-    "pandas>=2.3; python_version>='3.13'",
+    "numpy>=2.1; python_version<'3.14'",
+    "numpy>=2.3.2; python_version>='3.14'",
+    "pandas>=2.3.3; python_version>='3.14'",
 ]
 
 dev = [
@@ -77,7 +78,7 @@ trusted-publishing = "always"
 conflicts = [
     [
       { group = "test_min" },
-      { group = "test_py13" },
+      { group = "test_py14" },
     ],
 ]
 
@@ -111,7 +112,7 @@ testpaths = [
 # Settings for tools previously used by project
 [tool.black]
 line-length = 88
-target-version = ["py310", "py311", "py312", "py313"]
+target-version = ["py310", "py311", "py312", "py313", "py314"]
 
 [tool.flake8]
 max-line-length = 88

@@ -183,11 +183,19 @@ def get_csv(name: str) -> pd.DataFrame:
     )
     if df.index.tz is not None:
         df.index = df.index.tz_convert(None)
+    # NOTE When min supported version of pandas bumps to 2.0 will be able to lose the
+    # if pd.__version__ >= "3.0.0" lines  and just conver to as_unit in all cases
+    # (`as_unit`` introduced in pandas 2.0).
+    # NB pre v3.0 pandas infers resolution here as "ns", not so in v3.
     for col in df:
+        if pd.__version__ >= "3.0.0":
+            df[col] = df[col].dt.as_unit("ns")
         if df[col].dt.tz is None:
             df[col] = df[col].dt.tz_localize(UTC)
         else:
             df[col] = df[col].dt.tz_convert(UTC)
+    if pd.__version__ >= "3.0.0":
+        df.index = df.index.as_unit("ns")
     return df
 
 

@@ -369,6 +369,12 @@ class ExchangeCalendar(ABC):
 
         break_starts = None if self._break_starts is None else self._break_starts
         break_ends = None if self._break_ends is None else self._break_ends
+        # NOTE can lose the if line when min supported version of pandas bumps to
+        # 2.0 (`as_unit`` introduced in pandas 2.0). Indeed could then remove the whole
+        # if clause and amend index parameter below to take `_all_days.as_unit("ns")`.
+        # NB pre v3.0 pandas infers resolution here as "ns", not so in v3.
+        if pd.__version__ >= "3.0.0":
+            _all_days = _all_days.as_unit("ns")
         self.schedule = pd.DataFrame(
             index=_all_days,
             data=collections.OrderedDict(
@@ -389,8 +395,15 @@ class ExchangeCalendar(ABC):
 
         _check_breaks_match(self.break_starts_nanos, self.break_ends_nanos)
 
-        self._late_opens = _special_opens.index
-        self._early_closes = _special_closes.index
+        # NOTE If / when min pandas bumps to 2.0 can reduce all the following to just
+        # the content of the if clause. (`as_unit`` introduced in pandas 2.0).
+        # NB pre v3.0 pandas infers resolution here as "ns", not so in v3.
+        if pd.__version__ >= "3.0.0":
+            self._late_opens = _special_opens.index.as_unit("ns")
+            self._early_closes = _special_closes.index.as_unit("ns")
+        else:
+            self._late_opens = _special_opens.index
+            self._early_closes = _special_closes.index
 
     # --------------- Calendar definition methods/properties --------------
     # Methods and properties in this section should be overriden or
