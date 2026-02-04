@@ -288,7 +288,7 @@ class ExchangeCalendar(ABC):
             return GLOBAL_DEFAULT_END
         return min(GLOBAL_DEFAULT_END, bound_max)
 
-    def __init__(
+    def __init__(  # noqa: PLR0915  # can lose noqa post changes when min pandas bumps to 2.0
         self,
         start: Date | None = None,
         end: Date | None = None,
@@ -367,14 +367,27 @@ class ExchangeCalendar(ABC):
             _all_days, self._break_ends, _special_closes
         )
 
-        break_starts = None if self._break_starts is None else self._break_starts
-        break_ends = None if self._break_ends is None else self._break_ends
-        # NOTE can lose the if line when min supported version of pandas bumps to
-        # 2.0 (`as_unit`` introduced in pandas 2.0). Indeed could then remove the whole
-        # if clause and amend index parameter below to take `_all_days.as_unit("ns")`.
-        # NB pre v3.0 pandas infers resolution here as "ns", not so in v3.
+        break_starts = (
+            self._break_starts
+            if self._break_starts is not None
+            else pd.DatetimeIndex([np.nan] * len(_all_days), tz=UTC)
+        )
+        break_ends = (
+            self._break_ends
+            if self._break_ends is not None
+            else pd.DatetimeIndex([np.nan] * len(_all_days), tz=UTC)
+        )
+
+        # NOTE can lose this if line when min supported version of pandas bumps to
+        # 2.0 (`as_unit` introduced in pandas 2.0) and just dedent the content.
+        # NB pre v3.0 pandas infers resolution here as "ns", not so in v3 which would
+        # otherwise infer as "us".
         if pd.__version__ >= "3.0.0":
             _all_days = _all_days.as_unit("ns")
+            self._opens = self._opens.as_unit("ns")
+            self._closes = self._closes.as_unit("ns")
+            break_starts = break_starts.as_unit("ns")
+            break_ends = break_ends.as_unit("ns")
         self.schedule = pd.DataFrame(
             index=_all_days,
             data=collections.OrderedDict(
@@ -385,7 +398,6 @@ class ExchangeCalendar(ABC):
                     ("close", self._closes),
                 ]
             ),
-            dtype="datetime64[ns, UTC]",
         )
 
         self.opens_nanos = self.schedule.open.values.astype(np.int64)
