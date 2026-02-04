@@ -1756,10 +1756,10 @@ class TestTradingIndex:
         cal, start, end = cal_start_end
         error_msg = (
             "`period` cannot be greater than one day although received as"
-            f" '{pd.Timedelta('2d')}'."
+            f" '{pd.Timedelta('2D')}'."
         )
         with pytest.raises(ValueError, match=error_msg):
-            cal.trading_index(start, end, "2d", parse=False)
+            cal.trading_index(start, end, "2D", parse=False)
 
         error_msg = "If `intervals` is True then `closed` cannot be 'neither'."
         with pytest.raises(ValueError, match=re.escape(error_msg)):
@@ -1791,7 +1791,7 @@ class TestTradingIndex:
             f"`period` receieved as '{invalid_str}' although takes type"
             " 'pd.Timedelta' or a 'str' that is valid as a single input"
             " to 'pd.Timedelta'. Examples of valid input: pd.Timestamp('15T'),"
-            " '15min', '15T', '1H', '4h', '1d', '5s', 500ms'."
+            " '15min', '15T', '1H', '4h', '1D', '5s', 500ms'."
         )
         with pytest.raises(ValueError, match=re.escape(error_msg)):
             cal.trading_index(start, end, invalid_str)
