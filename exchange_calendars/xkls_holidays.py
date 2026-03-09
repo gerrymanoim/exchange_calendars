@@ -23,7 +23,7 @@ malaysia_nuzul_al_quran = pd.to_datetime(
         "2023-04-08",
         "2024-03-27",
         "2025-03-18",
-        "2026-03-06",
+        "2026-03-07",
         "2027-02-24",
         "2028-02-13",
         "2029-02-01",
@@ -101,7 +101,7 @@ muharram = pd.to_datetime(
         "2023-07-19",
         "2024-07-07",
         "2025-06-27",
-        "2026-06-16",
+        "2026-06-17",
         "2027-06-06",
         "2028-05-25",
         "2029-05-14",
@@ -206,6 +206,7 @@ muhammad_birthday = pd.to_datetime(
 )
 
 # Malaysia's observances of Eid al-Fitr
+# If falls on Sunday, the following Monday will be observed as a holiday.
 malaysia_eid_al_fitr_first_day = pd.to_datetime(
     [
         "1981-08-01",
@@ -254,7 +255,7 @@ malaysia_eid_al_fitr_first_day = pd.to_datetime(
         "2023-04-22",
         "2024-04-10",
         "2025-03-31",
-        "2026-03-20",
+        "2026-03-21",
         "2027-03-09",
         "2028-02-26",
         "2029-02-14",
@@ -360,6 +361,7 @@ malaysia_eid_al_adha = pd.to_datetime(
 )
 
 # Malaysia's observances of Deepavali (Hindu Lunar Calendar)
+# If falls on Sunday, the following Monday will be observed as a holiday.
 deepavali = pd.to_datetime(
     [
         "2002-11-04",
@@ -383,10 +385,15 @@ deepavali = pd.to_datetime(
         "2023-11-13",
         "2024-10-31",
         "2025-10-20",
+        "2026-11-09",
+        "2027-10-28",
+        "2028-10-17",
+        "2029-11-05",
     ]
 )
 
-# Malaysia's observances of Thaipusam (Tamil Calendar)
+# Malaysia's observances of Thaipusam (Tamil Calendar).
+# If falls on Sunday, the following Monday will be observed as a holiday.
 thaipusam = pd.to_datetime(
     [
         "2008-01-23",
@@ -407,11 +414,16 @@ thaipusam = pd.to_datetime(
         "2023-02-04",
         "2024-01-25",
         "2025-02-11",
+        "2026-02-02",
+        "2027-01-22",
+        "2028-02-09",
+        "2029-01-30",
     ]
 )
 
 # Malaysia's observances of Wesak Day (Chinese Lunar Calendar)
 # source: https://publicholidays.com.my/wesak-day/
+# If falls on Sunday, the following Monday will be observed as a holiday.
 wesak_day = pd.to_datetime(
     [
         "2003-05-15",
@@ -434,11 +446,17 @@ wesak_day = pd.to_datetime(
         "2023-05-04",
         "2024-05-22",
         "2025-05-12",
+        "2026-06-01",
+        "2027-05-20",
+        "2028-05-09",
+        "2029-05-28",
     ]
 )
 
 misc_adhoc = pd.to_datetime(
     [
+        "2027-06-07",  # Yang di-Pertuan Agong's Birthday
+        "2026-06-01",  # Yang di-Pertuan Agong's Birthday
         "2025-06-02",  # Yang di-Pertuan Agong's Birthday
         "2024-06-03",  # Yang di-Pertuan Agong's Birthday
         "2023-06-05",  # Yang di-Pertuan Agong's Birthday

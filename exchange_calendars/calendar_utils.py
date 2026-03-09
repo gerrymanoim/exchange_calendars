@@ -61,6 +61,7 @@ from .exchange_calendar_xsau import XSAUExchangeCalendar
 from .exchange_calendar_xses import XSESExchangeCalendar
 from .exchange_calendar_xsgo import XSGOExchangeCalendar
 from .exchange_calendar_xshg import XSHGExchangeCalendar
+from .exchange_calendar_xstu import XSTUExchangeCalendar
 from .exchange_calendar_xsto import XSTOExchangeCalendar
 from .exchange_calendar_xswx import XSWXExchangeCalendar
 from .exchange_calendar_xtae import XTAEExchangeCalendar
@@ -134,6 +135,7 @@ _default_calendar_factories = {
     "XSGO": XSGOExchangeCalendar,
     "XSHG": XSHGExchangeCalendar,
     "XSTO": XSTOExchangeCalendar,
+    "XSTU": XSTUExchangeCalendar,
     "XSWX": XSWXExchangeCalendar,
     "XTAE": XTAEExchangeCalendar,
     "XTAI": XTAIExchangeCalendar,
