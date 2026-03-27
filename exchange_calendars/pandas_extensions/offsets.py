@@ -142,32 +142,44 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
         )
 
     @apply_wraps
-    def _apply(self, other):
-        if isinstance(other, datetime):
+    def _apply(self, day):
+        if isinstance(day, datetime):
+            sign = 1 if self.n > 0 else -1
             moved = 0
             remaining = self.n - moved
-            bday, interval = self._custom_business_day_for(
-                other, remaining, with_interval=True
+            is_edge: bool = (
+                False  # Whether the current day is at the edge of the current interval.
             )
-            result = bday + other
-            while not interval.left <= result <= interval.right:
-                previous_other = other
-                if result < interval.left:
-                    other = interval.left
-                elif result > interval.right:
-                    other = interval.right
+            while remaining != 0:
+                # Get business day and interval for current date. Set is_edge to True if
+                # the day is at the edge of the current interval, so the call returns
+                # the next adjacent interval.
+                bday, interval = self._custom_business_day_for(
+                    day, remaining, with_interval=True, is_edge=is_edge
+                )
+                # Next business day according to current interval.
+                day_next = bday + day
+                # Check if this falls outside the current interval.
+                if interval.left <= day_next <= interval.right:
+                    # Still in the current interval. Continue with next iteration.
+                    moved += sign * max(
+                        1, abs(int(self._moved(day, day_next, bday)))
+                    )  # Must have moved at least one business day.
+                    remaining = self.n - moved
+                    day = day_next
+                    is_edge = False
+                    continue
+                # Next day is outside the current interval. Clamp to interval bounds
+                #  so when re-entering the loop, the next interval is considered.
+                if day_next < interval.left:
+                    day = interval.left
+                elif day_next > interval.right:
+                    day = interval.right
                 else:
                     raise RuntimeError("Should not reach here")
-                moved += self._moved(previous_other, other, bday)
-                remaining = self.n - moved
-                if remaining == 0:
-                    break
-                bday, interval = self._custom_business_day_for(
-                    other, remaining, is_edge=True, with_interval=True
-                )
-                result = bday._apply(other)  # noqa: SLF001
-            return result
-        return super().apply(other)
+                is_edge = True
+            return day
+        return super().apply(day)
 
     # backwards compat
     apply = _apply
