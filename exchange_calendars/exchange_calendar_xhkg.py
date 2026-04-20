@@ -70,7 +70,7 @@ def process_queen_birthday(dt):
     wom = WeekOfMonth(week=2, weekday=0)
     if dt.year in [1983, 1988, 1993, 1994]:
         wom = WeekOfMonth(week=1, weekday=0)
-    if dt.year in [1985]:
+    if dt.year == 1985:
         wom = WeekOfMonth(week=3, weekday=0)
     return dt + wom
 

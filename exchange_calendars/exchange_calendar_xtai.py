@@ -60,7 +60,7 @@ def before_chinese_new_year_offset(holidays):
 
     Can be used to offset holidays that fall before Chinese New Year.
     """
-    return pd.to_datetime(holidays.map(lambda d: previous_friday(d)))
+    return pd.to_datetime(holidays.map(previous_friday))
 
 
 def chinese_new_year_offset(holidays):
@@ -68,7 +68,7 @@ def chinese_new_year_offset(holidays):
 
     Can be used to offset holidays that fall after Chinese New Year.
     """
-    return pd.to_datetime(holidays.map(lambda d: next_monday(d)))
+    return pd.to_datetime(holidays.map(next_monday))
 
 
 def evalute_tomb_sweeping_weekday_extra(dt: pd.DatetimeIndex) -> pd.DatetimeIndex:
@@ -125,7 +125,7 @@ def manual_nearest_weekday_2014_thr_2023(holidays):
     Can be used to implement nearest weekday observance rule for Chinese
     lunar calendar holidays from 2013 through 2023.
     """
-    return pd.to_datetime(holidays.map(lambda d: nearest_weekday_2014_thr_2023(d)))
+    return pd.to_datetime(holidays.map(nearest_weekday_2014_thr_2023))
 
 
 def manual_extra_days_07_thr_2023(holidays):

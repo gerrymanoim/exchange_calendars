@@ -35,7 +35,7 @@ def new_years_eve_observance(dt: datetime.datetime) -> datetime.datetime | None:
 
 def new_years_day_observance(dt: datetime.datetime) -> datetime.datetime | None:
     # New Year's Day did not follow the next-non-holiday rule these years.
-    return None if dt.year in [2022] else weekend_to_monday(dt)
+    return None if dt.year == 2022 else weekend_to_monday(dt)
 
 
 def new_years_holiday_observance(dt: datetime.datetime) -> datetime.datetime | None:
@@ -58,17 +58,17 @@ def defender_of_fatherland_observance(
 
 def victory_day_observance(dt: datetime.datetime) -> datetime.datetime | None:
     # Victory Day did not follow the next-non-holiday rule these years.
-    return None if dt.year in [2021] else weekend_to_monday(dt)
+    return None if dt.year == 2021 else weekend_to_monday(dt)
 
 
 def day_of_russia_observance(dt: datetime.datetime) -> datetime.datetime | None:
     # Day of Russia did not follow the next-non-holiday rule these years.
-    return None if dt.year in [2021] else weekend_to_monday(dt)
+    return None if dt.year == 2021 else weekend_to_monday(dt)
 
 
 def unity_day_observance(dt: datetime.datetime) -> datetime.datetime | None:
     # Unity Day did not follow the next-non-holiday rule these years.
-    return None if dt.year in [2023] else weekend_to_monday(dt)
+    return None if dt.year == 2023 else weekend_to_monday(dt)
 
 
 NewYearsDay = new_years_day(observance=new_years_day_observance)

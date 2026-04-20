@@ -501,25 +501,21 @@ FederalTerritoryDay = Holiday(
     observance=sunday_to_monday,
 )
 
-ChineseNewYear = pd.to_datetime(
-    chinese_lunar_new_year_dates.map(lambda d: sunday_to_monday(d))
-)
+ChineseNewYear = pd.to_datetime(chinese_lunar_new_year_dates.map(sunday_to_monday))
 
-ChineseNewYearDay2 = (ChineseNewYear + timedelta(1)).map(lambda d: sunday_to_monday(d))
+ChineseNewYearDay2 = (ChineseNewYear + timedelta(1)).map(sunday_to_monday)
 
 LabourDay = european_labour_day(observance=sunday_to_monday)
 
 WesakDay = wesak_day
 
-NuzulAlQuran = malaysia_nuzul_al_quran.map(lambda d: sunday_to_monday(d))
+NuzulAlQuran = malaysia_nuzul_al_quran.map(sunday_to_monday)
 
-EidAlFitrDay1 = pd.to_datetime(
-    malaysia_eid_al_fitr_first_day.map(lambda d: sunday_to_monday(d))
-)
+EidAlFitrDay1 = pd.to_datetime(malaysia_eid_al_fitr_first_day.map(sunday_to_monday))
 
-EidAlFitrDay2 = (EidAlFitrDay1 + timedelta(1)).map(lambda d: sunday_to_monday(d))
+EidAlFitrDay2 = (EidAlFitrDay1 + timedelta(1)).map(sunday_to_monday)
 
-EidAlAdha = malaysia_eid_al_adha.map(lambda d: sunday_to_monday(d))
+EidAlAdha = malaysia_eid_al_adha.map(sunday_to_monday)
 
 NationalDay = Holiday(
     "National Day",
@@ -528,7 +524,7 @@ NationalDay = Holiday(
     observance=sunday_to_monday,
 )
 
-Muharram = muharram.map(lambda d: sunday_to_monday(d))
+Muharram = muharram.map(sunday_to_monday)
 
 MalaysiaDay = Holiday(
     "Malaysia Day",
@@ -540,7 +536,7 @@ MalaysiaDay = Holiday(
 
 Deepavali = deepavali
 
-MuhammadBirthday = muhammad_birthday.map(lambda d: sunday_to_monday(d))
+MuhammadBirthday = muhammad_birthday.map(sunday_to_monday)
 
 ChristmasDay = christmas(observance=sunday_to_monday)
 
