@@ -1,0 +1,55 @@
+name: Monthly Dependencies Update
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # First day of every month at 00:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+
+      - name: Update lock file
+        run: uv lock --upgrade
+
+      - name: Export requirements.txt
+        run: uv export --format requirements-txt --no-emit-project --no-hashes --no-dev -o requirements.txt
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "No dependency changes detected."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Dependency changes detected."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create branch, commit, push, and open PR
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="deps/update-$(date +%Y-%m)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add uv.lock requirements.txt
+          git commit -m "gh action: update dependencies $(date +%Y-%m)"
+          git push -u origin "$BRANCH"
+          BODY=$(printf 'Monthly automated dependency update.\n\n- Updated `uv.lock` via `uv lock --upgrade`\n- Regenerated `requirements.txt` via `uv export`')
+          gh pr create \
+            --title "gh action: update dependencies $(date +%Y-%m)" \
+            --body "$BODY" \
+            --base master \
+            --label "maintenance"
