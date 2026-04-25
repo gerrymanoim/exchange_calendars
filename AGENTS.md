@@ -31,7 +31,90 @@ See @pyproject.toml for project metadata and dependencies.
 ### Repository Layout
 
 ```
-TODO
+exchange_calendars_fork/
+├── .agents/
+│   └── skills/
+│       ├── dependencies-management/
+│       │   └── SKILL.md
+│       └── update-agents-md/
+│           └── SKILL.md
+├── .devcontainer/
+│   ├── library-scripts/
+│   │   ├── common-debian.sh
+│   │   ├── node-debian.sh
+│   │   └── python-debian.sh
+│   ├── base.Dockerfile
+│   ├── devcontainer.json
+│   └── Dockerfile
+├── .github/
+│   ├── workflows/
+│   │   ├── benchmark.yml
+│   │   ├── labeler.yml
+│   │   ├── main.yml
+│   │   ├── master-merge.yml
+│   │   ├── release.yml
+│   │   └── update_deps.yml
+│   ├── dependabot.yml
+│   ├── pull_request_template.md
+│   └── release-drafter-config.yml
+├── docs/
+│   ├── dev/
+│   │   └── depenencies_update.md
+│   ├── tutorials/
+│   │   ├── calendar_methods.ipynb
+│   │   ├── calendar_properties.ipynb
+│   │   ├── minutes.ipynb
+│   │   ├── sessions.ipynb
+│   │   └── trading_index.ipynb
+│   └── changes_archive.md
+├── etc/  # developer scripts and reference materials
+│   ├── ecal/
+│   ├── lunisolar/
+│   ├── NYSE-Historical-Closings.pdf
+│   ├── bench.py
+│   ├── check_holidays.py
+│   ├── factory_bounds.py  # generates start/end bounds for calendar factory
+│   ├── make_exchange_calendar_test_csv.py
+│   └── update_xkrx_holidays.py
+├── exchange_calendars/
+│   ├── pandas_extensions/
+│   │   ├── holiday.py
+│   │   ├── korean_holiday.py
+│   │   └── offsets.py
+│   ├── utils/
+│   │   └── pandas_utils.py
+│   ├── always_open.py
+│   ├── calendar_helpers.py
+│   ├── calendar_utils.py  # calendar registry and dispatch
+│   ├── common_holidays.py
+│   ├── ecal.py  # CLI entry point
+│   ├── errors.py
+│   ├── exchange_calendar.py  # base ExchangeCalendar class
+│   ├── exchange_calendar_<code>.py  # calendars for each exchange
+│   ├── lunisolar_holidays.py
+│   ├── precomputed_exchange_calendar.py
+│   ├── tase_holidays.py
+│   ├── us_futures_calendar.py
+│   ├── us_holidays.py
+│   ├── weekday_calendar.py
+│   ├── xbkk_holidays.py
+│   ├── xkls_holidays.py
+│   ├── xkrx_holidays.py
+│   └── xtks_holidays.py
+├── tests/
+│   ├── resources/
+│   └── test_<code>_calendar.py  # test file for each calendar
+├── .pre-commit-config.yaml
+├── .python-version
+├── AGENTS.md
+├── CLAUDE.md
+├── LICENSE
+├── MANIFEST.in
+├── pyproject.toml
+├── README.md
+├── requirements.txt
+├── ruff.toml
+└── uv.lock
 ```
 
 ## Technology Stack
