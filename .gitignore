@@ -146,5 +146,8 @@ etc/solar-ecliptic-longitude/*
 # Vscode
 .vscode
 
+# ruff
+.ruff_*
+
 # not intended for inclusion to public project
 /_local
