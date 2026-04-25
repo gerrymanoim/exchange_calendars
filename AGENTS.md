@@ -32,8 +32,8 @@ See @pyproject.toml for project metadata and dependencies.
 
 ```
 exchange_calendars_fork/
-├── .agents/
-│   └── skills/
+├── .agents/                                # instructions for LLM coding agents
+│   └── skills/                             # skills for LLM coding agents
 │       ├── dependencies-management/
 │       │   └── SKILL.md
 │       └── update-agents-md/
@@ -50,7 +50,7 @@ exchange_calendars_fork/
 │   ├── workflows/
 │   │   ├── benchmark.yml
 │   │   ├── labeler.yml
-│   │   ├── main.yml
+│   │   ├── main.yml                        # build and run full test suite
 │   │   ├── master-merge.yml
 │   │   ├── release.yml
 │   │   └── update_deps.yml
@@ -67,14 +67,14 @@ exchange_calendars_fork/
 │   │   ├── sessions.ipynb
 │   │   └── trading_index.ipynb
 │   └── changes_archive.md
-├── etc/  # developer scripts and reference materials
-│   ├── ecal/
+├── etc/                                    # developer scripts and reference materials
+│   ├── ecal/                               # show holiday calendar in the terminal
 │   ├── lunisolar/
 │   ├── NYSE-Historical-Closings.pdf
 │   ├── bench.py
 │   ├── check_holidays.py
-│   ├── factory_bounds.py  # generates start/end bounds for calendar factory
-│   ├── make_exchange_calendar_test_csv.py
+│   ├── factory_bounds.py                   # explore bounds of a calendar factory
+│   ├── make_exchange_calendar_test_csv.py  # create a answers .csv file for a calendar
 │   └── update_xkrx_holidays.py
 ├── exchange_calendars/
 │   ├── pandas_extensions/
@@ -85,12 +85,12 @@ exchange_calendars_fork/
 │   │   └── pandas_utils.py
 │   ├── always_open.py
 │   ├── calendar_helpers.py
-│   ├── calendar_utils.py  # calendar registry and dispatch
+│   ├── calendar_utils.py                    # calendar registry and dispatch
 │   ├── common_holidays.py
-│   ├── ecal.py  # CLI entry point
+│   ├── ecal.py                              # show holiday calendar in the terminal
 │   ├── errors.py
-│   ├── exchange_calendar.py  # base ExchangeCalendar class
-│   ├── exchange_calendar_<code>.py  # calendars for each exchange
+│   ├── exchange_calendar.py                 # includes base ExchangeCalendar class
+│   ├── exchange_calendar_<code>.py          # calendars for each exchange
 │   ├── lunisolar_holidays.py
 │   ├── precomputed_exchange_calendar.py
 │   ├── tase_holidays.py
@@ -102,8 +102,8 @@ exchange_calendars_fork/
 │   ├── xkrx_holidays.py
 │   └── xtks_holidays.py
 ├── tests/
-│   ├── resources/
-│   └── test_<code>_calendar.py  # test file for each calendar
+│   ├── resources/                           # .csv answer files for each calendar
+│   └── test_<code>_calendar.py              # test file for each calendar
 ├── .pre-commit-config.yaml
 ├── .python-version
 ├── AGENTS.md
@@ -147,12 +147,11 @@ pre-commit install
 
 ### Testing
 
-Each calendar has a dedicated test file containing a dedicated test suite defined on a subclass of the common base class `ExchangeCalendarTestBase` (in @tests\test_exchange_calendar.py).
-- tests are in @tests/
-- doctests are included to some methods/functions
-- test with `pytest`
+- tests are in @tests/.
+- doctests are included to some methods/functions.
+- test with `pytest`.
 - see @pytest.ini for configuration; options are applied automatically via `addopts`.
-- shared fixtures are in @tests/conftest.py
+- shared fixtures are in @tests/conftest.py.
 
 Commands to run tests:
 ```bash
@@ -168,6 +167,11 @@ pytest tests/test_module.py::test_name
 # With verbose output
 pytest -v
 ```
+
+#### Testing Architecture
+Each calendar has a dedicated test file containing a dedicated test suite defined on a subclass of the common base class `ExchangeCalendarTestBase` (in @tests\test_exchange_calendar.py).
+
+Expected sessions and times for each calendar are stored in a .csv file in @tests\resources. During testing the contents of a .csv file are stored by an instance of the `Answers` class (of @tests\test_exchange_calendar.py). Tests then call the methods of the `Answers` class to access expected values.
 
 ### Pre-commit Hooks
 
