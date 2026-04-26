@@ -15,6 +15,10 @@ conflicts = [[
     { package = "exchange-calendars", group = "test-py14" },
 ]]
 
+[options]
+exclude-newer = "2026-04-24T21:00:18.376096557Z"
+exclude-newer-span = "P2D"
+
 [[package]]
 name = "cfgv"
 version = "3.5.0"
@@ -415,10 +419,10 @@ name = "pandas"
 version = "2.3.3"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version < '3.11'",
     "python_full_version >= '3.14' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.11'",
 ]
 dependencies = [
     { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and extra == 'group-18-exchange-calendars-test-min') or (python_full_version >= '3.14' and extra == 'group-18-exchange-calendars-test-min') or (extra == 'group-18-exchange-calendars-test-min' and extra == 'group-18-exchange-calendars-test-py14')" },
