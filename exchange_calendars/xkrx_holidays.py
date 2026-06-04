@@ -1149,6 +1149,7 @@ manually_added_holidays = pd.DatetimeIndex(
         "2025-01-27",  # Temporary Public Holiday (Added to create a 6-day long holiday period)
         "2025-06-03",  # Presidential election
         "2026-05-25",  # Buddha's birthday holiday in lieu
+        "2026-06-03",  # Local election day
         "2027-12-27",  # Christmas holiday in lieu
         "2028-10-05",  # Extra day for Chuseok holiday
         "2029-05-21",  # Buddha's birthday holiday in lieu
@@ -1217,9 +1218,23 @@ BuddhasBirthday = KoreanLunarHoliday("Buddha's Birthday", month=4, day=8)
 OldLaborDay = KoreanSolarHoliday(
     "Labor Day", month=3, day=10, end_date=pd.Timestamp("1993-12-31")
 )
-LoborDay = KoreanSolarHoliday(
-    "Labor Day", month=5, day=1, start_date=pd.Timestamp("1994-01-01")
-)  # Labor day changed it's day from 03/10 to 05/01 since 1994
+# May 1 was an XKRX closure before becoming a Korean public holiday in 2026.
+# Keep the historical XKRX-only rule as Holiday so it does not register dates
+# in KoreanHoliday._computed_holidays and affect future alternative holidays.
+LaborDayBeforePublicHoliday = Holiday(
+    "Labor Day",
+    month=5,
+    day=1,
+    start_date=pd.Timestamp("1994-01-01"),
+    end_date=pd.Timestamp("2025-12-31"),
+)
+LaborDay = KoreanSolarHoliday(
+    "Labor Day",
+    month=5,
+    day=1,
+    observance=alternative_holiday,
+    start_date=pd.Timestamp("2026-01-01"),
+)  # Labor Day became a Korean public holiday from 2026.
 ChildrensDay = KoreanSolarHoliday(
     "Children's Day", month=5, day=5, observance=alternative_holiday_for_childrens_day
 )
@@ -1299,7 +1314,8 @@ korean_regular_holiday_rules_without_alternative_holiday_rule = [
     ArborDay,
     BuddhasBirthday,
     OldLaborDay,
-    LoborDay,
+    LaborDayBeforePublicHoliday,
+    LaborDay,
     MemorialDay,
     ConstitutionDay,
     NationalLiberationDay,
@@ -1375,5 +1391,10 @@ precomputed_csat_days = pd.DatetimeIndex(
         "2018-11-15",  # https://www.hankyung.com/finance/article/2018110526741                   0900~1530 => 1000~1630
         "2019-11-14",  # https://www.hankyung.com/finance/article/2019110435331                   0900~1530 => 1000~1630
         "2020-12-03",  # https://www.hankyung.com/finance/article/2020112799257                   0900~1530 => 1000~1630
+        "2021-11-18",  # https://www.hankyung.com/article/202111046888i                           0900~1530 => 1000~1630
+        "2022-11-17",  # https://www.hankyung.com/article/202211174786Y                           0900~1530 => 1000~1630
+        "2023-11-16",  # https://magazine.hankyung.com/business/article/202311159652b             0900~1530 => 1000~1630
+        "2024-11-14",  # https://www.hankyung.com/article/2024103126631                           0900~1530 => 1000~1630
+        "2025-11-13",  # https://www.hankyung.com/article/2025111296366                           0900~1530 => 1000~1630
     ]
 )
