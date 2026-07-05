@@ -8,7 +8,8 @@ from .test_utils import T
 
 class TestXHKGCalendar(ExchangeCalendarTestBase):
     @pytest.fixture(scope="class")
-    def calendar_cls(self):
+    @classmethod
+    def calendar_cls(cls):
         yield XHKGExchangeCalendar
 
     @pytest.fixture

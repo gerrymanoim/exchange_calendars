@@ -1698,7 +1698,8 @@ class ExchangeCalendarTestBase:
     # subclass must override the following fixtures
 
     @pytest.fixture(scope="class")
-    def calendar_cls(self) -> abc.Iterator[type[ExchangeCalendar]]:
+    @classmethod
+    def calendar_cls(cls) -> abc.Iterator[type[ExchangeCalendar]]:
         """ExchangeCalendar class to be tested.
 
         Examples:
@@ -1722,8 +1723,9 @@ class ExchangeCalendarTestBase:
     # ["left", "right"] to decorator's 'params' arg (24h calendars cannot
     # have a side defined as 'both' or 'neither'.).
     @pytest.fixture(scope="class", params=["both", "left", "right", "neither"])
+    @classmethod
     def all_calendars_with_answers(
-        self, request, calendars, answers
+        cls, request, calendars, answers
     ) -> abc.Iterator[tuple[ExchangeCalendar, Answers]]:
         """Parameterized calendars and answers for each side."""
         yield (calendars[request.param], answers[request.param])
@@ -2024,22 +2026,26 @@ class ExchangeCalendarTestBase:
     # Base class fixtures
 
     @pytest.fixture(scope="class")
-    def name(self, calendar_cls) -> abc.Iterator[str]:
+    @classmethod
+    def name(cls, calendar_cls) -> abc.Iterator[str]:
         """Calendar name."""
         yield calendar_cls.name
 
     @pytest.fixture(scope="class")
-    def has_24h_session(self, name) -> abc.Iterator[bool]:
+    @classmethod
+    def has_24h_session(cls, name) -> abc.Iterator[bool]:
         df = get_csv(name)
         yield (df.close == df.open.shift(-1)).any()
 
     @pytest.fixture(scope="class")
-    def default_side(self) -> abc.Iterator[str]:
+    @classmethod
+    def default_side(cls) -> abc.Iterator[str]:
         """Default calendar side."""
         yield "left"
 
     @pytest.fixture(scope="class")
-    def sides(self, has_24h_session) -> abc.Iterator[list[str]]:
+    @classmethod
+    def sides(cls, has_24h_session) -> abc.Iterator[list[str]]:
         """All valid sides options for calendar."""
         if has_24h_session:
             yield ["left", "right"]
@@ -2049,17 +2055,20 @@ class ExchangeCalendarTestBase:
     # Calendars and answers
 
     @pytest.fixture(scope="class")
-    def answers(self, name, sides) -> abc.Iterator[dict[str, Answers]]:
+    @classmethod
+    def answers(cls, name, sides) -> abc.Iterator[dict[str, Answers]]:
         """Dict of answers, key as side, value as corresoponding answers."""
         yield {side: Answers(name, side) for side in sides}
 
     @pytest.fixture(scope="class")
-    def default_answers(self, answers, default_side) -> abc.Iterator[Answers]:
+    @classmethod
+    def default_answers(cls, answers, default_side) -> abc.Iterator[Answers]:
         yield answers[default_side]
 
     @pytest.fixture(scope="class")
+    @classmethod
     def calendars(
-        self, calendar_cls, default_answers, sides
+        cls, calendar_cls, default_answers, sides
     ) -> abc.Iterator[dict[str, ExchangeCalendar]]:
         """Dict of calendars, key as side, value as corresoponding calendar."""
         start = default_answers.first_session
@@ -2067,41 +2076,48 @@ class ExchangeCalendarTestBase:
         yield {side: calendar_cls(start, end, side) for side in sides}
 
     @pytest.fixture(scope="class")
+    @classmethod
     def default_calendar(
-        self, calendars, default_side
+        cls, calendars, default_side
     ) -> abc.Iterator[ExchangeCalendar]:
         yield calendars[default_side]
 
     @pytest.fixture(scope="class")
+    @classmethod
     def calendars_with_answers(
-        self, calendars, answers, sides
+        cls, calendars, answers, sides
     ) -> abc.Iterator[dict[str, tuple[ExchangeCalendar, Answers]]]:
         """Dict of calendars and answers, key as side."""
         yield {side: (calendars[side], answers[side]) for side in sides}
 
     @pytest.fixture(scope="class")
+    @classmethod
     def default_calendar_with_answers(
-        self, calendars_with_answers, default_side
+        cls, calendars_with_answers, default_side
     ) -> abc.Iterator[tuple[ExchangeCalendar, Answers]]:
         yield calendars_with_answers[default_side]
 
     # General use fixtures.
 
     @pytest.fixture(scope="class")
-    def one_minute(self) -> abc.Iterator[pd.Timedelta]:
+    @classmethod
+    def one_minute(cls) -> abc.Iterator[pd.Timedelta]:
         yield pd.Timedelta(1, "min")
 
     @pytest.fixture(scope="class")
-    def today(self) -> abc.Iterator[pd.Timedelta]:
+    @classmethod
+    def today(cls) -> abc.Iterator[pd.Timedelta]:
         yield pd.Timestamp.now().floor("D")
 
     @pytest.fixture(scope="class", params=["next", "previous", "none"])
-    def all_directions(self, request) -> abc.Iterator[str]:
+    @classmethod
+    def all_directions(cls, request) -> abc.Iterator[str]:
         """Parameterised fixture of direction to go if minute is not a trading minute"""
         yield request.param
 
     @pytest.fixture(scope="class")
-    def valid_overrides(self) -> abc.Iterator[list[str]]:
+    @classmethod
+    def valid_overrides(cls) -> abc.Iterator[list[str]]:
         """Names of methods that can be overriden by a subclass."""
         yield [
             "name",
@@ -2129,7 +2145,8 @@ class ExchangeCalendarTestBase:
         ]
 
     @pytest.fixture(scope="class")
-    def non_valid_overrides(self, valid_overrides) -> abc.Iterator[list[str]]:
+    @classmethod
+    def non_valid_overrides(cls, valid_overrides) -> abc.Iterator[list[str]]:
         """Names of methods that cannot be overriden by a subclass."""
         yield [
             name
@@ -2140,8 +2157,9 @@ class ExchangeCalendarTestBase:
         ]
 
     @pytest.fixture(scope="class")
+    @classmethod
     def daylight_savings_dates(
-        self, default_calendar
+        cls, default_calendar
     ) -> abc.Iterator[list[pd.Timestamp]]:
         """All dates in a specific year that mark the first day of a new
         time regime.
@@ -2170,8 +2188,9 @@ class ExchangeCalendarTestBase:
         yield dates
 
     @pytest.fixture(scope="class")
+    @classmethod
     def late_opens(
-        self, default_calendar_with_answers
+        cls, default_calendar_with_answers
     ) -> abc.Iterator[pd.DatetimeIndex]:
         """Calendar sessions with a late open.
 
@@ -2211,8 +2230,9 @@ class ExchangeCalendarTestBase:
         yield late_opens
 
     @pytest.fixture(scope="class")
+    @classmethod
     def early_closes(
-        self, default_calendar_with_answers
+        cls, default_calendar_with_answers
     ) -> abc.Iterator[pd.DatetimeIndex]:
         """Calendar sessions with a late open.
 

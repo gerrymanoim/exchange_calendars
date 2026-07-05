@@ -6,7 +6,8 @@ from .test_exchange_calendar import EuronextCalendarTestBase
 
 class TestXPARCalendar(EuronextCalendarTestBase):
     @pytest.fixture(scope="class")
-    def calendar_cls(self):
+    @classmethod
+    def calendar_cls(cls):
         yield XPARExchangeCalendar
 
     @pytest.fixture
