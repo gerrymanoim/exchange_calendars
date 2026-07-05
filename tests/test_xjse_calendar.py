@@ -8,7 +8,8 @@ from .test_exchange_calendar import ExchangeCalendarTestBase
 
 class TestXJSECalendar(ExchangeCalendarTestBase):
     @pytest.fixture(scope="class")
-    def calendar_cls(self):
+    @classmethod
+    def calendar_cls(cls):
         yield XJSEExchangeCalendar
 
     @pytest.fixture
