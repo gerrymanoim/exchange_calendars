@@ -77,14 +77,18 @@ class TestXSHGCalendar(ExchangeCalendarTestBase):
             # 2026 - based on official announcement from Shanghai Stock Exchange
             "2026-01-01",  # New Year's Day 2026
             "2026-01-02",  # New Year's Day 2026
+            "2026-02-14",  # Part of Chinese New Year 2026 
+            "2026-02-15",  # Part of Chinese New Year 2026
             "2026-02-16",  # Part of Chinese New Year 2026
             "2026-02-17",  # Part of Chinese New Year 2026
             "2026-02-18",  # Part of Chinese New Year 2026
             "2026-02-19",  # Part of Chinese New Year 2026
             "2026-02-20",  # Part of Chinese New Year 2026
             "2026-02-23",  # Part of Chinese New Year 2026
+            "2026-04-04",  # Part of Qingming Festival 2026
             "2026-04-06",  # Part of Qingming Festival 2026
             "2026-05-01",  # Part of Chinese Labor Day 2026
+            "2026-05-02",  # Part of Chinese Labor Day 2026
             "2026-05-04",  # Part of Chinese Labor Day 2026
             "2026-05-05",  # Part of Chinese Labor Day 2026
             "2026-06-19",  # Part of Dragon Boat Festival 2026
