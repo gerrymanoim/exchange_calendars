@@ -51,7 +51,6 @@ if start_arg == "existing" or end_arg == "existing":
         path,
         index_col=0,
         parse_dates=[0, 1, 2, 3, 4],
-        infer_datetime_format=True,
     )
 
 if start_arg == "existing":
