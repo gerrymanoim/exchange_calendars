@@ -77,7 +77,7 @@ class TestXSHGCalendar(ExchangeCalendarTestBase):
             # 2026 - based on official announcement from Shanghai Stock Exchange
             "2026-01-01",  # New Year's Day 2026
             "2026-01-02",  # New Year's Day 2026
-            "2026-02-14",  # Part of Chinese New Year 2026 
+            "2026-02-14",  # Part of Chinese New Year 2026
             "2026-02-15",  # Part of Chinese New Year 2026
             "2026-02-16",  # Part of Chinese New Year 2026
             "2026-02-17",  # Part of Chinese New Year 2026
