@@ -31,6 +31,7 @@ class TestCMESCalendar(ExchangeCalendarTestBase):
             "2016-01-18",  # mlk day
             "2016-02-15",  # presidents
             "2016-05-30",  # mem day
+            "2023-06-19",  # juneteenth
             "2016-07-04",  # july 4
             "2016-09-05",  # labor day
             "2016-11-24",  # thanksgiving
