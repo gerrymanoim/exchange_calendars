@@ -51,7 +51,6 @@ if start_arg == "existing" or end_arg == "existing":
         path,
         index_col=0,
         parse_dates=[0, 1, 2, 3, 4],
-        infer_datetime_format=True,
     )
 
 if start_arg == "existing":
@@ -87,7 +86,7 @@ print(
 if not python_tzdata_path:
     python_tzdata_path = pathlib.Path(os.__file__).parent
     print(f"Setting PYTHONTZPATH to {python_tzdata_path}")
-    os.putenv("PYTHONTZPATH", python_tzdata_path)
+    os.putenv("PYTHONTZPATH", str(python_tzdata_path))
 print(f"Using tzdata version: {tzdata.IANA_VERSION}")
 
 print(f"Writing test CSV file to {path}")
