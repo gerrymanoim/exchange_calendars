@@ -121,12 +121,14 @@ class XIDXExchangeCalendar(ExchangeCalendar):
             "2024-02-09",
             "2025-01-28",
             "2025-01-29",
+            "2026-02-16",
             # Common leave for Ascension Day.
             "2003-05-30",
             "2006-05-26",
             "2007-05-18",
             "2024-05-10",
             "2025-05-30",
+            "2026-05-15",
             # Common leave for Independence Day.
             "2003-08-18",
             "2006-08-18",
@@ -153,6 +155,7 @@ class XIDXExchangeCalendar(ExchangeCalendar):
             "2023-12-26",
             "2024-12-26",
             "2025-12-26",
+            "2026-12-24",
         ]
     )
 
@@ -182,6 +185,7 @@ class XIDXExchangeCalendar(ExchangeCalendar):
             "2023-07-19",
             "2024-07-07",
             "2025-06-27",
+            "2026-06-16",
         ]
     )
 
@@ -299,6 +303,9 @@ class XIDXExchangeCalendar(ExchangeCalendar):
             "2025-04-03",
             "2025-04-04",
             "2025-04-07",
+            "2026-03-20",
+            "2026-03-23",
+            "2026-03-24",
         ]
     )
 
@@ -338,6 +345,8 @@ class XIDXExchangeCalendar(ExchangeCalendar):
             "2024-06-18",
             "2025-06-06",
             "2025-06-09",
+            "2026-05-27",
+            "2026-05-28",
         ]
     )
 
@@ -374,6 +383,7 @@ class XIDXExchangeCalendar(ExchangeCalendar):
             "2023-02-18",
             "2024-02-08",
             "2025-01-27",
+            "2026-01-16",
         ]
     )
 
@@ -403,6 +413,7 @@ class XIDXExchangeCalendar(ExchangeCalendar):
             "2023-09-28",
             "2024-09-16",
             "2025-09-05",
+            "2026-08-25",
         ]
     )
 
@@ -460,6 +471,8 @@ class XIDXExchangeCalendar(ExchangeCalendar):
             "2024-03-11",
             "2024-03-12",
             "2025-03-28",
+            "2026-03-18",
+            "2026-03-19",
         ]
     )
 

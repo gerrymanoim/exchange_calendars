@@ -33,6 +33,7 @@ class TestXIDXCalendar(ExchangeCalendarTestBase):
             2023: (239, [21, 20, 21, 14, 21, 17, 20, 22, 20, 22, 22, 19]),
             2024: (237, [22, 18, 18, 16, 18, 18, 23, 22, 20, 23, 20, 19]),
             2025: (237, [19, 20, 19, 16, 17, 18, 23, 21, 21, 23, 20, 20]),
+            2026: (239, [20, 18, 17, 21, 16, 20, 23, 19, 22, 22, 21, 20]),
         }
         for year, (total_days, monthly_days) in expected_trading_days.items():
             assert sum(monthly_days) == total_days  # Sanity check
@@ -43,6 +44,33 @@ class TestXIDXCalendar(ExchangeCalendarTestBase):
     @pytest.mark.parametrize(
         "year, holidays",
         [
+            (
+                2026,
+                [
+                    "2026-01-01",  # New Year 2026
+                    "2026-01-16",  # Isra Mikraj of Prophet Muhammad SAW
+                    "2026-02-16",  # Commemoration of Chinese New Year 2577 Kongzili
+                    "2026-02-17",  # Chinese New Year 2577 Kongzili
+                    "2026-03-18",  # Commemoration of Hindu Saka New Year 1948
+                    "2026-03-19",  # Hindu Saka New Year 1948
+                    "2026-03-20",  # Commemoration of Eid ul-Fitr 1447 Hijriyah
+                    "2026-03-23",  # Commemoration of Eid ul-Fitr 1447 Hijriyah
+                    "2026-03-24",  # Commemoration of Eid ul-Fitr 1447 Hijriyah
+                    "2026-04-03",  # Good Friday
+                    "2026-05-01",  # Labor Day
+                    "2026-05-14",  # Ascension Day Of Jesus Christ
+                    "2026-05-15",  # Commemoration of Ascension Day
+                    "2026-05-27",  # Eid al-Adha 1447 Hijriyah
+                    "2026-05-28",  # Commemoration of Eid al-Adha 1447 Hijriyah
+                    "2026-06-01",  # Pancasila Day
+                    "2026-06-16",  # Islamic New Year 1448 Hijriyah
+                    "2026-08-17",  # Independence Day of Indonesia
+                    "2026-08-25",  # Birth of Prophet Muhammad
+                    "2026-12-24",  # Commemoration Of Christmas Day
+                    "2026-12-25",  # Christmas Day
+                    "2026-12-31",  # Trading Holiday
+                ],
+            ),
             (
                 2019,
                 [
