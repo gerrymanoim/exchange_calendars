@@ -269,6 +269,7 @@ See the [minutes tutorial](docs/tutorials/minutes.ipynb) for a detailed explanat
 | Belgrade Stock Exchange         | XBEL     | Serbia         | 4.11.3        | https://www.belex.rs/eng                                     |
 | Eurex                           | XEUR     | Germany        | 4.13.2        | https://www.eurex.com/ex-en/                                 |
 | Börse Stuttgart                 | XSTU     | Germany        | 4.13.2        | https://www.boerse-stuttgart.de/en                           |
+| Dubai Financial Market          | XDFM     | UAE            | 4.13.3        | https://www.dfm.ae/                                          |
 
 
 > Note that exchange calendars are defined by their [ISO-10383](https://www.iso20022.org/10383/iso-10383-market-identifier-codes) market identifier code.
