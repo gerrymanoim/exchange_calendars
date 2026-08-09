@@ -38,7 +38,7 @@ from .us_holidays import (
 )
 
 # Useful resources for making changes to this file:
-# http://www.cmegroup.com/tools-information/holiday-calendar.html
+# https://www.cmegroup.com/trading-hours.html
 
 
 class CMESExchangeCalendar(ExchangeCalendar):
@@ -46,7 +46,7 @@ class CMESExchangeCalendar(ExchangeCalendar):
     Exchange calendar for the Chicago Mercantile Exchange (CMES).
 
     Open Time: 5:00 PM, America/Chicago
-    Close Time: 5:00 PM, America/Chicago
+    Close Time: 4:00 PM, America/Chicago
 
     Regularly-Observed Holidays:
     - New Years Day
@@ -60,7 +60,7 @@ class CMESExchangeCalendar(ExchangeCalendar):
 
     open_times = ((None, time(17)),)
 
-    close_times = ((None, time(17)),)
+    close_times = ((None, time(16)),)
 
     @property
     def open_offset(self):
