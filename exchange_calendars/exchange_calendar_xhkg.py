@@ -360,7 +360,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
             qingming_festival_dates,
         ).values.copy()  # copy so that array is writeable
         years = qingming_festival.astype("M8[Y]")
-        easter_monday = EasterMonday.dates(years[0], years[-1] + 1)
+        easter_monday = EasterMonday.dates(years[0], years[-1] + np.timedelta64(1, "Y"))
         # qingming gets observed one day later if easter monday is on the same
         # day
         qingming_festival[qingming_festival == easter_monday] += np.timedelta64(1, "D")
