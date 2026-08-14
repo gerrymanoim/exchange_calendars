@@ -68,6 +68,8 @@ ignore = [
     "TD003",  # missing-todo-issue
     "FIX002",  # line-contains-todo.  Ignore here to pass CI tests.
     "PLR0913",  # too-many-arguments
+    "PLR0917",  # too-many-positional-arguments
+    "CPY001",  # missing-copyright-notice.  Project does not use per-file copyright notices.
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.

@@ -88,7 +88,7 @@ def selection(
 
 def _group_times(
     sessions: pd.DatetimeIndex,
-    times: None | Sequence[tuple[pd.Timestamp | None, datetime.time]],
+    times: Sequence[tuple[pd.Timestamp | None, datetime.time]] | None,
     tz: ZoneInfo,
     offset: int = 0,
 ) -> pd.DatetimeIndex | None:
@@ -496,7 +496,7 @@ class ExchangeCalendar(ABC):
     @property
     def break_start_times(
         self,
-    ) -> None | Sequence[tuple[pd.Timestamp | None, datetime.time]]:
+    ) -> Sequence[tuple[pd.Timestamp | None, datetime.time]] | None:
         """Local break start time(s).
 
         As `close_times` although times represent the close of the morning
@@ -507,7 +507,7 @@ class ExchangeCalendar(ABC):
     @property
     def break_end_times(
         self,
-    ) -> None | Sequence[tuple[pd.Timestamp | None, datetime.time]]:
+    ) -> Sequence[tuple[pd.Timestamp | None, datetime.time]] | None:
         """Local break end time(s).
 
         As `open_times` although times represent the open of the afternoon
