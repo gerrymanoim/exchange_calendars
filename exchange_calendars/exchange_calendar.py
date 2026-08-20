@@ -353,7 +353,11 @@ class ExchangeCalendar(ABC):
         )
 
         # Apply any special offsets first
+        assert self._opens is not None
+        _standard_opens = self._opens.copy()
         self.apply_special_offsets(_all_days, start, end)
+        assert self._opens is not None
+        _special_offset_late_opens = _all_days[self._opens > _standard_opens]
 
         # Series mapping sessions with non-standard opens/closes.
         _special_opens = self._calculate_special_opens(start, end)
@@ -412,11 +416,12 @@ class ExchangeCalendar(ABC):
         # NOTE If / when min pandas bumps to 2.0 can reduce all the following to just
         # the content of the if clause. (`as_unit`` introduced in pandas 2.0).
         # NB pre v3.0 pandas infers resolution here as "ns", not so in v3.
+        _late_opens = _special_opens.index.union(_special_offset_late_opens)
         if pd.__version__ >= "3.0.0":
-            self._late_opens = _special_opens.index.as_unit("ns")
+            self._late_opens = _late_opens.as_unit("ns")
             self._early_closes = _special_closes.index.as_unit("ns")
         else:
-            self._late_opens = _special_opens.index
+            self._late_opens = _late_opens
             self._early_closes = _special_closes.index
 
     # --------------- Calendar definition methods/properties --------------
