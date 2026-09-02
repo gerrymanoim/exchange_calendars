@@ -108,12 +108,6 @@ class TestXKRXCalendar(ExchangeCalendarTestBase):
             "2026-06-03",  # Local election day.
         ]
 
-    # TODO: Issue #94
-    def test_late_opens(self, default_calendar, late_opens):  # noqa: ARG002
-        # overrides base to mark as xfail
-        msg = "Calendar has late opens although `late_opens` is empty. Issue #94"
-        pytest.xfail(msg)
-
     # Calendar-specific tests
 
     def test_historical_regular_holidays_fall_into_precomputed_holidays(
