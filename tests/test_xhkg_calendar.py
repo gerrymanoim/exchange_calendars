@@ -178,7 +178,12 @@ class TestXHKGCalendar(ExchangeCalendarTestBase):
             "2017-12-26",  # The day after Christmas
         ]
 
-        typhoon_days = ["2021-10-13", "2024-09-06"]
+        typhoon_days = [
+            "2021-10-13",
+            "2023-09-01",
+            "2023-09-08",  # black rainstorm warning / extreme conditions
+            "2024-09-06",
+        ]
 
         mid_autumn_festival_holidays = [
             "2022-09-12"  # In 2019, the mid-autumn festival holiday was observed on the following business day.  # noqa: E501
