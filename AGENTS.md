@@ -36,9 +36,7 @@ exchange_calendars_fork/
 │   └── skills/                             # skills for LLM coding agents
 │       ├── dependencies-management/
 │       │   └── SKILL.md
-│       ├── update-agents-md/
-│       │   └── SKILL.md
-│       └── writing-tests/
+│       └── update-agents-md/
 │           └── SKILL.md
 ├── .devcontainer/
 │   ├── library-scripts/
