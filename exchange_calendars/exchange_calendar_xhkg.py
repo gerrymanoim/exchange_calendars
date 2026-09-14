@@ -231,6 +231,12 @@ HKAdhocClosures = [
     #  this pattern. We'll have to wait and see before we generalise this into a rule.
     pd.Timestamp("2022-09-12"),
     pd.Timestamp("2023-07-17"),  # 8号台风泰利, 全天休市
+    pd.Timestamp(
+        "2023-09-01"
+    ),  # https://www.hkex.com.hk/News/Market-Communications/2023/2309012news?sc_lang=en
+    pd.Timestamp(
+        "2023-09-08"
+    ),  # https://www.hkex.com.hk/News/Market-Communications/2023/2309083news?sc_lang=en
     pd.Timestamp("2024-09-06"),  # 八號颱風, 全天休市
 ]
 
