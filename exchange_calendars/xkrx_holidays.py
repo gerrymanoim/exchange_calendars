@@ -1246,6 +1246,14 @@ ConstitutionDay = KoreanSolarHoliday(
     start_date=pd.Timestamp("1949-10-01"),
     end_date=pd.Timestamp("2007-12-31"),
 )  # Constitution day was holiday from 1949 to 2007
+# Constitution Day was reinstated as a public holiday from 2026 and, unlike the
+# 1949-2007 period, is subject to the alternative (substitute) holiday rule.
+ConstitutionDayReinstated = KoreanSolarHoliday(
+    "Constitution Day",
+    month=7,
+    day=17,
+    start_date=pd.Timestamp("2026-01-01"),
+)
 NationalLiberationDay = KoreanSolarHoliday(
     "National Liberation Day", month=8, day=15, observance=alternative_holiday
 )
@@ -1335,6 +1343,7 @@ korean_regular_holiday_rules_with_alternative_holiday_rule = [
     Chuseok,
     ChuseokAfter,
     ChuseokBefore,
+    ConstitutionDayReinstated,
 ]
 
 # Here we are trying to calculate non alternative holidays first
