@@ -167,8 +167,11 @@ class XASXExchangeCalendar(ExchangeCalendar):
     """
     Calendar for the Australian Securities Exchange in Sydney.
 
-    Open Time: 10:00 AM, Australian Eastern Time
+    Open Time: 9:59 AM, Australian Eastern Time (the earliest transition to
+    continuous trading is 09:59:45).
     Close Time: 4:00 PM, Australian Eastern Time
+
+    https://www.asx.com.au/markets/market-resources/trading-hours-calendar/cash-market-trading-hours
 
     Regularly-Observed Holidays:
       - New Year's Day
@@ -191,7 +194,7 @@ class XASXExchangeCalendar(ExchangeCalendar):
 
     tz = ZoneInfo("Australia/Sydney")
 
-    open_times = ((None, time(10)),)  # Zipline compatability (10,1); else (10,0)
+    open_times = ((None, time(9, 59)),)
 
     close_times = ((None, time(16)),)
 

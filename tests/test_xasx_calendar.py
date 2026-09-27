@@ -14,7 +14,8 @@ class TestXASXCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def max_session_hours(self):
-        yield 6
+        # Longest session is from 9:59:00 to 16:00:00
+        yield 6 + (1.0 / 60.0)
 
     @pytest.fixture
     def regular_holidays_sample(self):
