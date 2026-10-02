@@ -3143,8 +3143,10 @@ class ExchangeCalendarTestBase:
         assert f_next(last_min_less_one) == last_min
         assert f_prev(last_min_plus_one) == last_min
 
-        prev_last_min = last_min
+        sample = ans.sessions_sample
+        sessions = sample[sample != ans.first_session]
         for (
+            prev_last_min,
             first_min,
             first_min_plus_one,
             first_min_less_one,
@@ -3153,13 +3155,14 @@ class ExchangeCalendarTestBase:
             last_min_less_one,
             gap_before,
         ) in zip(
-            ans.first_minutes[1:],
-            ans.first_minutes_plus_one[1:],
-            ans.first_minutes_less_one[1:],
-            ans.last_minutes[1:],
-            ans.last_minutes_plus_one[1:],
-            ans.last_minutes_less_one[1:],
-            ~ans._mask_sessions_without_gap_before[1:],  # noqa: SLF001
+            ans.last_minutes.shift(1).loc[sessions],
+            ans.first_minutes.loc[sessions],
+            ans.first_minutes_plus_one.loc[sessions],
+            ans.first_minutes_less_one.loc[sessions],
+            ans.last_minutes.loc[sessions],
+            ans.last_minutes_plus_one.loc[sessions],
+            ans.last_minutes_less_one.loc[sessions],
+            ~ans._mask_sessions_without_gap_before.loc[sessions],  # noqa: SLF001
             strict=False,
         ):
             assert f_next(prev_last_min) == first_min
@@ -3178,11 +3181,9 @@ class ExchangeCalendarTestBase:
                 assert f_next(prev_last_min + one_minute) == first_min_plus_one
                 assert f_next(prev_last_min + one_minute) == first_min_plus_one
 
-            prev_last_min = last_min
-
         match = "Requested minute would fall after the calendar's last trading minute"
         with pytest.raises(errors.RequestedMinuteOutOfBounds, match=match):
-            f_next(last_min)
+            f_next(ans.last_minute)
         # minutes later than last_minute assumed handled via parse_timestamp
 
         if ans.has_a_session_with_break:
@@ -3194,12 +3195,12 @@ class ExchangeCalendarTestBase:
                 first_pm_min_less_one,
                 first_pm_min_plus_one,
             ) in zip(
-                ans.last_am_minutes,
-                ans.last_am_minutes_less_one,
-                ans.last_am_minutes_plus_one,
-                ans.first_pm_minutes,
-                ans.first_pm_minutes_less_one,
-                ans.first_pm_minutes_plus_one,
+                ans.last_am_minutes.loc[sample],
+                ans.last_am_minutes_less_one.loc[sample],
+                ans.last_am_minutes_plus_one.loc[sample],
+                ans.first_pm_minutes.loc[sample],
+                ans.first_pm_minutes_less_one.loc[sample],
+                ans.first_pm_minutes_plus_one.loc[sample],
                 strict=False,
             ):
                 if pd.isna(last_am_min):
