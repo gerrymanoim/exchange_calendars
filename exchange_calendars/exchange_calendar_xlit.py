@@ -29,7 +29,10 @@ RestorationOfTheState = Holiday("Restoration of the State", month=2, day=16)
 RestorationOfIndependence = Holiday("Restoration of Independence", month=3, day=11)
 StJohnsDay = Holiday("St. John's Day", month=6, day=24)
 StatehoodDay = Holiday("Statehood Day", month=7, day=6)
-AllSoulsDay = Holiday("All Souls' Day", month=11, day=2)
+# Public holiday from 2020 under Law No XIII-2415 amending Article 123 of
+# the Labour Code:
+# https://e-seimas.lrs.lt/portal/legalAct/lt/TAD/2a8f4d62c57911e993cff47c25bfa28c
+AllSoulsDay = Holiday("All Souls' Day", month=11, day=2, start_date="2020-01-01")
 
 
 class XLITExchangeCalendar(ExchangeCalendar):
@@ -52,7 +55,7 @@ class XLITExchangeCalendar(ExchangeCalendar):
       - Statehood Day (Jul 6)
       - Assumption Day (Aug 15)
       - All Saints' Day (Nov 1)
-      - All Souls' Day (Nov 2)
+      - All Souls' Day (Nov 2, from 2020)
       - Christmas Eve (Dec 24)
       - Boxing Day (Dec 26)
       - New Year's Eve (Dec 31)

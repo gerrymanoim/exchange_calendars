@@ -30,10 +30,18 @@ class TestXLITExchangeCalendar(ExchangeCalendarTestBase):
             "2024-07-06",  # Statehood Day
             "2024-08-15",  # Assumption Day
             "2024-11-01",  # All Saints' Day
+            "2023-11-02",  # All Souls' Day
             "2024-12-24",  # Christmas Eve
             "2024-12-26",  # Boxing Day
             "2024-12-31",  # New Year's Eve
         ]
+
+    def test_all_souls_day_from_2020(self):
+        # All Souls' Day became a public holiday in 2020.
+        cal = XLITExchangeCalendar(start="2018-01-01", end="2021-12-31")
+        assert cal.is_session("2018-11-02")
+        assert not cal.is_session("2020-11-02")
+        assert not cal.is_session("2021-11-02")
 
     @pytest.fixture
     def non_holidays_sample(self):
