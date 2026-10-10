@@ -61,8 +61,17 @@ class TestXTAICalendar(ExchangeCalendarTestBase):
         ]
 
     @pytest.fixture
+    def adhoc_holidays_sample(self):
+        # Days around Chinese New Year listed by TWSE as no trading or as
+        # adjusted holidays.
+        yield ["2022-02-04", "2023-01-18"]
+
+    @pytest.fixture
     def non_holidays_sample(self):
         yield [
+            # TWSE's holiday schedule lists this as a no-trading day, but its
+            # daily trading records show a full session.
+            "2021-02-05",
             # Holidays falling on a Sat/Sun are made up on Fri/Mon respectively,
             # make sure made up in correct direction (e.g. if fell on Sat, make sure
             # Mon not a holiday / if fell on Sun, make sure Fri not a holiday).
