@@ -47,7 +47,11 @@ class TestXMEXCalendar(ExchangeCalendarTestBase):
 
     @pytest.fixture
     def adhoc_holidays_sample(self):
-        yield ["2010-09-17"]  # Bicentennial Celebration.
+        yield [
+            "2010-09-17",  # Bicentennial Celebration.
+            "2006-12-01",  # Change of Federal Government.
+            "2024-10-01",  # Change of Federal Government.
+        ]
 
     @pytest.fixture
     def non_holidays_sample(self):

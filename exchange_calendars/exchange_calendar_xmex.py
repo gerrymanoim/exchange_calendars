@@ -133,4 +133,11 @@ class XMEXExchangeCalendar(ExchangeCalendar):
         return [
             # Bicentennial Celebration.
             pd.Timestamp("2010-09-17"),
+            # Change of Federal Government, every six years: 1 December until
+            # 2018 and 1 October from 2024 (article 84 of the Ley General de
+            # Instituciones y Procedimientos Electorales). The weekday changes
+            # are listed in BMV's holiday calendars.
+            pd.Timestamp("2006-12-01"),
+            pd.Timestamp("2024-10-01"),
+            pd.Timestamp("2030-10-01"),
         ]
