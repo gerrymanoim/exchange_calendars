@@ -73,9 +73,9 @@ class TestXASXCalendar(ExchangeCalendarTestBase):
             # trading days before them were Fridays, which should be early closes.
             "2016-12-23",
             "2016-12-30",
-            # In 2023, the early closes were reinstated after 2022's cancellation.
-            "2023-12-22",
-            "2023-12-29",
+            # In 2024, the early closes were reinstated after 2022 and 2023.
+            "2024-12-24",
+            "2024-12-31",
         ]
 
     @pytest.fixture
@@ -85,8 +85,15 @@ class TestXASXCalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def non_early_closes_sample(self):
         # In 2009 the early close rules should not be in effect yet.
-        # In 2022 we had an exception to them.
-        yield ["2009-12-24", "2009-12-31", "2022-12-23", "2022-12-30"]
+        # In 2022 and 2023 we had exceptions to them.
+        yield [
+            "2009-12-24",
+            "2009-12-31",
+            "2022-12-23",
+            "2022-12-30",
+            "2023-12-22",
+            "2023-12-29",
+        ]
 
     @pytest.fixture
     def non_early_closes_sample_time(self):

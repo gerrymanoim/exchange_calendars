@@ -114,10 +114,13 @@ KingsBirthday = Holiday(
 
 # ASX cash markets (but NOT ASX 24!) usually have a couple of early
 # closes for the last trading day before Christmas and also the last day
-# of the Calendar year. There was an exception to this in 2022 (see below).
+# of the Calendar year. There were exceptions to this in 2022 and 2023, when
+# both days were full trading days (see below).
 #
 # Sources:
 # https://www.asx.com.au/markets/market-resources/trading-hours-calendar/cash-market-trading-hours/trading-calendar
+# https://asxonline.com/content/dam/asxonline/public/notices/2022/august/asx-trade-2023-notice-attachment.pdf
+# https://asxonline.com/content/dam/asxonline/public/notices/2023/august/asx-trade-2024-calendar.pdf
 LastTradingDayBeforeChristmasPre2022 = Holiday(
     "Last Trading Day Before Christmas",
     month=12,
@@ -126,11 +129,11 @@ LastTradingDayBeforeChristmasPre2022 = Holiday(
     end_date="2022",
     observance=previous_friday,
 )
-LastTradingDayBeforeChristmasPost2022 = Holiday(
+LastTradingDayBeforeChristmasPost2023 = Holiday(
     "Last Trading Day Before Christmas",
     month=12,
     day=24,
-    start_date="2023",
+    start_date="2024",
     observance=previous_friday,
 )
 
@@ -147,11 +150,11 @@ LastTradingDayOfCalendarYearPre2022 = Holiday(
     end_date="2022",
     observance=previous_friday,
 )
-LastTradingDayOfCalendarYearPost2022 = Holiday(
+LastTradingDayOfCalendarYearPost2023 = Holiday(
     "Last Trading Day Of Calendar Year",
     month=12,
     day=31,
-    start_date="2023",
+    start_date="2024",
     observance=previous_friday,
 )
 
@@ -238,8 +241,8 @@ class XASXExchangeCalendar(ExchangeCalendar):
                     [
                         LastTradingDayBeforeChristmasPre2022,
                         LastTradingDayOfCalendarYearPre2022,
-                        LastTradingDayBeforeChristmasPost2022,
-                        LastTradingDayOfCalendarYearPost2022,
+                        LastTradingDayBeforeChristmasPost2023,
+                        LastTradingDayOfCalendarYearPost2023,
                     ]
                 ),
             ),
