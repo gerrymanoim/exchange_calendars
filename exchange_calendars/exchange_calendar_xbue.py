@@ -34,6 +34,7 @@ from .exchange_calendar import (
     MONDAY,
     TUESDAY,
     WEDNESDAY,
+    THURSDAY,
     WEEKDAYS,
     HolidayCalendar,
     ExchangeCalendar,
@@ -65,6 +66,21 @@ def cultural_diversity_observance(dt: datetime.datetime) -> datetime.datetime | 
     """
     hol = nearest_monday(dt)
     return hol if hol.year != 2012 else None
+
+
+def guemes_observance(dt: datetime.datetime) -> datetime.datetime:
+    """
+    Move Martin Miguel de Guemes Day under Law 27399: from Tuesday or
+    Wednesday to the previous Monday, and from Thursday to the following
+    Monday. On a Friday it is not moved, because the following Monday is
+    National Flag Day.
+    """
+    day = dt.weekday()
+    if day in (TUESDAY, WEDNESDAY):
+        return dt - datetime.timedelta(day)
+    if day == THURSDAY:
+        return dt + datetime.timedelta(4)
+    return dt
 
 
 def not_2018(dt: datetime.datetime) -> datetime.datetime | None:
@@ -126,6 +142,7 @@ MartinMiguelDeGuemesDay = Holiday(
     month=6,
     day=17,
     start_date="2016",
+    observance=guemes_observance,
 )
 
 NationalFlagDayTo2010 = Holiday(
@@ -230,7 +247,8 @@ class XBUEExchangeCalendar(ExchangeCalendar):
     - Good Friday
     - Labour Day
     - May Day Revolution (May 25)
-    - Martin Miguel de Guemes Day (Jun 17, 2016-present)
+    - Martin Miguel de Guemes Day (Jun 17, moved to a Monday from Tuesday,
+      Wednesday or Thursday, 2016-present)
     - National Flag Day (until 2010 3rd Monday in Jun, 2011-present Jun 20)
     - Independence Day (Jul 9)
     - San Martin's Day (3rd Monday in Aug)
@@ -339,6 +357,13 @@ class XBUEExchangeCalendar(ExchangeCalendar):
             "2016-11-28",  # Day of National Sovereignty
         ]
 
+        # Listed in BYMA's 2026 trading calendar.
+        closures_2026 = [
+            "2026-11-09",  # Visit of Pope Leo XIV (Decree 1103/2026)
+            "2026-11-10",  # Visit of Pope Leo XIV (Decree 1103/2026)
+            "2026-12-31",  # No trading or settlement
+        ]
+
         return [
             pd.Timestamp(d)
             for d in chain(
@@ -347,6 +372,7 @@ class XBUEExchangeCalendar(ExchangeCalendar):
                 market_closures_2002_apr,
                 bridge_days,
                 irregular_observances,
+                closures_2026,
             )
         ]
 

@@ -51,6 +51,23 @@ class TestXBUECalendar(ExchangeCalendarTestBase):
             "2014-10-13",  # Falls on Sunday
             "2013-10-14",  # Falls on Saturday
             "2010-10-11",  # Falls on Tuesday
+            #
+            # Martin Miguel de Guemes Day (Jun 17th) moves to the previous
+            # Monday from a Tuesday or Wednesday, and to the following Monday
+            # from a Thursday.
+            "2025-06-16",  # Falls on Tuesday
+            "2020-06-15",  # Falls on Wednesday
+            "2021-06-21",  # Falls on Thursday
+            "2022-06-17",  # Falls on Friday
+        ]
+
+    @pytest.fixture
+    def adhoc_holidays_sample(self):
+        yield [
+            "2018-11-30",  # G20 summit
+            "2026-11-09",  # Visit of Pope Leo XIV
+            "2026-11-10",  # Visit of Pope Leo XIV
+            "2026-12-31",  # No trading or settlement
         ]
 
     @pytest.fixture
@@ -76,6 +93,8 @@ class TestXBUECalendar(ExchangeCalendarTestBase):
             # Martin Miguel de-Guemes Day on Sunday, Jun 17th.
             "2018-06-15",
             "2018-06-18",
+            # Martin Miguel de-Guemes Day moved from Wednesday, Jun 17th.
+            "2020-06-17",
             # National Flag Day on Saturday, Jun 20th.
             "2015-06-19",
             "2015-06-22",
