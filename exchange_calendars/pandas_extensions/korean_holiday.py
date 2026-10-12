@@ -72,6 +72,13 @@ revised_alternative_holiday_since = pd.Timestamp(
 
 
 def alternative_holiday_func(dt, is_already_holiday, since):
+    if isinstance(dt, pd.DatetimeIndex):
+        # Some pandas versions (seen with 1.5.3) pass the whole index to the
+        # observance before falling back to element-wise calls. Map element-wise
+        # here so the scalar comparison below never sees an array.
+        return pd.DatetimeIndex(
+            [alternative_holiday_func(d, is_already_holiday, since) for d in dt]
+        )
     if dt >= since:
         dt = pd.Timestamp(dt)
         dt_tzinfo = dt.tzinfo

@@ -1,3 +1,4 @@
+import warnings
 from datetime import date
 
 import pandas as pd
@@ -142,3 +143,23 @@ class TestXKRXCalendar(ExchangeCalendarTestBase):
     def test_feb_29_2022_in_lunar_calendar(self, default_calendar):
         # This test asserts that the following does not throw an exception.
         default_calendar.regular_holidays.holidays(date(2022, 3, 31), date(2022, 3, 31))
+
+    def test_alternative_holiday_no_deprecation_warning(self):
+        # On some pandas versions the lunar observance receives a whole (here
+        # empty) DatetimeIndex. The call must not emit a DeprecationWarning, and
+        # the alternative holidays must be unchanged.
+        cal = XKRXExchangeCalendar()
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            cal.regular_holidays.holidays(date(2022, 3, 31), date(2022, 3, 31))
+        deprecations = [w for w in record if issubclass(w.category, DeprecationWarning)]
+        assert not deprecations, [str(w.message) for w in deprecations]
+
+        holidays = cal.regular_holidays.holidays(
+            pd.Timestamp("2014-09-01"), pd.Timestamp("2022-05-31")
+        )
+        known = ["2014-09-08", "2014-09-10", "2016-02-10", "2021-08-16", "2022-05-05"]
+        for day in known:
+            assert pd.Timestamp(day) in holidays
+        # Sunday, so never a substitute holiday
+        assert pd.Timestamp("2014-09-07") not in holidays
