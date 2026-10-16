@@ -4,7 +4,6 @@ on:
     types: [published]
 
 permissions:
-  id-token: write
   contents: read
 
 jobs:
@@ -13,17 +12,48 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
+    permissions:
+      contents: read
+      id-token: write
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
     - name: Install uv
-      uses: astral-sh/setup-uv@v10.0.1
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
     - name: Install Python
       run: uv python install
     - name: Build
       run: uv build
 
+    - name: Record distribution hashes
+      run: sha256sum dist/* > distribution-sha256.txt
+    - name: Save distributions
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: python-distributions
+        path: |
+          dist/
+          distribution-sha256.txt
+        if-no-files-found: error
+
     - name: Publish distribution 📦 to Test PyPI
       run: uv publish --index testpypi
+
+  check-testpypi:
+    name: Check TestPyPI installation and import
+    needs: build-n-publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Install uv
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+    - name: Install Python
+      run: uv python install
     - name: Check test install and import
       run: |
         sleep 5  # Wait for Test Pypi to publish
@@ -37,10 +67,46 @@ jobs:
           --no-project \
           --isolated \
           -- \
-          python -c 'import exchange_calendars; print(f"{exchange_calendars.__version__=}")'
+          python -I -c 'import exchange_calendars; print(exchange_calendars.__file__, exchange_calendars.__version__)'
 
+  publish-pypi:
+    name: Publish distributions to PyPI
+    needs: check-testpypi
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Install uv
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+    - name: Download distributions
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: python-distributions
+    - name: Verify distribution hashes
+      run: sha256sum --check distribution-sha256.txt
     - name: Publish distribution 📦 to PyPI
       run: uv publish
+
+  check-pypi:
+    name: Check PyPI installation and import
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - name: Install uv
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+    - name: Install Python
+      run: uv python install
     - name: Check install and import
       run: |
         sleep 5  # Wait for Pypi to publish
@@ -50,4 +116,4 @@ jobs:
         --no-project \
         --isolated \
         -- \
-        python -c 'import exchange_calendars;print(f"{exchange_calendars.__version__=}")'
+        python -I -c 'import exchange_calendars; print(exchange_calendars.__file__, exchange_calendars.__version__)'
