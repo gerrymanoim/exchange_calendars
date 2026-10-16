@@ -18,6 +18,8 @@ class TestXAMSCalendar(EuronextCalendarTestBase):
             "2001-06-04",  # Whit Monday
             "2001-04-30",  # Queen's Day
             "2001-12-31",  # New Year's Eve
+            # First observance of regular holidays
+            "2002-05-01",  # Labour Day
         ]
 
     @pytest.fixture
@@ -28,4 +30,7 @@ class TestXAMSCalendar(EuronextCalendarTestBase):
             "2002-05-20",  # Whit Monday
             "2002-04-30",  # Queen's Day
             "2002-12-31",  # New Year's Eve
+            # Final years before regular holiday started being observed
+            "2000-05-01",  # Labour Day
+            "2001-05-01",  # Labour Day
         ]

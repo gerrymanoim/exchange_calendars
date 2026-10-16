@@ -42,7 +42,10 @@ QueensDay = Holiday(
     end_date="2002",
 )
 
-LabourDay = european_labour_day()
+# Following the Euronext merger, trading holidays were harmonised across
+# Amsterdam, Brussels, and Paris starting in 2002, observing Labour Day
+# from 2002 onwards (De Telegraaf, 1 May 2002).
+LabourDay = european_labour_day(start_date="2002")
 
 ChristmasEve = christmas_eve(days_of_week=WEEKDAYS)
 Christmas = christmas()
