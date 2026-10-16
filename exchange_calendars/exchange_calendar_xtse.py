@@ -91,7 +91,12 @@ BoxingDay = boxing_day()
 
 WeekendBoxingDay = weekend_boxing_day()
 
-September11ClosingsCanada = pd.date_range("2001-09-11", "2001-09-12")
+# The Toronto Stock Exchange halted trading on September 11, 2001 at 10:41 a.m.
+# EDT following the terrorist attacks in the United States (TSE News Releases
+# 573 & 574, 11 Sep 2001; CBC News, 12 Sep 2001), and remained closed on
+# September 12, 2001.
+September11EarlyClose = pd.DatetimeIndex(["2001-09-11"])
+September12ClosingsCanada = [pd.Timestamp("2001-09-12")]
 
 
 class XTSEExchangeCalendar(ExchangeCalendar):
@@ -121,6 +126,8 @@ class XTSEExchangeCalendar(ExchangeCalendar):
     - Starting in 2010, if Christmas Eve falls on a weekday, the market
       closes at 1:00 pm that day. If it falls on a weekend, there is no
       early close.
+    - On September 11, 2001, trading was halted at 10:41 am following the
+      terrorist attacks in the US.
     """
 
     regular_early_close = time(13)
@@ -154,8 +161,7 @@ class XTSEExchangeCalendar(ExchangeCalendar):
 
     @property
     def adhoc_holidays(self):
-        # NOTE: change the name of this property
-        return list(chain(September11ClosingsCanada))
+        return list(chain(September12ClosingsCanada))
 
     @property
     def special_closes(self):
@@ -165,3 +171,7 @@ class XTSEExchangeCalendar(ExchangeCalendar):
                 HolidayCalendar([ChristmasEveEarlyClose2010Onwards]),
             )
         ]
+
+    @property
+    def special_closes_adhoc(self):
+        return [(time(10, 41), September11EarlyClose)]
