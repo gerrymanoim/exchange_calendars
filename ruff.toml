@@ -56,7 +56,6 @@ ignore = [
     "TRY",  # tryceratops. TODO: fix / tighten up ignore.
     "EM",  # flake8-errmsg. TODO: fix / tighten up ignore.
     "DTZ",  # flake8-datetimez. TODO: fix / tighten up ignore.
-    "RUF012", # mutable-class-default. TODO: Fix.
     "FBT001", # boolean-type-hint-position-argument. TODO: Review. Maybe tighten up with fixes and inline noqa.
     "FBT002", # boolean-default-value-position-argument. TODO: Fix.
     "PLR2004", # magic-value-comparison. TODO: Review. Maybe tighten up with fixes and inline noqa.

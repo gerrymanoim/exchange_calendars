@@ -222,8 +222,8 @@ class Answers:
     TWO_MIN = pd.Timedelta(2, "min")
     ONE_DAY = pd.Timedelta(1, "D")
 
-    LEFT_SIDES = ["left", "both"]
-    RIGHT_SIDES = ["right", "both"]
+    LEFT_SIDES: typing.ClassVar[list[str]] = ["left", "both"]
+    RIGHT_SIDES: typing.ClassVar[list[str]] = ["right", "both"]
 
     def __init__(
         self,
