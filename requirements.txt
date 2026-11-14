@@ -10,25 +10,28 @@ numpy==2.4.6 ; python_full_version == '3.11.*'
     # via
     #   exchange-calendars
     #   pandas
-numpy==2.5.2 ; python_full_version >= '3.12'
+numpy==2.5.4 ; python_full_version >= '3.12'
     # via
     #   exchange-calendars
     #   pandas
 pandas==2.3.3 ; python_full_version < '3.11'
     # via exchange-calendars
-pandas==3.0.5 ; python_full_version >= '3.11'
+pandas==3.0.6 ; python_full_version >= '3.11'
     # via exchange-calendars
 pyluach==2.3.0
     # via exchange-calendars
-python-dateutil==2.9.0.post0
+python-dateutil==3.0.0 ; python_full_version < '3.11'
     # via pandas
-pytz==2026.3.post1 ; python_full_version < '3.11'
+python-dateutil==4.0.0 ; python_full_version >= '3.11'
     # via pandas
-six==1.17.0
+pytz==2026.6 ; python_full_version < '3.11'
+    # via pandas
+six==1.17.0 ; python_full_version < '3.11'
     # via python-dateutil
-toolz==1.1.0
+toolz==1.2.0
     # via exchange-calendars
-tzdata==2026.3
+tzdata==2026.6
     # via
     #   exchange-calendars
     #   pandas
+    #   python-dateutil
