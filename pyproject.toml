@@ -76,6 +76,10 @@ documentation = "https://github.com/gerrymanoim/exchange_calendars/tree/master/d
 [tool.uv]
 trusted-publishing = "always"
 exclude-newer = "2 days"
+constraint-dependencies = [
+    # See #640. Remove pandas<3.1 constraint once #640 is fixed.
+    "pandas<3.1",
+]
 conflicts = [
     [
       { group = "test_min" },

@@ -63,6 +63,9 @@ ignore = [
     "ERA001",  # commented-out-code. TODO: Fix.
     "PD011",  # pandas-use-of-dot-values. TODO: Fix.
     # Actively ignore all these...
+    "ICN001",  # import-conventions (`datetime`).  Project commonly uses `dt` as a
+               # parameter name for datetime values, which would conflict with
+               # aliasing the `datetime` module import to `dt`.
     "COM812",  # missing-trailing-comma.  As recommended by ruff as conflicts with formatter.
     "TD002",  # missing-todo-author
     "TD003",  # missing-todo-issue
