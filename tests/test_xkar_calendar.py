@@ -29,6 +29,18 @@ class TestXKARCalendar(ExchangeCalendarTestBase):
             if pd.Timestamp(f"{year}-11-09").weekday() not in (5, 6)
         ]
 
+    @pytest.fixture
+    def adhoc_holidays_sample(self):
+        yield [
+            # Eid-ul-Azha 2026 public holidays (2026-05-26, 27 and 28); 05-28 is
+            # covered by the Youm-e-Takbeer rule.
+            "2026-05-26",
+            "2026-05-27",
+            # Ashura 2026 (9th & 10th Muharram).
+            "2026-06-25",
+            "2026-06-26",
+        ]
+
     @pytest.mark.parametrize(
         "year, holidays",
         [
