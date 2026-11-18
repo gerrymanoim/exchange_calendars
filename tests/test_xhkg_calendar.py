@@ -6,6 +6,15 @@ from .test_exchange_calendar import ExchangeCalendarTestBase
 from .test_utils import T
 
 
+@pytest.mark.filterwarnings(
+    "error:The 'generic' unit for NumPy timedelta is deprecated"
+)
+def test_initialization_does_not_use_generic_numpy_timedelta():
+    calendar = XHKGExchangeCalendar()
+
+    assert calendar.name == "XHKG"
+
+
 class TestXHKGCalendar(ExchangeCalendarTestBase):
     @pytest.fixture(scope="class")
     @classmethod
