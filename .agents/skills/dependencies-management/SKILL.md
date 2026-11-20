@@ -105,6 +105,7 @@ Once local tests pass, commit all changes to the branch and raise a PR.
   - `<DD>` should be replaced with the current day of the month as represented by two digits.
   Example title: `Update Dependencies Apr 07 (auto)`
 - **label**: Add the 'dependencies' label to the PR.
+- otherwise comply with the package's 'create-pr' skill.
 
 ### 8. Subscribe to PR activity
 
@@ -151,7 +152,7 @@ ONLY if any test failures cannot be resolved, raise an issue that references the
 ### 12. Tidy up
 
 Perform the following 'tidy up' actions:
-- Call `mcp__github__unsubscribe_pr_activity` to unscubscribe from the PR activity.
+- Call `mcp__github__unsubscribe_pr_activity` to unsubscribe from the PR activity.
 - Review and if necessary update the PR body to reflect the final circumstances.
 
 ---

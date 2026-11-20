@@ -171,25 +171,29 @@ ecal XNYS 1 2020
     [19][20] 21  22  23  24 [25]
     [26] 27  28  29  30  31
 
+## Contributing
+
+Contributions are very welcome! [CONTRIBUTING.md](CONTRIBUTING.md) describes the workflows to add a new calendar and to modify an existing calendar, and how to raise a PR. If you employ an AI agent on a contribution, please read [Using AI agents](CONTRIBUTING.md#using-ai-agents) before you raise the PR.
+
 ## Frequently Asked Questions
 
 ### **How can I create a new calendar?**
 
 First off, make sure the calendar you're after hasn't already been defined; exchange calendars comes with over [50 pre-defined calendars](#Calendars), including major security exchanges.
 
-If you can't find what you're after, a custom calendar can be created as a subclass of [ExchangeCalendar](exchange_calendars/exchange_calendar.py). [This workflow](.github/pull_request_template.md) describes the process to add a new calendar to `exchange_calendars`. Just follow the relevant parts.
+If you can't find what you're after, a custom calendar can be created as a subclass of [ExchangeCalendar](exchange_calendars/exchange_calendar.py). [This workflow](CONTRIBUTING.md#workflow-to-add-a-new-calendar) describes the process to add a new calendar to `exchange_calendars`. Just follow the relevant parts.
 
 To access the new calendar via `get_calendar` call either `xcals.register_calendar` or `xcals.register_calendar_type` to register, respectively, a specific calendar instance or a calendar factory (i.e. the subclass).
 
 ### **Can I contribute a new calendar to exchange calendars?**
 
-Yes please! The workflow can be found [here](.github/pull_request_template.md).
+Yes please! The workflow can be found [here](CONTRIBUTING.md#workflow-to-add-a-new-calendar).
 
 ### **`<calendar>` is missing a holiday, has a wrong time, should have a break etc...**
 
 **All** of the exchange calendars are maintained by user contributions. If a calendar you care about needs revising, please open a [PR](https://github.com/gerrymanoim/exchange_calendars/pulls) - that's how this thing works! (Never contributed to a project before and it all seems a bit daunting? Check [this out](https://github.com/firstcontributions/first-contributions/blob/main/README.md) and don't look back!)
 
-You'll find the workflow to modify an existing calendar [here](.github/pull_request_template.md).
+You'll find the workflow to modify an existing calendar [here](CONTRIBUTING.md#workflow-to-modify-an-existing-calendar).
 
 ### **What times are considered open and closed?**
 
