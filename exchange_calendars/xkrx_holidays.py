@@ -1396,5 +1396,6 @@ precomputed_csat_days = pd.DatetimeIndex(
         "2023-11-16",  # https://magazine.hankyung.com/business/article/202311159652b             0900~1530 => 1000~1630
         "2024-11-14",  # https://www.hankyung.com/article/2024103126631                           0900~1530 => 1000~1630
         "2025-11-13",  # https://www.hankyung.com/article/2025111296366                           0900~1530 => 1000~1630
+        "2026-11-19",  # https://www.hankyung.com/article/2026110576576                           0900~1530 => 1000~1630
     ]
 )
