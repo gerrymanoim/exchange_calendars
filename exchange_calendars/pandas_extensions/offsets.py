@@ -165,12 +165,26 @@ class CompositeCustomBusinessDay(CustomBusinessDay):
                 bday, interval = self._custom_business_day_for(
                     other, remaining, is_edge=True, with_interval=True
                 )
-                result = bday._apply(other)  # noqa: SLF001
+                result = bday + other
             return result
         return super().apply(other)
 
     # backwards compat
     apply = _apply
+    # pandas 3.1 renamed the scalar hook `_apply` to `_add_datetime`; keep both names
+    # so the same class works on every supported pandas.
+    _add_datetime = _apply
+
+    # pandas >= 3.1 generates `date_range`s of CustomBusinessDay-like offsets with a
+    # vectorized mask built from the offset's own weekmask and holidays; that would
+    # ignore the per-week weekmasks applied by `_apply`.
+    _supports_daily_offset_mask = False
+
+    def _add_datetime_ndarray(self, dtarr):
+        # CustomBusinessDay has a vectorized implementation (pandas >= 3.1) that knows
+        # only its own weekmask and holidays, not the composite logic of `_apply`;
+        # defer to the scalar path.
+        raise NotImplementedError("composite offsets are applied one date at a time")
 
     def is_on_offset(self, dt):
         if self.normalize and not _is_normalized(dt):
@@ -337,6 +351,8 @@ class OrthodoxEaster(SingleConstructorOffset):
             other.second,
             other.microsecond,
         )
+
+    _add_datetime = _apply  # pandas >= 3.1 name of the scalar hook
 
     def is_on_offset(self, dt: datetime) -> bool:
         if self.normalize and not _is_normalized(dt):
