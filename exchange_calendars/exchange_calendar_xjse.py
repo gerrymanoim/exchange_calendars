@@ -145,17 +145,29 @@ class XJSEExchangeCalendar(ExchangeCalendar):
                 "2014-05-07",
                 "2016-08-03",
                 "2019-05-08",
+                # https://clientportal.jse.co.za/docs/default-source/jsenoticesandcircularsitems/jse-market-notice-48121a-all-markets---public-holiday-1-november-2021.pdf
+                "2021-11-01",
+                # https://clientportal.jse.co.za/docs/default-source/jsehotlinesitems/jse-service-hotline-05724-all-markets---public-holiday---wednesday---29-may-2024.pdf
+                "2024-05-29",
+                # https://clientportal.jse.co.za/docs/default-source/jsenoticesandcircularsitems/jse-market-notice-32826-all-markets---public-holiday---wednesday-4-november-2026.pdf
+                "2026-11-04",
                 # In 2008, Human Rights Day fell on the same day as Good
                 # Friday (March 21), so the "Bridge Public Holiday" was
                 # observed on May 2.
                 "2008-05-02",
-                # In 2011 and 2016, Christmas fell on Sunday, which would
+                # In 2011, 2016 and 2022, Christmas fell on Sunday, which would
                 # ordinarily cause it to be observed on Monday; but Day of
                 # Goodwill fell on Monday, which resulted in only 11
                 # scheduled holidays for the year instead of the usual 12.
                 # In these years, the 27th was declared a bonus holiday: it
-                # may or may not be repeated in 2022 and onward.
+                # may or may not be repeated in 2033 and onward.
                 "2011-12-27",
                 "2016-12-27",
+                # https://clientportal.jse.co.za/docs/default-source/jsenoticesandcircularsitems/jse-market-notice-60022-all-markets---public-holiday-27-december-2022.pdf
+                "2022-12-27",
+                # One-off public holiday declared after the Springboks won the
+                # 2023 Rugby World Cup.
+                # https://clientportal.jse.co.za/docs/default-source/jsehotlinesitems/jse-service-hotline-16923-all-markets---public-holiday-friday-15-december-2023.pdf
+                "2023-12-15",
             ]
         ]

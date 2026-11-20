@@ -17,6 +17,16 @@ class TestXJSECalendar(ExchangeCalendarTestBase):
         # The JSE is open from 09:00 to 17:00.
         yield 8
 
+    @pytest.fixture
+    def adhoc_holidays_sample(self):
+        yield [
+            "2021-11-01",  # Election Day
+            "2022-12-27",  # Day of Goodwill (Ad-hoc make-up observance)
+            "2023-12-15",  # One-off public holiday
+            "2024-05-29",  # Election Day
+            "2026-11-04",  # Election Day
+        ]
+
     def test_no_weekend_sessions(self, default_calendar):
         bv = default_calendar.sessions.weekday.isin((5, 6))
         assert default_calendar.sessions[bv].empty
@@ -24,6 +34,25 @@ class TestXJSECalendar(ExchangeCalendarTestBase):
     @pytest.mark.parametrize(
         "year, holidays",
         [
+            (
+                2022,
+                [
+                    "2022-01-01",  # New Year's Day (falls on Saturday, not made up)
+                    "2022-03-21",  # Human Rights Day
+                    "2022-04-15",  # Good Friday
+                    "2022-04-18",  # Family Day
+                    "2022-04-27",  # Freedom Day
+                    "2022-05-01",  # Workers' Day
+                    "2022-05-02",  # Workers' Day (Monday make-up)
+                    "2022-06-16",  # Youth Day
+                    "2022-08-09",  # National Women's Day
+                    "2022-09-24",  # Heritage Day (falls on Saturday, not made up)
+                    "2022-12-16",  # Day of Reconciliation
+                    "2022-12-25",  # Christmas
+                    "2022-12-26",  # Christmas (Monday make-up)
+                    "2022-12-27",  # Day of Goodwill (Ad-hoc make-up observance)
+                ],
+            ),
             (
                 2019,
                 [
