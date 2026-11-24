@@ -8,13 +8,13 @@ The remaining content of this file is intended only for Claude (including Claude
 
 Find skills under the @.agents/skills directory which serves as the directory you would have expected to find at `.claude/skills`.
 
-Your name is Claude. Anywhere in the context that asks you to use your 'name' or 'colloquial name' or 'vernacular name' then you should use 'Claude'.
+Your name is Claude Code and your colloquial name is Claude. Anywhere in the context that asks you to use your 'name' then you should use 'Claude Code'. Anywhere in the context that asks you to use your 'colloquial name' or 'vernacular name' then you should use 'Claude'.
 
 ## Editing files with pre-granted permissions
 
 `.claude/settings.json` pre-grants `Edit(...)` permission for a specific set of
-files (e.g. `.pre-commit-config.yaml` and github workflows/*.yml` files). These
-permissions only apply to the built-in`Edit` tool — they do not extend to the
+files (e.g. `.pre-commit-config.yaml` and github `workflows/*.yml` files). These
+permissions only apply to the built-in `Edit` tool — they do not extend to the
 `Bash` tool.
 
 Some routines (e.g. the `dependencies-management` routine) are configured to run

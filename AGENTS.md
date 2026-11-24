@@ -34,7 +34,11 @@ See @pyproject.toml for project metadata and dependencies.
 exchange_calendars_fork/
 ├── .agents/                                # instructions for LLM coding agents
 │   └── skills/                             # skills for LLM coding agents
+│       ├── create-pr/
+│       │   └── SKILL.md
 │       ├── dependencies-management/
+│       │   └── SKILL.md
+│       ├── pr-body-layout/
 │       │   └── SKILL.md
 │       ├── update-agents-md/
 │       │   └── SKILL.md
@@ -110,6 +114,7 @@ exchange_calendars_fork/
 ├── .python-version
 ├── AGENTS.md
 ├── CLAUDE.md
+├── CONTRIBUTING.md                          # contribution workflows, use of AI agents
 ├── LICENSE
 ├── MANIFEST.in
 ├── pyproject.toml
@@ -198,6 +203,8 @@ GitHub Actions is used for CI. Defined workflows include:
 ### Architecture
 
 Each calendar is defined as a subclass of the common base class `ExchangeCalendar` in @exchange_calendars/exchange_calendar.py.
+
+To add a new calendar or to modify an existing calendar, follow the corresponding workflow of @CONTRIBUTING.md.
 
 ### Formatting
 
@@ -327,7 +334,9 @@ explicit takes more words, use more words.
 4. **NumPy docstring style** — all new public functions/classes must use NumPy-convention docstrings and rules as defined under Docstrings section of this @AGENTS.md file.
 
 5. **Branch naming** — feature branches should follow the `<agent-name>/<description>` pattern with the following substitutions:
-    - `<agent-name>` -> your name
+    - `<agent-name>` -> your colloquial name, in lower case
     - `<description>` -> very short description of changes
 
-6. **Typos** — do not report typos when reviewing code, rather just plan to fix them in the next commit (regardless of whether that next commit is related to the typos or not). If the user indicates that the session will end without you making any further commits (for example by requesting that the PR body be updated to reflect the changes) then advise of any outstanding typos to be fixed; do not list them; do not advise of the negative situation, i.e. if there are no outstanding typo fixes.
+6. **Pull requests** — on creating a PR, or on writing or updating the body of one, follow the `create-pr` skill (@.agents/skills/create-pr/SKILL.md).
+
+7. **Typos** — do not report typos when reviewing code, rather just plan to fix them in the next commit (regardless of whether that next commit is related to the typos or not). If the user indicates that the session will end without you making any further commits (for example by requesting that the PR body be updated to reflect the changes) then advise of any outstanding typos to be fixed; do not list them; do not advise of the negative situation, i.e. if there are no outstanding typo fixes.
