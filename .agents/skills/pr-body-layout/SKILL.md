@@ -32,8 +32,7 @@ In the following template, `{curly braces}` mark placeholders for you to replace
 
 I have reviewed the (tick all that apply):
 
-- [ ] full diff across the code base
-- [ ] full diff across the test suite
+{a 'full diff' checkbox for each file category that the PR changes (see section 3)}
 - [ ] commit messages
 - [ ] agent's detail below
 
@@ -95,7 +94,18 @@ Write one sentence, in your own voice, that gives the evidence behind the autono
 
 ## 3. Contributor review
 
-Include the lead-in and the checkboxes exactly as shown, unticked. The checkboxes are the user's declarations, hence never tick a checkbox yourself and never remove one. Do not tick a checkbox even if the user tells you in conversation that they have reviewed what the checkbox declares. These rules apply to every checkbox in the body, including the title and summary checkboxes. The only exception is the checkboxes of a section that the repository's `create-pr` skill defines (see 'How this combines with other instructions').
+Which 'full diff' checkboxes to include depends on the file categories that the PR's diff changes (i.e. the net changes between the PR's base branch and the PR's head). Each category has a checkbox of its own:
+
+| Checkbox | Files of the category |
+|---|---|
+| `- [ ] full diff across the code base` | the package's source, including its docstrings |
+| `- [ ] full diff across the test suite` | every file under `tests/` |
+| `- [ ] full diff across doc files` | the README and every other file that documents the project, except the agents files |
+| `- [ ] full diff across dev files` | every other file, for example the workflows, the configuration files, `pyproject.toml`, the lock file and the agents files (`AGENTS.md`, `CLAUDE.md` and the skills) |
+
+If a file could belong to more than one category, the file belongs to the category that the table lists first. Include the checkbox of each category that the diff changes, in the order of the table. Include no other 'full diff' checkbox. The commit messages and agent's detail checkboxes follow the 'full diff' checkboxes and are always included.
+
+Include the lead-in and the checkboxes exactly as shown, unticked. The checkboxes are the user's declarations, hence never tick a checkbox yourself and never remove one, except a 'full diff' checkbox that 'Updating an existing PR body' says to remove. Do not tick a checkbox even if the user tells you in conversation that they have reviewed what the checkbox declares. These rules apply to every checkbox in the body, including the title and summary checkboxes. The only exception is the checkboxes of a section that the repository's `create-pr` skill defines (see 'How this combines with other instructions').
 
 ## 4. Detail
 
@@ -111,6 +121,7 @@ If the body already follows this layout:
 
 - Keep the user's edits to the title and to the summary. Change the title or the summary only if later commits have made it untrue. If you change the title, untick the title checkbox. If you change the summary, untick the summary checkbox. In either case, advise the user.
 - Keep each ticked box, unless commits made since the box was ticked make its declaration untrue (for example, new changes to the code base after the user ticked "full diff across the code base"). In that case untick the box and advise the user.
+- Keep the 'full diff' checkboxes in step with the PR's diff (see section 3). If the diff changes a category that has no checkbox, add the category's checkbox, unticked. If the diff no longer changes a category, remove the category's checkbox, whether or not the checkbox is ticked, and advise the user.
 - Start from the autonomy level, verb and autonomy sentence that the body already holds, regardless of who set them, as they record the working arrangement of the sessions that you did not see. Move the level only for work done in this session, and only as far as that work's share of the whole change warrants. Change the verb to match the level. Revise the autonomy sentence such that it covers the whole history of the PR.
 - If you rewrite the detail, update the `<summary>` label, unless the label already names your model.
 
