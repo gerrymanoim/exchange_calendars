@@ -41,7 +41,7 @@ jobs:
       with:
         persist-credentials: false
     - name: Install uv
-      uses: astral-sh/setup-uv@v10.3.3
+      uses: astral-sh/setup-uv@v10.4.0
     - name: Install Python
       run: uv python install
     - name: Install the project
@@ -59,7 +59,7 @@ jobs:
         # Restores the most recently saved baseline.
         restore-keys: ${{ runner.os }}-benchmark
     - name: Store benchmark result
-      uses: rhysd/github-action-benchmark@v1
+      uses: rhysd/github-action-benchmark@v1.22.2
       with:
         tool: 'pytest'
         output-file-path: output.json
