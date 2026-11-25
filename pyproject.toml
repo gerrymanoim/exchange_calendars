@@ -37,7 +37,7 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-# Include minimum versions for 'minimum envionment' test in test workflow.
+# Include minimum versions for 'minimum environment' test in test workflow.
 [dependency-groups]
 test = [
     "hypothesis>=6.140.3",

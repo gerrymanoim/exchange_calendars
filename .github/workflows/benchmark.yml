@@ -7,25 +7,57 @@ on:
   pull_request:
     branches:
       - master
+    # The workflow is skipped for a pull request if every file that the pull request
+    # changes matches one of these patterns. A change to any of these files cannot
+    # affect the benchmark.
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".devcontainer/**"
+      - ".agents/**"
+      - ".claude/**"
+      - "LICENSE"
+      - ".pre-commit-config.yaml"
+      - ".github/pull_request_template.md"
+      - ".github/release-drafter-config.yml"
+      - ".github/workflows/build-test.yml"
+      - ".github/workflows/draft-release-notes.yml"
+      - ".github/workflows/labeler.yml"
+      - ".github/workflows/release.yml"
+
+# A push to a pull request cancels any run in progress for an earlier push. A run for a
+# push to master is not cancelled (as each such run saves a baseline).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   benchmark:
     name: Performance regression check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
     - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
     - name: Install uv
       uses: astral-sh/setup-uv@v10.3.3
     - name: Install Python
       run: uv python install
     - name: Install the project
-      run: uv sync --locked --group test --no-cache
+      run: uv sync --locked --group test
     - name: Run benchmark
       run: uv run -- pytest etc/bench.py --benchmark-json output.json
-    - name: Download previous benchmark data
-      uses: actions/cache@v6.1.0
+    # A run for a push to master saves its result as the new baseline (see the final
+    # step). A run for a pull request compares its result with the latest baseline and
+    # does not save its result.
+    - name: Restore benchmark baseline
+      uses: actions/cache/restore@v6.1.0
       with:
         path: ./cache
-        key: ${{ runner.os }}-benchmark
+        key: ${{ runner.os }}-benchmark-${{ github.run_id }}-${{ github.run_attempt }}
+        # Restores the most recently saved baseline.
+        restore-keys: ${{ runner.os }}-benchmark
     - name: Store benchmark result
       uses: rhysd/github-action-benchmark@v1
       with:
@@ -38,3 +70,10 @@ jobs:
         # Enable alert commit comment
         comment-on-alert: true
         alert-threshold: "150%"
+    - name: Save benchmark baseline
+      # update baseline only if run on a push to master and run not cancelled
+      if: ${{ !cancelled() && github.event_name == 'push' }}
+      uses: actions/cache/save@v6.1.0
+      with:
+        path: ./cache
+        key: ${{ runner.os }}-benchmark-${{ github.run_id }}-${{ github.run_attempt }}

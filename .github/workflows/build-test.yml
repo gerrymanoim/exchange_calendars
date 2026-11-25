@@ -1,0 +1,85 @@
+name: Build and test
+
+on:
+  pull_request:
+    branches:
+      - master
+    # The workflow is skipped if every file that the pull request changes matches
+    # one of these patterns. A change to any of these files cannot affect the tests.
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "etc/**"
+      - ".devcontainer/**"
+      - ".agents/**"
+      - ".claude/**"
+      - "LICENSE"
+      - ".pre-commit-config.yaml"
+      - ".github/pull_request_template.md"
+      - ".github/release-drafter-config.yml"
+      - ".github/workflows/benchmark.yml"
+      - ".github/workflows/draft-release-notes.yml"
+      - ".github/workflows/labeler.yml"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: read
+
+# A push to a pull request cancels any run in progress for an earlier push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10", "3.14"]
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: Install uv and set the Python version
+      uses: astral-sh/setup-uv@v10.3.3
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install the project
+      run: uv sync --locked --group test --no-dev
+
+    - if: runner.os != 'Windows'
+      name: Set up Python tzdata on Linux and macOS
+      run: |
+        PYTHONTZPATH=$(python -c "import os; print(os.path.dirname(os.__file__))")
+        echo "PYTHONTZPATH=$PYTHONTZPATH" >> $GITHUB_ENV
+    - if: runner.os == 'Windows'
+      name: Set up Python tzdata on Windows
+      run: |
+        $PYTHONTZPATH = python -c "import os; print(os.path.dirname(os.__file__))"
+        echo "PYTHONTZPATH=$PYTHONTZPATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+    # Without `--no-sync`, `uv run` would sync the environment with the dev group.
+    - name: Test with pytest
+      run: uv run --no-sync -- pytest tests -n auto --dist loadscope
+
+    # `--no-sync` runs the tests against the minimum environment as set up by this step.
+    # Without it, `uv run` would re-lock the project and upgrade the dependencies to
+    # their latest versions.
+    - name: Set up minimum environment and run tests
+      shell: bash
+      run: |
+        if [ "${{ matrix.python-version }}" == "3.14" ]; then
+          GROUP="test_py14"
+        else
+          GROUP="test_min"
+        fi
+        uv lock --resolution lowest-direct
+        uv sync --frozen --resolution lowest-direct --group "$GROUP" --no-dev
+        uv run --no-sync -- pytest tests -n auto --dist loadscope
+        uv pip list

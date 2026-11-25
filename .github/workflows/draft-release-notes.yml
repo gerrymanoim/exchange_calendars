@@ -1,9 +1,13 @@
-name: On Master Merge
+name: Release Drafter
 
 on:
   push:
     branches:
       - master
+
+permissions:
+  contents: write
+  pull-requests: read
 
 jobs:
   draft-release-publish:
