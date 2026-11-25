@@ -46,25 +46,29 @@ uv sync --inexact  # update environment to match @uv.lock
 
 ### 3. Update GitHub Actions versions
 
-For each `uses: <owner>/<repo>@<version>` entry across all files in `.github/workflows/`, retrieve the latest release tag by fetching the releases page with WebFetch:
+For each `uses: <owner>/<repo>@<version>` entry across all files in `.github/workflows/`, list the repository's tags with the newest version first:
 
-```
-url:    https://github.com/<owner>/<repo>/releases/latest
-prompt: What is the latest release tag for this GitHub action?
+```bash
+git ls-remote --tags --refs --sort=-v:refname https://github.com/<owner>/<repo>
 ```
 
-In each case update the version pin to any more recent release. **Preserve the existing pinning style**, so if the current pin is a specific version such as `@v3.0.1`, update to the full latest version string, whilst if it's a major-version tag such as `@v4`, update to any new major-version tag (if the project no longer publishes a major-version tag then switch to the full semver).
+In each case update the version pin to the tag of any more recent stable release (ignore the tag of any pre-release, for example `v8.0.0-rc.1`). **Preserve the existing pinning style**, so if the current pin is a specific version such as `@v3.0.1`, update to the full latest version string, whilst if it's a major-version tag such as `@v4`, update to any new major-version tag (if the project no longer publishes a major-version tag then switch to the full semver). Note that the listing places a major-version tag (for example `v4`) after every full version tag of that major version.
 
 ### 4. Update pre-commit hook versions
 
-For each `repo:` entry in `.pre-commit-config.yaml`, retrieve the latest release tag by fetching the releases page with WebFetch:
+Update the `rev:` pin of each repository in `.pre-commit-config.yaml` to the repository's latest tag:
 
-```
-url:    https://github.com/<owner>/<repo>/releases/latest
-prompt: What is the latest release tag for this pre-commit hook?
+```bash
+uv run pre-commit autoupdate
 ```
 
-In each case update the `rev:` pin to any more recent release. **Preserve the existing pinning style**, so if the current pin is a specific version such as `v6.0.0`, update to the full latest version string, whilst if it's a major-version tag such as `@v4`, update to any new major-version tag (if the project no longer publishes a major-version tag then switch to the full semver).
+Then run the hooks against all files:
+
+```bash
+uv run pre-commit run --all-files
+```
+
+Keep any changes that the hooks make. If a hook reports a violation that the hook cannot fix, fix the violation and run the hooks again.
 
 ### 5. Test
 
@@ -109,9 +113,9 @@ Once local tests pass, commit all changes to the branch and raise a PR.
 
 ### 8. Subscribe to PR activity
 
-By raising the PR a GitHub CI workflow will be triggered. Subscribe to the raised PR's activity.
+Raising the PR will trigger GitHub CI workflows. Subscribe to the raised PR's activity.
 
-Proceed to step 9 when you receive an event indicating that the triggered workflow has completed.
+Proceed to step 9 when you receive events indicating that all triggered workflows have completed. A push to the PR cancels any workflow run in progress for an earlier push. An event for a cancelled workflow run of an earlier push does not indicate completion. Continue to wait for the workflow runs of the latest push.
 
 ### 9. Inspect CI results
 
@@ -135,7 +139,7 @@ If the tests failed on specific matrix combinations (e.g. Windows / Python 3.10)
 Run the test suite to identify failing tests. For example:
 
 ```bash
-uv run --isolated --python 3.11 python pytest --ignore=tests/test_yahoo.py -v
+uv run --isolated --python 3.11 pytest -v
 ```
 
 Then find fixes for the failing tests by following step 6.

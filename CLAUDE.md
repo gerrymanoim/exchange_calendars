@@ -22,3 +22,7 @@ automatically and unattended and in these cases a permission prompt would stall
 the run. Therefore, when modifying any file covered by the `Edit(...)` permissions in
 `.claude/settings.json`, **always use the `Edit` tool** (not `Bash`/`sed`/etc.) so
 that the pre-granted permission applies and no prompt is raised.
+
+The one exception is any command that a skill directs you to run, for example
+`uv run pre-commit autoupdate`, which rewrites `.pre-commit-config.yaml`. Run such a
+command as the skill directs.
