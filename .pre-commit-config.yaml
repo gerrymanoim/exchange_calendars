@@ -1,3 +1,8 @@
+# pre-commit.ci runs its autoupdate at its least frequent schedule (as step 4 of the
+# dependencies-management skill updates the hook versions).
+ci:
+  autoupdate_schedule: quarterly
+exclude: ^\.claude/
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -11,5 +16,6 @@ repos:
     hooks:
       # Run the linter.
       - id: ruff-check
+        args: [--fix]
       # Run the formatter.
       - id: ruff-format

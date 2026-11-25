@@ -12,4 +12,4 @@
     uv export --format requirements-txt --no-emit-project --no-hashes --no-dev -o requirements.txt
     ```
 - Commit changes.
-- Make PR to main branch.
+- Make PR to master branch.
