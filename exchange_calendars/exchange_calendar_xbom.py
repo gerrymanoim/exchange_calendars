@@ -235,7 +235,9 @@ precomputed_bse_holidays = pd.to_datetime(
         "2013-10-16",
         "2013-11-03",
         "2013-11-04",
-        "2013-11-14",
+        # The Muharram holiday was moved from 2013-11-14 to 2013-11-15.
+        # https://www.thehindubusinessline.com/markets/nse-bse-change-muharram-holiday-to-nov-15/article23109186.ece
+        "2013-11-15",
         "2013-11-17",
         "2013-12-25",
         "2014-01-26",
@@ -504,12 +506,21 @@ class XBOMExchangeCalendar(PrecomputedExchangeCalendar):
          weekmasks that applies between dates.
         """
         return [
+            # Special trading session on Saturday, February 28, 2015
+            # https://www.bseindia.com/downloads/SPDJ_ANN/MediaReleasePDF/MediaReleaseSpecialTradingsession_20150224.pdf
+            (pd.Timestamp("2015-02-23"), pd.Timestamp("2015-03-01"), "1111110"),
+            # Special trading session on Saturday, February 1, 2020
+            # https://www.bseindia.com/downloads/SPDJ_ANN/MediaReleasePDF/1077559_MediaReleaseSpecialTradingSessionon20200201.pdf
+            (pd.Timestamp("2020-01-27"), pd.Timestamp("2020-02-02"), "1111110"),
             # Special trading session on Saturday, January 20, 2024.
             # https://www.bseindia.com/downloads/SPDJ_ANN/MediaReleasePDF/1470003_mediareleasespecialtradingsessionfors&pbseindices20240105.pdf
             (pd.Timestamp("2024-01-15"), pd.Timestamp("2024-01-21"), "1111110"),
             # Special trading session on Saturday, February 1, 2025
             # https://www.angelone.in/news/will-bse-and-nse-be-open-on-budget-day-feb-1
             (pd.Timestamp("2025-01-27"), pd.Timestamp("2025-02-02"), "1111110"),
+            # Special trading session on Sunday, February 1, 2026
+            # https://www.bseindia.com/markets/MarketInfo/DispNewNoticesCirculars.aspx?page=20260116-33
+            (pd.Timestamp("2026-01-26"), pd.Timestamp("2026-02-01"), "1111101"),
         ]
 
     @functools.cached_property
