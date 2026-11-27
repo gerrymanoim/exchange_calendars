@@ -92,9 +92,9 @@ Follows the rule:
 
 ```text
 Breaks the rule:
-    The method returns the rows in order, the header row being excluded.
+    This method returns the rows in order, the header row being excluded.
 Follows the rule:
-    The method returns the rows in order. The header row is excluded.
+    This method returns the rows in order. The header row is excluded.
 ```
 
 ```text
@@ -111,7 +111,7 @@ main clause.
 
 ```text
 Allowed:
-    The function parses the file, returning None if the file is empty.
+    This function parses the file, returning None if the file is empty.
 ```
 
 ### 3. Write no reference that a reader could take two ways
@@ -349,6 +349,21 @@ Prefer:
     takes on disk.
 ```
 
+### Refer to the documented object with "this"
+
+When documentation refers to the object that it documents (for example the
+class that a docstring documents), refer to the object with "this". This
+guidance does not apply to the summary line of a docstring.
+
+```text
+Rather than (in the docstring of a subclass of `Calendar`):
+    The class should be revised if a change to `Calendar` alters the
+    class's schedule.
+Prefer:
+    This class should be revised if a change to `Calendar` alters that
+    class's schedule.
+```
+
 ### Refer to a whole clause with a new sentence, not with "which"
 
 A "which" that refers to a whole clause usually reads worse than a new
@@ -469,13 +484,13 @@ Prefer:
 
 ```text
 Rather than:
-    The method returns the rows in order and skips each comment line. A
+    This method returns the rows in order and skips each comment line. A
     blank line ends the input. All of this applies only if `strict` is
     False.
 Prefer:
     If `strict` is False:
-        - the method returns the rows in order.
-        - the method skips each comment line.
+        - this method returns the rows in order.
+        - this method skips each comment line.
         - a blank line ends the input.
 ```
 
@@ -497,11 +512,11 @@ other cases.
 
 ```text
 Rather than:
-    Calling the method concurrently is safe only if the cache is
+    Calling this method concurrently is safe only if the cache is
     read-only.
 Prefer:
-    Calling the method concurrently is safe only if the cache is
-    read-only. If the cache is writable, calls to the method must be
+    Calling this method concurrently is safe only if the cache is
+    read-only. If the cache is writable, calls to this method must be
     serialised.
 ```
 
