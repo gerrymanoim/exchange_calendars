@@ -5,8 +5,7 @@ from zoneinfo import ZoneInfo
 from pandas.tseries.offsets import Day
 from korean_lunar_calendar import KoreanLunarCalendar
 
-from .holiday import Holiday
-from .offsets import _is_normalized
+from .holiday import Holiday, _is_normalized
 
 # ruff: noqa: SLF001
 
