@@ -296,6 +296,8 @@ class XKARExchangeCalendar(ExchangeCalendar):
             "2025-06-07",
             "2025-06-08",
             "2025-06-09",
+            "2026-05-26",
+            "2026-05-27",
         ]
     )
 
@@ -339,6 +341,8 @@ class XKARExchangeCalendar(ExchangeCalendar):
             "2024-07-17",
             "2025-07-05",
             "2025-07-06",
+            "2026-06-25",
+            "2026-06-26",
         ]
     )
 
