@@ -2133,6 +2133,7 @@ class ExchangeCalendarTestBase:
             "break_end_times",
             "close_times",
             "weekmask",
+            "special_weekmasks",
             "open_offset",
             "close_offset",
             "regular_holidays",
@@ -2273,15 +2274,31 @@ class ExchangeCalendarTestBase:
 
     def test_base_integrity(self, calendar_cls, non_valid_overrides):
         for name in non_valid_overrides:
-            # covers properties, instance methods and class mathods...
-            allowed = (
-                calendar_cls.name in ["XKRX", "XMOS", "XBOM", "XTAE"] and name == "day"
-            )
-            # allow exchange_calendar_xkrx to overwrite 'day'.
-            # allow exchange_calendar_xmos to overwrite 'day'.
-            # allow exchange_calendar_xbom to overwrite 'day'.
-            # allow exchange_calendar_xtae to overwrite 'day'.
-            assert name not in calendar_cls.__dict__ or allowed
+            # covers properties, instance methods and class methods...
+            assert name not in calendar_cls.__dict__
+
+    def test_special_weekmasks(self, default_calendar):
+        """Verify that the periods of `special_weekmasks` are valid.
+
+        The periods are valid if:
+            - each period has a last date.
+            - each period starts no later than its last date.
+            - no two periods overlap.
+        """
+        periods = default_calendar.special_weekmasks
+        for start, end, _ in periods:
+            assert end is not None
+            assert start is None or start <= end
+
+        # Of the periods ordered by first date, only the first period can have no
+        # first date. Each later period starts after the previous period ends.
+        periods = sorted(
+            periods,
+            key=lambda period: pd.Timestamp.min if period[0] is None else period[0],
+        )
+        for (_, prev_end, _), (start, _, _) in itertools.pairwise(periods):
+            assert start is not None
+            assert start > prev_end
 
     def test_calculated_against_csv(self, default_calendar_with_answers):
         calendar, ans = default_calendar_with_answers

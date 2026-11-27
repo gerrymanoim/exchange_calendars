@@ -18,14 +18,11 @@ import datetime
 from itertools import chain
 from zoneinfo import ZoneInfo
 import pandas as pd
-import functools
 
 from pandas.tseries.holiday import Holiday, weekend_to_monday
-from pandas.tseries.offsets import CustomBusinessDay
 
 from .common_holidays import european_labour_day, new_years_day, new_years_eve
 from .exchange_calendar import WEEKDAYS, HolidayCalendar, ExchangeCalendar
-from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 
 
 def new_years_eve_observance(dt: datetime.datetime) -> datetime.datetime | None:
@@ -378,19 +375,4 @@ class XMOSExchangeCalendar(ExchangeCalendar):
                 unity_day_extensions,
                 misc_adhoc,
             ),
-        )
-
-    @functools.cached_property
-    def day(self):
-        if self.special_weekmasks:
-            return MultipleWeekmaskCustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-                weekmasks=self.special_weekmasks,
-            )
-        return CustomBusinessDay(
-            holidays=self.adhoc_holidays,
-            calendar=self.regular_holidays,
-            weekmask=self.weekmask,
         )

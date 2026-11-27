@@ -17,9 +17,7 @@ from datetime import time
 from zoneinfo import ZoneInfo
 
 import pandas as pd
-import functools
 
-from pandas.tseries.offsets import CustomBusinessDay
 
 from exchange_calendars.pandas_extensions.holiday import AbstractHolidayCalendar
 from .tase_holidays import (
@@ -63,7 +61,6 @@ from .tase_holidays import (
     YomKippurEveObserved,
 )
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
-from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 
 # All holidays are defined as ad-hoc holidays for each year since there is
 # currently no support for Hebrew calendar holiday rules in pandas.
@@ -243,18 +240,3 @@ class XTAEExchangeCalendar(ExchangeCalendar):
         return [
             (None, pd.Timestamp("2026-01-04"), "1111001"),
         ]
-
-    @functools.cached_property
-    def day(self):
-        if self.special_weekmasks:
-            return MultipleWeekmaskCustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-                weekmasks=self.special_weekmasks,
-            )
-        return CustomBusinessDay(
-            holidays=self.adhoc_holidays,
-            calendar=self.regular_holidays,
-            weekmask=self.weekmask,
-        )
