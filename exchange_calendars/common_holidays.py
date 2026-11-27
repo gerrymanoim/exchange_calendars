@@ -1,9 +1,47 @@
+from __future__ import annotations
+
+import functools
+from typing import TYPE_CHECKING
+
 import pandas as pd
+from dateutil.easter import EASTER_ORTHODOX, easter
 from pandas.tseries.holiday import FR, DateOffset, Easter, Holiday
 from pandas.tseries.offsets import Day
 
 from .exchange_calendar import MONDAY, TUESDAY
-from .pandas_extensions.offsets import OrthodoxEaster
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+
+def _days_from_orthodox_easter(dt: pd.Timestamp, days: int) -> pd.Timestamp:
+    """Return the date `days` days from Orthodox Easter of the year of `dt`.
+
+    `days` can be positive or negative.
+    """
+    return pd.Timestamp(easter(dt.year, method=EASTER_ORTHODOX)) + pd.Timedelta(
+        days=days
+    )
+
+
+def orthodox_easter_observance(days: int) -> Callable[[pd.Timestamp], pd.Timestamp]:
+    """Return an observance for a date relative to Orthodox Easter.
+
+    Parameters
+    ----------
+    days
+        Number of days from Orthodox Easter to the observed date, negative
+        if the observed date is before Orthodox Easter.
+
+    Returns
+    -------
+    Callable[[pd.Timestamp], pd.Timestamp]
+        Function that receives a date and returns the date that is `days`
+        days from Orthodox Easter of the year of the received date. Pass
+        the function as the `observance` of a `Holiday` that is defined
+        for 1 January.
+    """
+    return functools.partial(_days_from_orthodox_easter, days=days)
 
 
 def new_years_day(start_date=None, end_date=None, observance=None, days_of_week=None):
@@ -148,7 +186,7 @@ def orthodox_ash_monday(start_date=None, end_date=None):
         "Ash Monday",
         month=1,
         day=1,
-        offset=[OrthodoxEaster(), -Day(48)],
+        observance=orthodox_easter_observance(-48),
         start_date=start_date,
         end_date=end_date,
     )
@@ -159,7 +197,7 @@ def orthodox_good_friday(start_date=None, end_date=None):
         "Good Friday",
         month=1,
         day=1,
-        offset=[OrthodoxEaster(), -Day(2)],
+        observance=orthodox_easter_observance(-2),
         start_date=start_date,
         end_date=end_date,
     )
@@ -170,7 +208,7 @@ def orthodox_easter_monday(start_date=None, end_date=None):
         "Easter Monday",
         month=1,
         day=1,
-        offset=[OrthodoxEaster(), Day(1)],
+        observance=orthodox_easter_observance(1),
         start_date=start_date,
         end_date=end_date,
     )
@@ -181,7 +219,7 @@ def orthodox_easter_tuesday(start_date=None, end_date=None):
         "Easter Tuesday",
         month=1,
         day=1,
-        offset=[OrthodoxEaster(), Day(2)],
+        observance=orthodox_easter_observance(2),
         start_date=start_date,
         end_date=end_date,
     )
@@ -192,7 +230,7 @@ def orthodox_pentecost(start_date=None, end_date=None):
         "Pentecost",
         month=1,
         day=1,
-        offset=[OrthodoxEaster(), Day(49)],
+        observance=orthodox_easter_observance(49),
         start_date=start_date,
         end_date=end_date,
     )
@@ -203,7 +241,7 @@ def orthodox_whit_monday(start_date=None, end_date=None):
         "Whit Monday",
         month=1,
         day=1,
-        offset=[OrthodoxEaster(), Day(50)],
+        observance=orthodox_easter_observance(50),
         start_date=start_date,
         end_date=end_date,
     )

@@ -1,12 +1,10 @@
 from datetime import time
 from zoneinfo import ZoneInfo
-from .pandas_extensions.offsets import OrthodoxEaster
 from pandas.tseries.holiday import (
     Holiday,
     EasterMonday,
     GoodFriday,
 )
-from pandas.tseries.offsets import Day
 from .common_holidays import (
     new_years_day,
     epiphany,
@@ -18,6 +16,7 @@ from .common_holidays import (
     christmas_eve,
     christmas,
     boxing_day,
+    orthodox_easter_observance,
 )
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
 
@@ -25,7 +24,7 @@ NewYearsDay = new_years_day()
 Epiphany = epiphany()
 GreekIndependenceDay = Holiday("Greek Independence Day", month=3, day=25)
 GreenMonday = Holiday(
-    "Green Monday", month=1, day=1, offset=[OrthodoxEaster(), -Day(48)]
+    "Green Monday", month=1, day=1, observance=orthodox_easter_observance(-48)
 )
 CyprusNationalDay = Holiday("Cyprus National Day", month=4, day=1)
 OrthodoxGoodFriday = orthodox_good_friday()
@@ -33,7 +32,7 @@ OrthodoxEasterMonday = orthodox_easter_monday()
 OrthodoxEasterTuesday = orthodox_easter_tuesday()
 LabourDay = european_labour_day()
 HolySpiritDay = Holiday(
-    "Holy Spirit Day", month=1, day=1, offset=[OrthodoxEaster(), Day(50)]
+    "Holy Spirit Day", month=1, day=1, observance=orthodox_easter_observance(50)
 )
 AssumptionDay = assumption_day()
 CyprusIndependenceDay = Holiday("Cyprus Independence Day", month=10, day=1)

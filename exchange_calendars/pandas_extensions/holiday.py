@@ -14,7 +14,14 @@ from pandas import (
 )
 from pandas.errors import PerformanceWarning
 
-from .offsets import _is_normalized
+
+def _is_normalized(dt):
+    if dt.hour != 0 or dt.minute != 0 or dt.second != 0 or dt.microsecond != 0:
+        # Regardless of whether dt is datetime vs Timestamp
+        return False
+    if isinstance(dt, Timestamp):
+        return dt.nanosecond == 0
+    return True
 
 
 class Holiday(PandasHoliday):

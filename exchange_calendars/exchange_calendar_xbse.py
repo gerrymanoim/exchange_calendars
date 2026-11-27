@@ -2,7 +2,6 @@ from datetime import time
 from zoneinfo import ZoneInfo
 
 from pandas.tseries.holiday import Holiday
-from pandas.tseries.offsets import Day
 
 from .common_holidays import (
     christmas,
@@ -11,9 +10,9 @@ from .common_holidays import (
     european_labour_day,
     orthodox_pentecost,
     new_years_day,
+    orthodox_easter_observance,
 )
 from .exchange_calendar import HolidayCalendar, ExchangeCalendar
-from .pandas_extensions.offsets import OrthodoxEaster
 
 NewYearsDay = new_years_day()
 
@@ -42,7 +41,7 @@ DescentOfTheHolySpirit = Holiday(
     "Descent of the Holy Spirit",
     month=1,
     day=1,
-    offset=[OrthodoxEaster(), Day(50)],
+    observance=orthodox_easter_observance(50),
 )
 
 StMarysDay = Holiday(
