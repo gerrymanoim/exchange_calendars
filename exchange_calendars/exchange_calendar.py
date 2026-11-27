@@ -812,40 +812,35 @@ class ExchangeCalendar(ABC):
         any of these weekmasks includes. (If `special_weekmasks` is empty
         then the return's weekmask is the same as `weekmask`.)
 
-        The return's holidays property includes every date that is an
-        invalid day (i.e. a '0', a non-trading day) of the weekmask that
-        applies on that date, if the return's weekmask treats that day of
-        the week as valid. (Note that there are no such dates if
+        The return's holidays property includes the adhoc holidays and the
+        regular holidays. The holidays property also includes every date
+        that is an invalid day (i.e. a '0', a non-trading day) of the
+        weekmask that applies on that date, if the return's weekmask treats
+        that day of the week as valid. (Note that there are no such dates if
         `special_weekmasks` is empty.) The weekmask that applies on a date
         is the weekmask of the special weekmask period that covers the
         date. If no period covers the date, `weekmask` applies.
 
-        The holidays that the previous paragraph describes are evaluated
-        from the earlier of the calendar's `start` and 1970-01-01 through
-        the later of the calendar's `end` and 2200-12-31. Outside of this
-        range, the return treats a date as a session if the return's
-        weekmask includes the date's day of the week and the date is not a
-        holiday.
+        The regular holidays and the invalid days that the previous
+        paragraph describes are evaluated from the earlier of the
+        calendar's `start` and 1970-01-01 through the later of the
+        calendar's `end` and 2200-12-31. Outside of this range, the return
+        treats a date as a session if the return's weekmask includes the
+        date's day of the week and the date is not an adhoc holiday.
         """
-        if not self.special_weekmasks:
-            return CustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-            )
-        # pandas evaluates `regular_holidays` from `AbstractHolidayCalendar.start_date`
-        # through `AbstractHolidayCalendar.end_date`. The weekmask holidays are
-        # evaluated over at least the same range.
         start = min(self._start, AbstractHolidayCalendar.start_date)
         end = max(self._end, AbstractHolidayCalendar.end_date)
-        weekmask, weekmask_holidays = _combine_weekmasks(
-            self.weekmask, self.special_weekmasks, start, end
-        )
-        return CustomBusinessDay(
-            holidays=[*self.adhoc_holidays, *weekmask_holidays],
-            calendar=self.regular_holidays,
-            weekmask=weekmask,
-        )
+        holidays = list(self.adhoc_holidays)
+        regular_holidays = self.regular_holidays
+        if regular_holidays is not None:
+            holidays += regular_holidays.holidays(start, end).tolist()
+        weekmask = self.weekmask
+        if self.special_weekmasks:
+            weekmask, weekmask_holidays = _combine_weekmasks(
+                self.weekmask, self.special_weekmasks, start, end
+            )
+            holidays += list(weekmask_holidays)
+        return CustomBusinessDay(holidays=holidays, weekmask=weekmask)
 
     @classmethod
     def valid_sides(cls) -> list[str]:

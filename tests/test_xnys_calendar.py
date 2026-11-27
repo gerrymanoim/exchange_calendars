@@ -104,3 +104,41 @@ class TestXNYSCalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def non_early_closes_sample_time(self):
         yield pd.Timedelta(16, "h")
+
+    # Calendar-specific tests
+
+    @pytest.mark.parametrize(
+        ("start", "end", "holidays"),
+        [
+            (
+                "1950-01-01",
+                "1972-01-01",
+                [
+                    "1953-02-12",  # Lincoln's Birthday (closed every year 1896-1953).
+                    "1965-07-05",  # Independence Day on Sunday, made up on Monday.
+                    "1966-02-22",  # Washington's Birthday (on Feb 22 until 1970).
+                    "1966-11-08",  # Election Day (closed every year through 1968).
+                ],
+            ),
+            (
+                "2199-01-01",
+                "2202-01-01",
+                [
+                    "2201-01-01",  # New Year's Day.
+                    "2201-07-03",  # Independence Day on Saturday, made up on Friday.
+                    "2201-12-25",  # Christmas.
+                ],
+            ),
+        ],
+    )
+    def test_regular_holidays_outside_default_holiday_period(
+        self, calendar_cls, start, end, holidays
+    ):
+        """Test that regular holidays before 1970 or after 2200 are not sessions.
+
+        If a holiday calendar is not passed a period, the holiday calendar evaluates
+        holidays from 1970-01-01 through 2200-12-31.
+        """
+        cal = calendar_cls(start, end)
+        for holiday in holidays:
+            assert pd.Timestamp(holiday) not in cal.sessions
