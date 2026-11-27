@@ -123,7 +123,7 @@ class TestXKRXCalendar(ExchangeCalendarTestBase):
         cal = default_calendar
         precomputed = pd.DatetimeIndex(cal.adhoc_holidays)
         # precomputed holidays should not include weekends (saturday, sunday)
-        assert (precomputed.weekday < 5).all()
+        assert (precomputed.day_of_week < 5).all()
 
         regular = cal.regular_holidays.holidays(
             precomputed.min(),
@@ -132,7 +132,7 @@ class TestXKRXCalendar(ExchangeCalendarTestBase):
         )
 
         # filter non weekend generated holidays
-        non_weekend_regular = regular[regular.index.weekday < 5]
+        non_weekend_regular = regular[regular.index.day_of_week < 5]
 
         # regular holidays should generally fall into one of the precomputed holidays
         # except the future holidays that are not precomputed yet

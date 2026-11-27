@@ -485,7 +485,7 @@ class _TradingIndex:
         def align_opens(opens: pd.Series, align: pd.Timedelta) -> np.ndarray:
             """Return opens as nanos shifted for alignment."""
             opens = opens.dt.ceil(align)
-            return opens.values.astype(np.int64)
+            return opens.dt.tz_convert(None).to_numpy().astype(np.int64)
 
         if align != pd.Timedelta(1, "min"):
             self.opens = align_opens(calendar.opens[slce], align)
@@ -587,7 +587,7 @@ class _TradingIndex:
             num_indices -= 1
 
         # by session, evaluate a range of int such that indices of a session
-        # could be evaluted from [ session_open + (freq * i) for i in range ]
+        # could be evaluated from [ session_open + (freq * i) for i in range ]
         start = 0 if self.closed_left else 1
         func = np.vectorize(lambda stop: np.arange(start, stop), otypes=[np.ndarray])
         stop = num_indices if self.closed_left else num_indices + 1

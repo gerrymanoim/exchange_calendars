@@ -1,10 +1,10 @@
 import pytest
 import pandas as pd
-import pandas.testing as tm
 
 from exchange_calendars.always_open import AlwaysOpenCalendar
 from exchange_calendars.calendar_helpers import UTC
 from .test_exchange_calendar import ExchangeCalendarTestBase
+from .test_utils import assert_index_equal_compat
 
 
 class TestAlwaysOpenCalendar(ExchangeCalendarTestBase):
@@ -27,13 +27,13 @@ class TestAlwaysOpenCalendar(ExchangeCalendarTestBase):
     def test_open_every_day(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
         dates = pd.date_range(*ans.sessions_range)
-        tm.assert_index_equal(cal.sessions, dates)
+        assert_index_equal_compat(cal.sessions, dates, check_freq=False)
 
     def test_open_every_minute(self, calendars, answers, one_minute):
         cal, ans = calendars["left"], answers["left"]
         minutes = pd.date_range(*ans.trading_minutes_range, freq="min", tz=UTC)
-        tm.assert_index_equal(cal.minutes, minutes)
+        assert_index_equal_compat(cal.minutes, minutes, check_freq=False)
 
         cal = calendars["right"]
         minutes += one_minute
-        tm.assert_index_equal(cal.minutes, minutes)
+        assert_index_equal_compat(cal.minutes, minutes, check_freq=False)

@@ -35,7 +35,7 @@ from exchange_calendars.calendar_utils import (
 from exchange_calendars.exchange_calendar import ExchangeCalendar, days_at_time
 from exchange_calendars.utils import pandas_utils
 
-from .test_utils import T
+from .test_utils import T, assert_index_equal_compat
 
 
 class FakeCalendar(ExchangeCalendar):
@@ -1395,7 +1395,7 @@ class Answers:
         -------
         tuple
             [0] trading minute
-            [1] session of which [0] ia a trading minute
+            [1] session of which [0] is a trading minute
             [2] next session, i.e. session of which a minute with same time as
                 [0] is a break minute.
         """
@@ -1410,8 +1410,11 @@ class Answers:
         minutes = self.first_pm_minutes[sessions]
         offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
-        # (it wont be if the break has shifted by more than the break duration)
-        mask = offset_minutes.values > self.last_am_minutes[target_sessions].values
+        # (it won't be if the break has shifted by more than the break duration)
+        mask = (
+            offset_minutes.values
+            > self.last_am_minutes[target_sessions].dt.tz_convert(None).to_numpy()
+        )
         lst.extend(
             list(zip(minutes[mask], sessions[mask], target_sessions[mask], strict=True))
         )
@@ -1422,7 +1425,10 @@ class Answers:
         minutes = self.last_am_minutes[sessions]
         offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
-        mask = offset_minutes.values < self.first_pm_minutes[target_sessions].values
+        mask = (
+            offset_minutes.values
+            < self.first_pm_minutes[target_sessions].dt.tz_convert(None).to_numpy()
+        )
         lst.extend(
             list(zip(minutes[mask], sessions[mask], target_sessions[mask], strict=True))
         )
@@ -1438,7 +1444,7 @@ class Answers:
         -------
         tuple
             [0] trading minute
-            [1] session of which [0] ia a trading minute
+            [1] session of which [0] is a trading minute
             [2] previous session, i.e. session of which a minute with same time as
                 [0] is a break minute.
         """
@@ -1453,8 +1459,11 @@ class Answers:
         minutes = self.first_pm_minutes[sessions]
         offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
-        # (it wont be if the break has shifted by more than the break duration)
-        mask = offset_minutes.values > self.last_am_minutes[target_sessions].values
+        # (it won't be if the break has shifted by more than the break duration)
+        mask = (
+            offset_minutes.values
+            > self.last_am_minutes[target_sessions].dt.tz_convert(None).to_numpy()
+        )
         lst.extend(
             list(zip(minutes[mask], sessions[mask], target_sessions[mask], strict=True))
         )
@@ -1465,7 +1474,10 @@ class Answers:
         minutes = self.last_am_minutes[sessions]
         offset_minutes = minutes.dt.tz_convert(None) - sessions + target_sessions
         # only include offset minute if verified as break minute of target
-        mask = offset_minutes.values < self.first_pm_minutes[target_sessions].values
+        mask = (
+            offset_minutes.values
+            < self.first_pm_minutes[target_sessions].dt.tz_convert(None).to_numpy()
+        )
         lst.extend(
             list(zip(minutes[mask], sessions[mask], target_sessions[mask], strict=True))
         )
@@ -2302,7 +2314,9 @@ class ExchangeCalendarTestBase:
 
     def test_calculated_against_csv(self, default_calendar_with_answers):
         calendar, ans = default_calendar_with_answers
-        tm.assert_index_equal(calendar.schedule.index, ans.sessions)
+        assert_index_equal_compat(
+            calendar.schedule.index, ans.sessions, check_freq=False
+        )
 
     def test_start_end(self, default_answers, calendar_cls):
         ans = default_answers
@@ -2430,7 +2444,7 @@ class ExchangeCalendarTestBase:
         cal, ans = default_calendar_with_answers
         ans_sessions = ans.sessions
         cal_sessions = cal.sessions
-        tm.assert_index_equal(ans_sessions, cal_sessions)
+        assert_index_equal_compat(ans_sessions, cal_sessions, check_freq=False)
 
     def test_opens_closes_break_starts_ends(self, default_calendar_with_answers):
         """Test `opens`, `closes, `break_starts` and `break_ends` properties."""
@@ -2644,7 +2658,7 @@ class ExchangeCalendarTestBase:
         if not early_closes_weekdays:
             return
         cal, ans = default_calendar_with_answers
-        bv = ans.sessions.weekday.isin(early_closes_weekdays)
+        bv = ans.sessions.day_of_week.isin(early_closes_weekdays)
         expected = ans.sessions[bv]
         assert expected.difference(cal.early_closes).empty
 
@@ -2835,7 +2849,9 @@ class ExchangeCalendarTestBase:
 
         for _, block in ans.session_block_generator():
             for session in block:
-                tm.assert_index_equal(f(session), ans.get_sessions_minutes(session))
+                assert_index_equal_compat(
+                    f(session), ans.get_sessions_minutes(session), check_freq=False
+                )
 
     def test_session_offset(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
@@ -3605,7 +3621,7 @@ class ExchangeCalendarTestBase:
             from_ = ans.first_minutes[block[0]]
             to = ans.last_minutes[block[-1]]
             cal_dti = f(from_, to)
-            tm.assert_index_equal(ans_dti, cal_dti)
+            assert_index_equal_compat(ans_dti, cal_dti, check_freq=False)
 
             # test consequence of getting range from one minute before/after the
             # block's first/last trading minute.
@@ -3614,14 +3630,16 @@ class ExchangeCalendarTestBase:
             cal_dti = f(from_ - one_minute, to + one_minute)
             start_idx = 1 if block[0] in ans.sessions_without_gap_before else 0
             end_idx = -1 if block[-1] in ans.sessions_without_gap_after else None
-            tm.assert_index_equal(ans_dti, cal_dti[start_idx:end_idx])
+            assert_index_equal_compat(
+                ans_dti, cal_dti[start_idx:end_idx], check_freq=False
+            )
 
         # intra-session
         from_ = ans.first_minutes[ans.first_session] + pd.Timedelta(15, "min")
         to = ans.first_minutes[ans.first_session] + pd.Timedelta(45, "min")
         expected = pd.date_range(from_, to, freq="min")
         rtrn = f(from_, to)
-        tm.assert_index_equal(expected, rtrn)
+        assert_index_equal_compat(expected, rtrn, check_freq=False)
 
         # inter-session
         if not ans.sessions_with_gap_after.empty:
@@ -3641,18 +3659,18 @@ class ExchangeCalendarTestBase:
             ans_dti = block_minutes[name]
             count = len(ans_dti)
             cal_dti = f(start, count)
-            tm.assert_index_equal(ans_dti, cal_dti)
+            assert_index_equal_compat(ans_dti, cal_dti, check_freq=False)
 
             start = ans.last_minutes[block[-1]]
             cal_dti = f(start, -count)
-            tm.assert_index_equal(ans_dti, cal_dti)
+            assert_index_equal_compat(ans_dti, cal_dti, check_freq=False)
 
         # intra-session
         from_ = ans.first_minutes[ans.first_session] + pd.Timedelta(15, "min")
         count = 30
         expected = pd.date_range(from_, periods=count, freq="min")
         rtrn = f(from_, count)
-        tm.assert_index_equal(expected, rtrn)
+        assert_index_equal_compat(expected, rtrn, check_freq=False)
 
         # inter-session
         if not ans.sessions_with_gap_after.empty:
@@ -3756,11 +3774,11 @@ class ExchangeCalendarTestBase:
 
         # test where start and end are sessions
         start, end = ans.sessions[10], ans.sessions[-10]
-        tm.assert_index_equal(f(start, end), ans.sessions[10:-9])
+        assert_index_equal_compat(f(start, end), ans.sessions[10:-9], check_freq=False)
 
         # test session blocks
         for _, block in ans.session_block_generator():
-            tm.assert_index_equal(f(block[0], block[-1]), block)
+            assert_index_equal_compat(f(block[0], block[-1]), block, check_freq=False)
 
         # tests where start and end are non-session dates
         if len(ans.non_sessions) > 1:
@@ -3769,7 +3787,7 @@ class ExchangeCalendarTestBase:
 
             # test range defined with start and end as non-sessions
             (start, end), sessions = ans.sessions_range_defined_by_non_sessions
-            tm.assert_index_equal(f(start, end), sessions)
+            assert_index_equal_compat(f(start, end), sessions, check_freq=False)
 
     def test_sessions_has_break(self, default_calendar_with_answers):
         cal, ans = default_calendar_with_answers
@@ -3803,8 +3821,8 @@ class ExchangeCalendarTestBase:
 
         for _, block in ans.session_block_generator():
             count = len(block)
-            tm.assert_index_equal(f(block[0], count), block)
-            tm.assert_index_equal(f(block[-1], -count), block)
+            assert_index_equal_compat(f(block[0], count), block, check_freq=False)
+            assert_index_equal_compat(f(block[-1], -count), block, check_freq=False)
 
         # verify raises ValueError if window extends beyond calendar's session bounds.
         # at limit, window starts on first calendar session
@@ -3862,7 +3880,7 @@ class ExchangeCalendarTestBase:
         for name, block in ans.session_block_generator():
             ans_minutes = block_minutes[name]
             cal_minutes = f(block[0], block[-1])
-            tm.assert_index_equal(ans_minutes, cal_minutes)
+            assert_index_equal_compat(ans_minutes, cal_minutes, check_freq=False)
 
         # tests where start and end are non-session dates
         if len(ans.non_sessions) > 1:
@@ -3872,7 +3890,7 @@ class ExchangeCalendarTestBase:
             # test range defined with start and end as non-sessions
             (start, end), sessions = ans.sessions_range_defined_by_non_sessions
             minutes = ans.get_sessions_minutes(sessions[0], sessions[-1])
-            tm.assert_index_equal(f(start, end), minutes)
+            assert_index_equal_compat(f(start, end), minutes, check_freq=False)
 
     def test_sessions_minutes_count(self, all_calendars_with_answers):
         cal, ans = all_calendars_with_answers

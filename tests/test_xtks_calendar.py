@@ -52,7 +52,7 @@ class TestXTKSCalendar(ExchangeCalendarTestBase):
             # so the presence of a "silver week" was not widely noted before 2009
             if equinox < pd.Timestamp("2009-01-01"):
                 continue
-            if equinox.dayofweek == WEDNESDAY:
+            if equinox.day_of_week == WEDNESDAY:
                 citizens_holidays.append(day_before(equinox))
 
         expected_citizens_holidays = CitizensHolidaySilverWeek
@@ -340,7 +340,7 @@ class TestXTKSCalendar(ExchangeCalendarTestBase):
 
         for year in range(1990, 2019):
             birthday = pd.Timestamp(f"{year}-12-23")
-            if birthday.dayofweek == SUNDAY:
+            if birthday.day_of_week == SUNDAY:
                 birthday += pd.Timedelta(days=1)
             assert birthday in expected_birthdays
 

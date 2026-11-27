@@ -32,7 +32,7 @@ def days_at_time(
     Returns
     -------
     pd.DatetimeIndex
-        DatetimeIndex comprising Timestamp evaluted from `dates` and `time`
+        DatetimeIndex comprising Timestamp evaluated from `dates` and `time`
         with `dates` offset by `day_offset` and `time` interpreted as having
         timezone `tz`. DatetimeIndex has UTC timezone.
 
@@ -81,7 +81,7 @@ def vectorized_sunday_to_monday(dtix):
         ``dtix`` with all sundays moved to the next monday.
     """
     values = dtix.values.copy()
-    values[dtix.weekday == 6] += np.timedelta64(1, "D")
+    values[dtix.day_of_week == 6] += np.timedelta64(1, "D")
     return pd.DatetimeIndex(values)
 
 

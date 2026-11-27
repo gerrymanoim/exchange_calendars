@@ -341,7 +341,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
     def adhoc_holidays(self):
         # overrides as inherited from PrecomputedExchangeCalendar
         lunar_new_years_eve = (chinese_lunar_new_year_dates - pd.Timedelta(days=1))[
-            (chinese_lunar_new_year_dates.weekday == SATURDAY)
+            (chinese_lunar_new_year_dates.day_of_week == SATURDAY)
             & (chinese_lunar_new_year_dates.year < 2013)
         ]
 
@@ -355,9 +355,9 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
             # Sunday, the fourth day of Lunar New Year is designated as a
             # statutory and general holiday in substitution.
             (
-                (chinese_lunar_new_year_dates.weekday == SUNDAY)
-                | (lunar_new_year_2.weekday == SUNDAY)
-                | (lunar_new_year_3.weekday == SUNDAY)
+                (chinese_lunar_new_year_dates.day_of_week == SUNDAY)
+                | (lunar_new_year_2.day_of_week == SUNDAY)
+                | (lunar_new_year_3.day_of_week == SUNDAY)
             )
             & (chinese_lunar_new_year_dates.year >= 2013)
         ]
@@ -441,7 +441,7 @@ class XHKGExchangeCalendar(PrecomputedExchangeCalendar):
     def special_closes_adhoc(self):
         lunar_new_years_eve = (chinese_lunar_new_year_dates - pd.Timedelta(days=1))[
             np.isin(
-                chinese_lunar_new_year_dates.weekday,
+                chinese_lunar_new_year_dates.day_of_week,
                 [TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY],
             )
             & (chinese_lunar_new_year_dates.year >= 2013)

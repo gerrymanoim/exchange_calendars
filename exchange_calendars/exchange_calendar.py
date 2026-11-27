@@ -404,10 +404,18 @@ class ExchangeCalendar(ABC):
             ),
         )
 
-        self.opens_nanos = self.schedule.open.values.astype(np.int64)
-        self.break_starts_nanos = self.schedule.break_start.values.astype(np.int64)
-        self.break_ends_nanos = self.schedule.break_end.values.astype(np.int64)
-        self.closes_nanos = self.schedule.close.values.astype(np.int64)
+        self.opens_nanos = (
+            self.schedule.open.dt.tz_convert(None).to_numpy().astype(np.int64)
+        )
+        self.break_starts_nanos = (
+            self.schedule.break_start.dt.tz_convert(None).to_numpy().astype(np.int64)
+        )
+        self.break_ends_nanos = (
+            self.schedule.break_end.dt.tz_convert(None).to_numpy().astype(np.int64)
+        )
+        self.closes_nanos = (
+            self.schedule.close.dt.tz_convert(None).to_numpy().astype(np.int64)
+        )
 
         _check_breaks_match(self.break_starts_nanos, self.break_ends_nanos)
 
@@ -1026,7 +1034,7 @@ class ExchangeCalendar(ABC):
     @functools.cached_property
     def minutes_nanos(self) -> np.ndarray:
         """All trading minutes as nanoseconds."""
-        return self.minutes.values.astype(np.int64)
+        return self.minutes.tz_convert(None).to_numpy().astype(np.int64)
 
     # Calendar properties.
 
@@ -2240,7 +2248,9 @@ class ExchangeCalendar(ABC):
             raise ValueError("`index` must be ordered.")
         # Find the indices of the previous first session minute and the next
         # last session minute for each minute.
-        index_nanos = minutes.values.astype(np.int64)
+        # If `minutes` is tz-naive, its values are taken as UTC.
+        utc_minutes = minutes if minutes.tz is None else minutes.tz_convert(None)
+        index_nanos = utc_minutes.to_numpy().astype(np.int64)
         first_min_nanos = self.first_minutes_nanos
         last_min_nanos = self.last_minutes_nanos
         prev_first_mins_idxs = (
@@ -2468,7 +2478,7 @@ class ExchangeCalendar(ABC):
         longer the range of dates covered and/or the shorter the period
         (i.e. higher the frequency), the longer the execution. Whilst an
         index with 4000 indices might be created in a couple of
-        miliseconds, a high frequency index with 2 million indices might
+        milliseconds, a high frequency index with 2 million indices might
         take a second or two.
 
         Parameters
