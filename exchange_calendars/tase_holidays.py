@@ -1,15 +1,14 @@
-from datetime import date, datetime
+from __future__ import annotations
+
+import functools
+from typing import TYPE_CHECKING
 
 import pandas as pd
-from pandas._libs.tslibs.conversion import localize_pydatetime
-from pandas.tseries.holiday import Day, Holiday
-from pandas.tseries.offsets import Easter
+from pandas.tseries.holiday import Holiday, previous_friday
 from pyluach import dates, hebrewcal
 
-try:
-    from pandas._libs.tslibs.offsets import apply_wraps
-except ImportError:
-    from pandas.tseries.offsets import apply_wraps
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # Auxiliary functions to get Hebrew dates for holidays observed by TASE for a
 # given Hebrew calendar year. These are just the raw dates with no adjustments
@@ -212,215 +211,113 @@ def simchat_torah(year):
     return _simchat_torah(_hebrew_year(year + 1)).to_greg()
 
 
-def _is_normalized(dt):
-    if dt.hour != 0 or dt.minute != 0 or dt.second != 0 or dt.microsecond != 0:
-        # Regardless of whether dt is datetime vs Timestamp
-        return False
-    if isinstance(dt, pd.Timestamp):
-        return dt.nanosecond == 0
-    return True
+class _Holiday(Holiday):
+    """Holiday that evaluates to no dates if it has no reference dates.
 
-
-class _HolidayOffset(Easter):
-    """
-    Auxiliary class for DateOffset instances for the different holidays.
+    Use this class in place of `Holiday` to define a holiday that has an observance
+    and a `start_date` or an `end_date`. If the holiday's `start_date` or `end_date`
+    excludes every reference date, pandas < 2.0 evaluates the observance to an
+    `Index` of dtype object, rather than to an empty `DatetimeIndex` as pandas >= 2.0
+    does. Filtering that `Index` by `days_of_week` raises an AttributeError.
     """
 
-    @property
-    def holiday(self):
-        """
-        Return the Gregorian date for the holiday in a given Gregorian calendar
-        year.
-        """
-
-    @apply_wraps
-    def _apply(self, other):
-        current = self.holiday(other.year).to_pydate()
-        current = datetime(current.year, current.month, current.day)
-        current = localize_pydatetime(current, other.tzinfo)
-
-        n = self.n
-        if n >= 0 and other < current:
-            n -= 1
-        elif n < 0 and other > current:
-            n += 1
-        # TODO: Why does this handle the 0 case the opposite of others?
-
-        # NOTE: self.holiday a dates.GregorianDate so we have to convert to
-        # type of other
-        new = self.holiday(other.year + n).to_pydate()
-        return datetime(
-            new.year,
-            new.month,
-            new.day,
-            other.hour,
-            other.minute,
-            other.second,
-            other.microsecond,
-        )
-
-    # backwards compat
-    apply = _apply
-
-    def is_on_offset(self, dt):
-        if self.normalize and not _is_normalized(dt):
-            return False
-        return date(dt.year, dt.month, dt.day) == self.holiday(dt.year).to_pydate()
+    # NOTE This class can be removed when the minimum supported version of
+    # pandas bumps to 2.0 (pandas 2.0 introduced the behavior defined here to
+    # `Holiday._apply_rule`).
+    def _apply_rule(self, dates: pd.DatetimeIndex) -> pd.DatetimeIndex:
+        if dates.empty:
+            return dates.copy()
+        return super()._apply_rule(dates)
 
 
-# DateOffset subclasses for holidays observed by TASE.
+def _days_from_holiday(
+    dt: pd.Timestamp, holiday: Callable[[int], dates.GregorianDate], days: int
+) -> pd.Timestamp:
+    """Return the date `days` days from `holiday` in the year of `dt`.
 
-
-class _Purim(_HolidayOffset):
-    @property
-    def holiday(self):
-        return purim
-
-
-class _Passover(_HolidayOffset):
-    @property
-    def holiday(self):
-        return passover
-
-
-class _MemorialDay(_HolidayOffset):
-    @property
-    def holiday(self):
-        return memorial_day
-
-
-class _Pentecost(_HolidayOffset):
-    @property
-    def holiday(self):
-        return pentecost
-
-
-class _FastDay(_HolidayOffset):
-    @property
-    def holiday(self):
-        return fast_day
-
-
-class _NewYear(_HolidayOffset):
-    @property
-    def holiday(self):
-        return new_year
-
-
-class _YomKippur(_HolidayOffset):
-    @property
-    def holiday(self):
-        return yom_kippur
-
-
-class _YomKippurEveObserved(_HolidayOffset):
+    `days` can be positive or negative.
     """
-    Custom offset for Yom Kippur Eve with previous_friday observance.
-    Applies both the Day(-1) offset and moves to previous Friday if needed.
+    return pd.Timestamp(holiday(dt.year).to_pydate()) + pd.Timedelta(days=days)
+
+
+def _observance(
+    holiday: Callable[[int], dates.GregorianDate], days: int = 0
+) -> Callable[[pd.Timestamp], pd.Timestamp]:
+    """Return an observance for a date relative to a holiday.
+
+    Parameters
+    ----------
+    holiday
+        Function that returns the Gregorian date of the holiday in a given
+        Gregorian calendar year.
+    days
+        Number of days from the holiday to the observed date, negative if the
+        observed date is before the holiday.
+
+    Returns
+    -------
+    Callable[[pd.Timestamp], pd.Timestamp]
+        Function that receives a date and returns the date that is `days` days
+        from the holiday in the year of the received date. Pass the function as
+        the `observance` of a `Holiday` that is defined for 1 January.
     """
-
-    @property
-    def holiday(self):
-        return yom_kippur
-
-    @apply_wraps
-    def _apply(self, other):
-        current = self.holiday(other.year).to_pydate()
-        # Get the day before (Yom Kippur Eve)
-        current = current - pd.Timedelta(days=1)
-        current = datetime(current.year, current.month, current.day)
-        # Apply previous_friday observance (move to previous Friday if on weekend)
-        weekday = current.weekday()
-        if weekday == 5:  # Saturday
-            current = current - pd.Timedelta(days=1)
-        elif weekday == 6:  # Sunday
-            current = current - pd.Timedelta(days=2)
-        current = localize_pydatetime(current, other.tzinfo)
-
-        n = self.n
-        if n >= 0 and other < current:
-            n -= 1
-        elif n < 0 and other > current:
-            n += 1
-
-        new = self.holiday(other.year + n).to_pydate()
-        # Get the day before (Yom Kippur Eve)
-        new = new - pd.Timedelta(days=1)
-        new = datetime(new.year, new.month, new.day)
-        # Apply previous_friday observance
-        weekday = new.weekday()
-        if weekday == 5:  # Saturday
-            new = new - pd.Timedelta(days=1)
-        elif weekday == 6:  # Sunday
-            new = new - pd.Timedelta(days=2)
-
-        return datetime(
-            new.year,
-            new.month,
-            new.day,
-            other.hour,
-            other.minute,
-            other.second,
-            other.microsecond,
-        )
-
-    def is_on_offset(self, dt):
-        if self.normalize and not _is_normalized(dt):
-            return False
-        # Get the expected date and apply the same logic
-        expected = self.holiday(dt.year).to_pydate() - pd.Timedelta(days=1)
-        expected = date(expected.year, expected.month, expected.day)
-        weekday = expected.weekday()
-        if weekday == 5:  # Saturday
-            expected = expected - pd.Timedelta(days=1)
-        elif weekday == 6:  # Sunday
-            expected = expected - pd.Timedelta(days=2)
-        return date(dt.year, dt.month, dt.day) == expected.date()
+    return functools.partial(_days_from_holiday, holiday=holiday, days=days)
 
 
-class _Sukkoth(_HolidayOffset):
-    @property
-    def holiday(self):
-        return sukkoth
+def _yom_kippur_eve_observed(dt: pd.Timestamp) -> pd.Timestamp:
+    """Return the date on which Yom Kippur Eve is observed in the year of `dt`.
 
-
-class _SimchatTorah(_HolidayOffset):
-    @property
-    def holiday(self):
-        return simchat_torah
+    Yom Kippur Eve is observed on the preceding Friday if Yom Kippur Eve falls on a
+    Saturday or a Sunday.
+    """
+    return previous_friday(_days_from_holiday(dt, yom_kippur, -1))
 
 
 # Holiday instances for holidays observed by TASE.
-Purim = Holiday("Purim", month=1, day=1, offset=[_Purim()])
-PassoverEve = Holiday("Passover Eve", month=1, day=1, offset=[_Passover(), Day(-1)])
-Passover = Holiday("Passover", month=1, day=1, offset=[_Passover()])
-Passover2Eve = Holiday("Passover II Eve", month=1, day=1, offset=[_Passover(), Day(5)])
-Passover2 = Holiday("Passover II", month=1, day=1, offset=[_Passover(), Day(6)])
-PentecostEve = Holiday("Pentecost Eve", month=1, day=1, offset=[_Pentecost(), Day(-1)])
-Pentecost = Holiday("Pentecost", month=1, day=1, offset=[_Pentecost()])
-FastDay = Holiday("Tisha B'Av", month=1, day=1, offset=[_FastDay()])
-MemorialDay = Holiday("Memorial Day", month=1, day=1, offset=[_MemorialDay()])
-IndependenceDay = Holiday(
-    "Independence Day", month=1, day=1, offset=[_MemorialDay(), Day(1)]
+Purim = Holiday("Purim", month=1, day=1, observance=_observance(purim))
+PassoverEve = Holiday(
+    "Passover Eve", month=1, day=1, observance=_observance(passover, -1)
 )
-NewYearsEve = Holiday("New Year's Eve", month=1, day=1, offset=[_NewYear(), Day(-1)])
-NewYear = Holiday("New Year", month=1, day=1, offset=[_NewYear()])
-NewYear2 = Holiday("New Year II", month=1, day=1, offset=[_NewYear(), Day(1)])
-YomKippurEve = Holiday("Yom Kippur Eve", month=1, day=1, offset=[_YomKippur(), Day(-1)])
-YomKippurEveObserved = Holiday(
+Passover = Holiday("Passover", month=1, day=1, observance=_observance(passover))
+Passover2Eve = Holiday(
+    "Passover II Eve", month=1, day=1, observance=_observance(passover, 5)
+)
+Passover2 = Holiday("Passover II", month=1, day=1, observance=_observance(passover, 6))
+PentecostEve = Holiday(
+    "Pentecost Eve", month=1, day=1, observance=_observance(pentecost, -1)
+)
+Pentecost = Holiday("Pentecost", month=1, day=1, observance=_observance(pentecost))
+FastDay = Holiday("Tisha B'Av", month=1, day=1, observance=_observance(fast_day))
+MemorialDay = Holiday(
+    "Memorial Day", month=1, day=1, observance=_observance(memorial_day)
+)
+IndependenceDay = Holiday(
+    "Independence Day", month=1, day=1, observance=_observance(memorial_day, 1)
+)
+NewYearsEve = Holiday(
+    "New Year's Eve", month=1, day=1, observance=_observance(new_year, -1)
+)
+NewYear = Holiday("New Year", month=1, day=1, observance=_observance(new_year))
+NewYear2 = Holiday("New Year II", month=1, day=1, observance=_observance(new_year, 1))
+YomKippurEve = Holiday(
+    "Yom Kippur Eve", month=1, day=1, observance=_observance(yom_kippur, -1)
+)
+YomKippurEveObserved = _Holiday(
     "Market Holiday",
     month=1,
     day=1,
-    offset=[_YomKippurEveObserved()],
+    observance=_yom_kippur_eve_observed,
     start_date=pd.Timestamp("2026-01-05"),
 )
-YomKippur = Holiday("Yom Kippur", month=1, day=1, offset=[_YomKippur()])
-SukkothEve = Holiday("Sukkoth Eve", month=1, day=1, offset=[_Sukkoth(), Day(-1)])
-Sukkoth = Holiday("Sukkoth", month=1, day=1, offset=[_Sukkoth()])
+YomKippur = Holiday("Yom Kippur", month=1, day=1, observance=_observance(yom_kippur))
+SukkothEve = Holiday("Sukkoth Eve", month=1, day=1, observance=_observance(sukkoth, -1))
+Sukkoth = Holiday("Sukkoth", month=1, day=1, observance=_observance(sukkoth))
 SimchatTorahEve = Holiday(
-    "Simchat Torah Eve", month=1, day=1, offset=[_SimchatTorah(), Day(-1)]
+    "Simchat Torah Eve", month=1, day=1, observance=_observance(simchat_torah, -1)
 )
-SimchatTorah = Holiday("Simchat Torah", month=1, day=1, offset=[_SimchatTorah()])
+SimchatTorah = Holiday(
+    "Simchat Torah", month=1, day=1, observance=_observance(simchat_torah)
+)
 
 DaysOfWeekBefore2026 = (0, 1, 2, 3, 6)
 DaysOfWeek = (0, 1, 2, 3, 4)
@@ -429,150 +326,150 @@ EndDate = pd.Timestamp("2026-01-05")
 
 
 # Sukkoth interim days - the 3 days following Sukkoth
-SukkothInterimDay1 = Holiday(
+SukkothInterimDay1 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(1)],
+    observance=_observance(sukkoth, 1),
     start_date=StartDate,
     days_of_week=DaysOfWeek,
 )
-SukkothInterimDay1Before2026 = Holiday(
+SukkothInterimDay1Before2026 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(1)],
+    observance=_observance(sukkoth, 1),
     end_date=EndDate,
     days_of_week=DaysOfWeekBefore2026,
 )
-SukkothInterimDay2 = Holiday(
+SukkothInterimDay2 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(2)],
+    observance=_observance(sukkoth, 2),
     start_date=StartDate,
     days_of_week=DaysOfWeek,
 )
-SukkothInterimDay2Before2026 = Holiday(
+SukkothInterimDay2Before2026 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(2)],
+    observance=_observance(sukkoth, 2),
     end_date=EndDate,
     days_of_week=DaysOfWeekBefore2026,
 )
-SukkothInterimDay3 = Holiday(
+SukkothInterimDay3 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(3)],
+    observance=_observance(sukkoth, 3),
     start_date=StartDate,
     days_of_week=DaysOfWeek,
 )
-SukkothInterimDay3Before2026 = Holiday(
+SukkothInterimDay3Before2026 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(3)],
+    observance=_observance(sukkoth, 3),
     end_date=EndDate,
     days_of_week=DaysOfWeekBefore2026,
 )
-SukkothInterimDay4 = Holiday(
+SukkothInterimDay4 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(4)],
+    observance=_observance(sukkoth, 4),
     start_date=StartDate,
     days_of_week=DaysOfWeek,
 )
-SukkothInterimDay4Before2026 = Holiday(
+SukkothInterimDay4Before2026 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(4)],
+    observance=_observance(sukkoth, 4),
     end_date=EndDate,
     days_of_week=DaysOfWeekBefore2026,
 )
-SukkothInterimDay5 = Holiday(
+SukkothInterimDay5 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(5)],
+    observance=_observance(sukkoth, 5),
     start_date=StartDate,
     days_of_week=DaysOfWeek,
 )
-SukkothInterimDay5Before2026 = Holiday(
+SukkothInterimDay5Before2026 = _Holiday(
     "Sukkoth Interim Day",
     month=1,
     day=1,
-    offset=[_Sukkoth(), Day(5)],
+    observance=_observance(sukkoth, 5),
     end_date=EndDate,
     days_of_week=DaysOfWeekBefore2026,
 )
 
 # Passover interim days are the days between beginning and end of passover.
 # Any otherwise regular business day in that period becomes an early close day.
-PassoverInterimDay1 = Holiday(
+PassoverInterimDay1 = _Holiday(
     "Passover Interim Day",
     month=1,
     day=1,
-    offset=[_Passover(), Day(1)],
+    observance=_observance(passover, 1),
     start_date=StartDate,
     days_of_week=DaysOfWeek,
 )
-PassoverInterimDay1Before2026 = Holiday(
+PassoverInterimDay1Before2026 = _Holiday(
     "Passover Interim Day",
     month=1,
     day=1,
-    offset=[_Passover(), Day(1)],
+    observance=_observance(passover, 1),
     end_date=EndDate,
     days_of_week=DaysOfWeekBefore2026,
 )
-PassoverInterimDay2 = Holiday(
+PassoverInterimDay2 = _Holiday(
     "Passover Interim Day",
     month=1,
     day=1,
-    offset=[_Passover(), Day(2)],
+    observance=_observance(passover, 2),
     start_date=StartDate,
     days_of_week=DaysOfWeek,
 )
-PassoverInterimDay2Before2026 = Holiday(
+PassoverInterimDay2Before2026 = _Holiday(
     "Passover Interim Day",
     month=1,
     day=1,
-    offset=[_Passover(), Day(2)],
+    observance=_observance(passover, 2),
     end_date=EndDate,
     days_of_week=DaysOfWeekBefore2026,
 )
-PassoverInterimDay3 = Holiday(
+PassoverInterimDay3 = _Holiday(
     "Passover Interim Day",
     month=1,
     day=1,
-    offset=[_Passover(), Day(3)],
+    observance=_observance(passover, 3),
     start_date=StartDate,
     days_of_week=DaysOfWeek,
 )
-PassoverInterimDay3Before2026 = Holiday(
+PassoverInterimDay3Before2026 = _Holiday(
     "Passover Interim Day",
     month=1,
     day=1,
-    offset=[_Passover(), Day(3)],
+    observance=_observance(passover, 3),
     end_date=EndDate,
     days_of_week=DaysOfWeekBefore2026,
 )
-PassoverInterimDay4 = Holiday(
+PassoverInterimDay4 = _Holiday(
     "Passover Interim Day",
     month=1,
     day=1,
-    offset=[_Passover(), Day(4)],
+    observance=_observance(passover, 4),
     start_date=StartDate,
     days_of_week=DaysOfWeek,
 )
-PassoverInterimDay4Before2026 = Holiday(
+PassoverInterimDay4Before2026 = _Holiday(
     "Passover Interim Day",
     month=1,
     day=1,
-    offset=[_Passover(), Day(4)],
+    observance=_observance(passover, 4),
     end_date=EndDate,
     days_of_week=DaysOfWeekBefore2026,
 )
