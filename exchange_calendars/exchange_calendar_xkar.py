@@ -296,8 +296,6 @@ class XKARExchangeCalendar(ExchangeCalendar):
             "2025-06-07",
             "2025-06-08",
             "2025-06-09",
-            # Eid-ul-Azha public holidays declared 2026-05-26, 27 and 28.
-            # 2026-05-28 is already covered by the Youm-e-Takbeer rule.
             "2026-05-26",
             "2026-05-27",
         ]

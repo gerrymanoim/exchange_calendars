@@ -18,7 +18,9 @@ class TestXKARCalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def regular_holidays_sample(self):
         # iqbal day observed until 2014 (last year of observance 2013)
-        yield [f"{year}-11-09" for year in range(2002, 2014)]
+        yield [f"{year}-11-09" for year in range(2002, 2014)] + [
+            "2026-05-28"  # Youm-e-Takbeer, also Eid-ul-Azha
+        ]
 
     @pytest.fixture
     def non_holidays_sample(self):
@@ -32,8 +34,8 @@ class TestXKARCalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def adhoc_holidays_sample(self):
         yield [
-            # Eid-ul-Azha 2026 public holidays (2026-05-26, 27 and 28); 05-28 is
-            # covered by the Youm-e-Takbeer rule.
+            # Eid-ul-Azha 2026 public holidays (05-28 is covered by the
+            # Youm-e-Takbeer rule).
             "2026-05-26",
             "2026-05-27",
             # Ashura 2026 (9th & 10th Muharram).
