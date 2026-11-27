@@ -19,7 +19,7 @@ import operator
 import warnings
 from abc import ABC, abstractmethod
 from calendar import day_name
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import numpy as np
 import pandas as pd
@@ -227,8 +227,8 @@ class ExchangeCalendar(ABC):
             - by tests for efficiency.
     """
 
-    _LEFT_SIDES = ["left", "both"]
-    _RIGHT_SIDES = ["right", "both"]
+    _LEFT_SIDES: ClassVar[list[str]] = ["left", "both"]
+    _RIGHT_SIDES: ClassVar[list[str]] = ["right", "both"]
 
     @classmethod
     def bound_min(cls) -> pd.Timestamp | None:
