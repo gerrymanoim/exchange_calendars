@@ -15,12 +15,10 @@
 
 
 from datetime import time
-import functools
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.holiday import Holiday
-from pandas.tseries.offsets import CustomBusinessDay
 
 from .exchange_calendar import HolidayCalendar
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
@@ -29,7 +27,6 @@ from .xkrx_holidays import (
     precomputed_krx_holidays,
     precomputed_csat_days,
 )
-from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 from .pandas_extensions.korean_holiday import next_business_day
 
 
@@ -345,21 +342,6 @@ class XKRXExchangeCalendar(PrecomputedExchangeCalendar):
             _special_close_offsets_adhoc,
             start,
             end,
-        )
-
-    @functools.cached_property
-    def day(self):
-        if self.special_weekmasks:
-            return MultipleWeekmaskCustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-                weekmasks=self.special_weekmasks,
-            )
-        return CustomBusinessDay(
-            holidays=self.adhoc_holidays,
-            calendar=self.regular_holidays,
-            weekmask=self.weekmask,
         )
 
 

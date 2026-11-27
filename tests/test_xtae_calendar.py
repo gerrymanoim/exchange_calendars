@@ -125,6 +125,31 @@ class TestXTAECalendar(ExchangeCalendarTestBase):
     def non_early_closes_sample_time(self):
         yield pd.Timedelta(hours=17, minutes=15)
 
+    def test_day(self, default_calendar):
+        """Verify `day` reflects `special_weekmasks` outside the calendar's range.
+
+        Until 2026-01-04 the exchange was open from Sunday to Thursday. From
+        2026-01-05 the exchange is open from Monday to Friday.
+        """
+        cal = default_calendar
+        day = cal.day
+
+        # dates before the calendar's first session
+        thu, fri, sun = map(pd.Timestamp, ("1980-01-03", "1980-01-04", "1980-01-06"))
+        assert thu < cal.first_session
+        assert day.is_on_offset(sun)
+        assert not day.is_on_offset(fri)
+        assert thu + day == sun
+        assert sun - day == thu
+
+        # dates after the calendar's last session
+        thu, fri, sun = map(pd.Timestamp, ("2100-01-07", "2100-01-08", "2100-01-10"))
+        assert thu > cal.last_session
+        assert day.is_on_offset(fri)
+        assert not day.is_on_offset(sun)
+        assert thu + day == fri
+        assert fri + day == pd.Timestamp("2100-01-11")
+
 
 class TestXTAECalendarEarlyCloseSundaysBefore2026(ExchangeCalendarTestBase):
     @pytest.fixture(scope="class")

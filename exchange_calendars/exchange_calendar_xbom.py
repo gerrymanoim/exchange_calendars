@@ -2,12 +2,9 @@ from datetime import time
 from zoneinfo import ZoneInfo
 
 import pandas as pd
-import functools
 
-from pandas.tseries.offsets import CustomBusinessDay
 
 from .precomputed_exchange_calendar import PrecomputedExchangeCalendar
-from .pandas_extensions.offsets import MultipleWeekmaskCustomBusinessDay
 
 """
 References for precomputed BSE/NSE holidays:
@@ -511,18 +508,3 @@ class XBOMExchangeCalendar(PrecomputedExchangeCalendar):
             # https://www.angelone.in/news/will-bse-and-nse-be-open-on-budget-day-feb-1
             (pd.Timestamp("2025-01-27"), pd.Timestamp("2025-02-02"), "1111110"),
         ]
-
-    @functools.cached_property
-    def day(self):
-        if self.special_weekmasks:
-            return MultipleWeekmaskCustomBusinessDay(
-                holidays=self.adhoc_holidays,
-                calendar=self.regular_holidays,
-                weekmask=self.weekmask,
-                weekmasks=self.special_weekmasks,
-            )
-        return CustomBusinessDay(
-            holidays=self.adhoc_holidays,
-            calendar=self.regular_holidays,
-            weekmask=self.weekmask,
-        )

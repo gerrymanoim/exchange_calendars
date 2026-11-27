@@ -324,6 +324,8 @@ class ExchangeCalendar(ABC):
                 f" '{start}' and `end` as '{end}'."
             )
 
+        # `day` reads the parsed `start` and `end`.
+        self._start, self._end = start, end
         _all_days = pd.date_range(start, end, freq=self.day)  # session labels
         if _all_days.empty:
             raise errors.NoSessionsError(calendar_name=self.name, start=start, end=end)
@@ -549,15 +551,64 @@ class ExchangeCalendar(ABC):
 
     @property
     def weekmask(self) -> str:
-        """Indicator of weekdays on which the exchange is open.
+        """Indicator of the days of the week on which the exchange is open.
+
+        This is the latest weekmask. It is applied to every date that
+        is not covered by a special weekmask (see `special_weekmasks`).
+
+        The weekmask is a string of seven '1's and '0's (Monday first), in
+        which '1' marks a day of the week on which the exchange is open.
 
         Default is '1111100' (i.e. Monday-Friday).
-
-        See Also
-        --------
-        numpy.busdaycalendar
         """
         return "1111100"
+
+    @property
+    def special_weekmasks(
+        self,
+    ) -> list[tuple[pd.Timestamp | None, pd.Timestamp, str]]:
+        """Weekmasks that apply in place of `weekmask` over given periods.
+
+        Example of what would be defined as special weekmasks:
+            "Until 1998-12-06 the exchange was open from Monday to
+            Saturday. From 1998-12-07 to 2026-01-04 the exchange was open
+            from Sunday to Thursday. From 2026-01-05 the exchange is open
+            from Monday to Friday. In the week from 2026-03-02 to
+            2026-03-08 the exchange was also open on the Saturday".
+
+            `weekmask` defined as "1111100"
+
+            returned value:
+                [
+                    (None, pd.Timestamp("1998-12-06"), "1111110"),
+                    (
+                        pd.Timestamp("1998-12-07"),
+                        pd.Timestamp("2026-01-04"),
+                        "1111001",
+                    ),
+                    (
+                        pd.Timestamp("2026-03-02"),
+                        pd.Timestamp("2026-03-08"),
+                        "1111110",
+                    ),
+                ]
+
+        Returns
+        -------
+        list[tuple[pd.Timestamp | None, pd.Timestamp, str]]:
+            List of tuples each describing a period over which a special
+            weekmask applies in place of `weekmask`:
+                [0] First date of the period, or None if the period has
+                no first date. (Must be timezone-naive.)
+
+                [1] Last date of the period. (Must be timezone-naive.)
+
+                [2] Weekmask that applies over the period, for example
+                '0111110' (i.e. Tuesday-Saturday).
+
+            Periods must not overlap.
+        """
+        return []
 
     @property
     def open_offset(self) -> int:
@@ -644,7 +695,7 @@ class ExchangeCalendar(ABC):
         """Adhoc non-standard open times.
 
         Defines non-standard open times that cannot be otherwise codified
-        within within `special_opens`.
+        within `special_opens`.
 
         Example of an event to define as an adhoc special open:
             "On 2022-02-14 due to a typhoon the exchange opened at 13:00,
@@ -753,11 +804,47 @@ class ExchangeCalendar(ABC):
 
     @functools.cached_property
     def day(self) -> CustomBusinessDay:
-        """CustomBusinessDay instance representing calendar sessions."""
+        """CustomBusinessDay instance representing calendar sessions.
+
+        The return's weekmask property is the combined weekmask of
+        `weekmask` and each special weekmask defined by
+        `special_weekmasks`, i.e. it includes every day of the week that
+        any of these weekmasks includes. (If `special_weekmasks` is empty
+        then the return's weekmask is the same as `weekmask`.)
+
+        The return's holidays property includes every date that is an
+        invalid day (i.e. a '0', a non-trading day) of the weekmask that
+        applies on that date, if the return's weekmask treats that day of
+        the week as valid. (Note that there are no such dates if
+        `special_weekmasks` is empty.) The weekmask that applies on a date
+        is the weekmask of the special weekmask period that covers the
+        date. If no period covers the date, `weekmask` applies.
+
+        The holidays that the previous paragraph describes are evaluated
+        from the earlier of the calendar's `start` and 1970-01-01 through
+        the later of the calendar's `end` and 2200-12-31. Outside of this
+        range, the return treats a date as a session if the return's
+        weekmask includes the date's day of the week and the date is not a
+        holiday.
+        """
+        if not self.special_weekmasks:
+            return CustomBusinessDay(
+                holidays=self.adhoc_holidays,
+                calendar=self.regular_holidays,
+                weekmask=self.weekmask,
+            )
+        # pandas evaluates `regular_holidays` from `AbstractHolidayCalendar.start_date`
+        # through `AbstractHolidayCalendar.end_date`. The weekmask holidays are
+        # evaluated over at least the same range.
+        start = min(self._start, AbstractHolidayCalendar.start_date)
+        end = max(self._end, AbstractHolidayCalendar.end_date)
+        weekmask, weekmask_holidays = _combine_weekmasks(
+            self.weekmask, self.special_weekmasks, start, end
+        )
         return CustomBusinessDay(
-            holidays=self.adhoc_holidays,
+            holidays=[*self.adhoc_holidays, *weekmask_holidays],
             calendar=self.regular_holidays,
-            weekmask=self.weekmask,
+            weekmask=weekmask,
         )
 
     @classmethod
@@ -2818,6 +2905,58 @@ class ExchangeCalendar(ABC):
             start,
             end,
         )
+
+
+def _combine_weekmasks(
+    weekmask: str,
+    special_weekmasks: list[tuple[pd.Timestamp | None, pd.Timestamp, str]],
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+) -> tuple[str, np.ndarray]:
+    """Express a weekmask and special weekmasks as one weekmask and holidays.
+
+    Parameters
+    ----------
+    weekmask
+        Weekmask that applies outside of the periods of `special_weekmasks`.
+    special_weekmasks
+        Special weekmasks, as `ExchangeCalendar.special_weekmasks`.
+    start
+        First date of the range over which to evaluate the holidays.
+    end
+        Last date of the range over which to evaluate the holidays.
+
+    Returns
+    -------
+    tuple[str, np.ndarray]
+        [0] Combined weekmask. The combined weekmask includes every day of the week
+        that `weekmask` or any weekmask of `special_weekmasks` includes.
+
+        [1] Holidays, as an array of dtype "datetime64[D]". The holidays are every
+        date from `start` through `end` whose day of the week the combined weekmask
+        includes although the weekmask that applies on the date excludes it.
+    """
+    dates = np.arange(
+        np.datetime64(start.date()),
+        np.datetime64(end.date()) + np.timedelta64(1, "D"),
+    )
+    daysofweek = pd.DatetimeIndex(dates).day_of_week.to_numpy()
+    mask = np.busdaycalendar(weekmask=weekmask).weekmask
+    open_on_date = mask[daysofweek]  # array of booleans, one per date
+    for period_start, period_end, period_weekmask in special_weekmasks:
+        period_mask = np.busdaycalendar(weekmask=period_weekmask).weekmask
+        mask |= period_mask
+        i = (
+            0
+            if period_start is None
+            else dates.searchsorted(np.datetime64(period_start.date()))
+        )
+        j = dates.searchsorted(np.datetime64(period_end.date()), side="right")
+        # replace latest weekmask (i.e. as represented by `weekmask`) with the
+        # special period's own - recall that special periods do not overlap.
+        open_on_date[i:j] = period_mask[daysofweek[i:j]]
+    holidays = dates[mask[daysofweek] & ~open_on_date]
+    return "".join("1" if included else "0" for included in mask), holidays
 
 
 def _check_breaks_match(break_starts_nanos: np.ndarray, break_ends_nanos: np.ndarray):
