@@ -311,6 +311,13 @@ documentation.
 license compression: do not add content, but where making the structure of a sentence
 explicit takes more words, use more words.
 
+#### Terminology
+
+In all documentation, use the following terms as defined here:
+- "weekday" means a day from Monday to Friday (as `WEEKDAYS` of
+  @exchange_calendars/exchange_calendar.py).
+- "day of the week" means any day from Monday to Sunday.
+
 ### Comments
 
 - pay particular attention to comments starting with:
