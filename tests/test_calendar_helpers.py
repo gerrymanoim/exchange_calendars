@@ -533,16 +533,43 @@ class TestTradingIndex:
         slice of Answers fall later than the left side of the first
         interval of the next session/subsession?
         """
-        can_overlap = False
         if has_break:
             duration = ans.break_starts[slc] - ans.opens[slc].dt.ceil(align)
             gap = ans.break_ends[slc].dt.ceil(align_pm) - ans.break_starts[slc]
-            can_overlap = (gap < duration).any()
-        if not can_overlap:
-            duration = ans.closes[slc] - ans.opens[slc].dt.ceil(align)
-            gap = ans.opens.shift(-1)[slc].dt.ceil(align) - ans.closes[slc]
-            can_overlap = (gap < duration).any()
-        return can_overlap
+            # The first comment below explains this check, with the morning
+            # subsession in place of the session and the break in place of the gap.
+            if (gap < duration).any():
+                return True
+
+        opens = ans.opens.dt.ceil(align)
+        duration = ans.closes[slc] - opens[slc]
+        gap = opens.shift(-1)[slc] - ans.closes[slc]
+        # A session will overlap with the next session if the right side of
+        # the session's last interval extends beyond the session's close by
+        # more than ("at least" if closed is "both") the gap between the
+        # session's close and the next session's open. Of the periods that are
+        # no longer than the session's duration, the one that extends the last
+        # interval furthest beyond the close is one minute shorter than the
+        # duration (periods and session times are whole minutes). The last
+        # interval then extends 'period minus one minute' beyond the close,
+        # i.e. two minutes less than the duration. Overlaps of this nature are
+        # accounted for by checking if `gap` is less than `duration` (a check
+        # that is slightly wider than necessary).
+        multi_interval_session_can_overlap = (gap < duration).any()
+        # A session will overlap with the next session if the period is
+        # at least as long as ("longer than" if closed is "right") the
+        # difference between the session's open and the next session's open.
+        # This difference can be less than the maximum possible period (a
+        # minute short of 24 hours) if the next session opens at an earlier
+        # time of day than the session (all in terms of UTC), for example
+        # if a spring DST change brings the next session's UTC open forward
+        # by an hour. Overlaps of this nature are accounted for by checking
+        # if `duration + gap` is less than or equal to the maximum possible
+        # period.
+        one_interval_session_can_overlap = (
+            duration + gap <= ONE_DAY - ONE_MINUTE
+        ).any()
+        return multi_interval_session_can_overlap or one_interval_session_can_overlap
 
     @staticmethod
     def evaluate_overrun(
@@ -987,11 +1014,11 @@ class TestTradingIndex:
     def test_overlap_error_fuzz(self, data, name, calendars, answers, closed, one_min):
         """Fuzz for expected IndicesOverlapError.
 
-        NB. Test should exclude calendars, such as "XLON", for which
-        indices cannot overlap. These are calendars where a
-        session/subsession duration is less than the subsequent gap
-        between that session/subsession and the next. Passing any slice of
-        the answers for such a calendar to `could_overlap` would return
+        NB. Test should exclude calendars for which indices cannot overlap.
+        These are calendars in which every session/subsession is shorter
+        than the gap that follows it and in which every session opens at
+        least one day after the previous session opens. Passing any slice
+        of the answers for such a calendar to `could_overlap` would return
         False. That such calendars cannot have overlapping indices is
         verified by `test_indices_fuzz` and `test_intervals_fuzz` which
         place no restraints on the period that these calendars can be
