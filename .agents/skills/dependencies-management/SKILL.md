@@ -72,9 +72,9 @@ Keep any changes that the hooks make. If a hook reports a violation that the hoo
 
 ### 5. Test
 
-Run the test suite:
+Run the test suite under the highest Python version that the project supports (i.e. the highest version in the `python-version` list of the matrix in @.github/workflows/build-test.yml). Use this Python version because the lock file pins the latest allowed version of each dependency for this Python version.
 ```bash
-uv run pytest -v
+uv run --python <highest_version> pytest -v
 ```
 
 **Interpret local test results:**
@@ -97,7 +97,7 @@ Iterate on this process until:
 IMPORTANT: in this step you should not run the full test suite, rather validate fixes by re-running only the previously failing tests. Example to run a specific test:
 
 ```bash
-pytest tests/test_module.py::test_name
+uv run --python <highest_version> pytest tests/test_module.py::test_name
 ```
 
 ### 7. Raise PR
@@ -162,11 +162,9 @@ Perform the following 'tidy up' actions:
 ---
 
 **Fixable warnings**
-The following warnings are considered UNFIXABLE and you should not attempt to fix them.
-- warnings that have their origin in a dependency's code.
-- `PricesMissingWarning`.
+Warnings that have their origin in a dependency's code are considered UNFIXABLE and you should not attempt to fix them. All other warnings are considered fixable.
 
-All other warnings are considered fixable.
+The origin of a warning is the file that the warning reports (i.e. the file whose path precedes the warning's category). A file within a `site-packages` directory is a dependency's code. For example, the origin of the warning `.../exchange_calendars/exchange_calendar_xhkg.py:369: DeprecationWarning: ...` is this package's code, although numpy issued the warning.
 
 ## Adding dependencies
 ```bash
