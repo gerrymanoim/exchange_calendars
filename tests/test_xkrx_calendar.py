@@ -82,6 +82,7 @@ class TestXKRXCalendar(ExchangeCalendarTestBase):
             # so the next monday becomes alternative holiday
             "2023-05-29",
             "2026-05-01",  # Labor Day public holiday from 2026.
+            "2026-07-17",  # Constitution Day, reinstated as a public holiday from 2026.
         ]
 
     @pytest.fixture
