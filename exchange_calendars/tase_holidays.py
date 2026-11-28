@@ -261,6 +261,7 @@ class _HolidayOffset(Easter):
 
     # backwards compat
     apply = _apply
+    _add_datetime = _apply  # pandas >= 3.1 name of the scalar hook
 
     def is_on_offset(self, dt):
         if self.normalize and not _is_normalized(dt):
@@ -363,6 +364,8 @@ class _YomKippurEveObserved(_HolidayOffset):
             other.second,
             other.microsecond,
         )
+
+    _add_datetime = _apply  # pandas >= 3.1 name of the scalar hook
 
     def is_on_offset(self, dt):
         if self.normalize and not _is_normalized(dt):
