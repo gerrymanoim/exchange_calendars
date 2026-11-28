@@ -25,6 +25,8 @@ class TestXTAICalendar(ExchangeCalendarTestBase):
             "2025-09-29",  # Teachers Day
             "2025-10-24",  # Taiwan Restoration Day
             "2025-12-25",  # Constitution Day
+            "2027-12-24",  # Constitution Day on Saturday, Dec 25th.
+            "2033-12-26",  # Constitution Day on Sunday, Dec 25th.
             #
             # 2019
             "2019-01-01",  # New Year's Day
@@ -76,4 +78,21 @@ class TestXTAICalendar(ExchangeCalendarTestBase):
             "2024-09-16",  # Mid-Autumn Festival on Tuesday, Sep 17th.
             "2024-10-11",  # National Day on Thursday, Oct 10th.
             "2030-09-13",  # Mid-Autumn Festival on Thursday, Sep 12th.
+            "2027-12-27",  # Constitution Day on Saturday, Dec 25th.
+            "2033-12-23",  # Constitution Day on Sunday, Dec 25th.
+        ]
+
+    @pytest.fixture
+    def adhoc_holidays_sample(self):
+        yield [
+            "2005-05-02",  # Labour Day on Sunday, May 1st.
+            "2011-05-02",  # Labour Day on Sunday, May 1st.
+            "2022-02-04",  # Adjusted Holiday
+            "2023-01-18",  # No trading
+            "2024-10-31",  # Typhoon Kong-rey
+            "2026-07-10",  # Typhoon Bavi
+            "2026-10-23",  # Typhoon Champi
+            "2027-02-02",  # No trading
+            "2027-02-03",  # No trading
+            "2027-04-06",  # Children's Day, observed after Tomb Sweeping Day
         ]

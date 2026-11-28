@@ -274,6 +274,7 @@ ConstitutionDay = Holiday(
     month=12,
     day=25,
     start_date="2025",
+    observance=nearest_workday,
 )
 
 chinese_new_year = chinese_new_year_offset(chinese_lunar_new_year_dates)
@@ -353,6 +354,8 @@ chinese_new_year_extras = pd.to_datetime(
         "2021-02-08",
         "2021-02-09",
         "2022-01-27",
+        "2022-02-04",  # Adjusted Holiday
+        "2023-01-18",  # No trading
         "2023-01-26",
         "2023-01-27",
         "2024-02-06",
@@ -360,21 +363,26 @@ chinese_new_year_extras = pd.to_datetime(
         "2025-01-23",
         "2025-01-24",
         "2026-02-20",
+        "2027-02-02",  # No trading
+        "2027-02-03",  # No trading
     ]
 )
 
 # Some abnormal observances of regularly observed holidays.
 extra_holidays = pd.to_datetime(
     [
+        "2027-04-06",  # Children's Day, observed after Tomb Sweeping Day
         "2026-02-12",  # No trading
         "2021-04-02",  # Women And Childrens Day
         "2020-04-02",  # Tomb Sweeping Day
         "2016-04-05",  # Tomb Sweeping Day
         "2012-12-31",  # New Year's Eve
         "2012-02-27",  # Peace Memorial Day
+        "2011-05-02",  # Labour Day
         "2009-01-02",  # New Year's Day
         "2006-10-09",  # National Day
         "2005-09-01",  # Bank Holiday
+        "2005-05-02",  # Labour Day
         "2018-04-06",  # Tomb Sweeping Day, https://www.dgpa.gov.tw/information?uid=41&pid=7488
         "2007-04-06",  # Tomb Sweeping Day
     ]
@@ -382,6 +390,10 @@ extra_holidays = pd.to_datetime(
 
 typhoons = pd.to_datetime(
     [
+        # TAIFEX notices: https://www.taifex.com.tw/cht/11/newsDetail?newsType=1&idx=N
+        "2026-10-23",  # Typhoon Champi, idx=17441
+        "2026-07-10",  # Typhoon Bavi, idx=17137
+        "2024-10-31",  # Typhoon Kong-rey, idx=15446
         "2024-10-03",
         "2024-10-02",
         "2024-07-25",
