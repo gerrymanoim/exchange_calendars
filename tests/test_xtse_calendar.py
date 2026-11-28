@@ -40,9 +40,16 @@ class TestXTSECalendar(ExchangeCalendarTestBase):
     @pytest.fixture
     def adhoc_holidays_sample(self):
         yield [
-            "2001-09-11",  # 9/11
-            "2001-09-12",  # 9/11
+            "2001-09-12",  # 9/11 Day After
         ]
+
+    def test_september_11_early_close(self, default_calendar):
+        session = pd.Timestamp("2001-09-11")
+        assert default_calendar.is_session(session)
+        assert session in default_calendar.early_closes
+        assert default_calendar.session_close(session) == pd.Timestamp(
+            "2001-09-11 10:41", tz="America/Toronto"
+        )
 
     @pytest.fixture
     def non_holidays_sample(self):
