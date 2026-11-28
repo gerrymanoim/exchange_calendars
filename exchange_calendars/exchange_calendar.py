@@ -677,12 +677,12 @@ class ExchangeCalendar(ABC):
                 as [0]. As either:
                     HolidayCalendar: defines annual dates by rules.
 
-                    int : integer defines a weekday with a regular
+                    int : integer defines a day of the week with a regular
                     non-standard open (0 - Monday, ..., 6 - Sunday).
 
             The same date may be described by more than one tuple, for
             example, if a late open on an annual holiday coincides with
-            a weekday late open. In this case the time assigned to the
+            a weekly late open. In this case the time assigned to the
             date will be that defined by the tuple with the lowest index
             in the returned list.
         """
@@ -733,12 +733,12 @@ class ExchangeCalendar(ABC):
                 as [0]. As either:
                     HolidayCalendar: defines annual dates by rules.
 
-                    int : integer defines a weekday with a regular
+                    int : integer defines a day of the week with a regular
                     non-standard close (0 - Monday, ..., 6 - Sunday).
 
             The same date may be described by more than one tuple, for
             example, if an early close on an annual holiday coincides with
-            a weekday early close. In this case the time assigned to the
+            a weekly early close. In this case the time assigned to the
             date will be that defined by the tuple with the lowest index
             in the returned list.
         """
@@ -2990,8 +2990,8 @@ def scheduled_special_times(
             HolidayCalendar : calendar with rules describing the dates on
             which special times apply
 
-            int : integer describing a weekday with a regular special
-            time (0 - Monday, ..., 6 - Sunday).
+            int : integer describing a day of the week with a regular
+            special time (0 - Monday, ..., 6 - Sunday).
 
     start
         Date from which to evaluate mapping (inclusive of `start`).
