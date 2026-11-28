@@ -16,14 +16,18 @@ numpy==2.5.5 ; python_full_version >= '3.12'
     #   pandas
 pandas==2.3.3 ; python_full_version < '3.11'
     # via exchange-calendars
-pandas==3.0.6 ; python_full_version >= '3.11'
+pandas==3.1.1 ; python_full_version >= '3.11'
     # via exchange-calendars
 pyluach==2.3.0
     # via exchange-calendars
 python-dateutil==3.0.0 ; python_full_version < '3.11'
-    # via pandas
+    # via
+    #   exchange-calendars
+    #   pandas
 python-dateutil==4.0.0 ; python_full_version >= '3.11'
-    # via pandas
+    # via
+    #   exchange-calendars
+    #   pandas
 pytz==2026.6 ; python_full_version < '3.11'
     # via pandas
 six==1.17.0 ; python_full_version < '3.11'
